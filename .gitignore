@@ -1,0 +1,5 @@
+*.[aoiS]
+a.out
+tinyos-graphics
+tgx
+*.so
