@@ -34,7 +34,6 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				// 之所以这边没有给出第三个参数， 是因为一般来到状态机内部就不需要
 				// 事件了， 状态机的调用必然发生在由event驱动系统出发的handler之内
 				// 而这些时间都被处理了
-				DEBUG("\n");
 				tgx_connection_parse_req_header(tcycle, (void *)tc, 0);
 			}
 			break;
@@ -45,7 +44,6 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				tgx_event_set_handler(tcycle->tevent, tc->fd,
 						tgx_connection_get_send_resp_header,
 						NULL);
-				DEBUG("\n");
 				tgx_connection_get_send_resp_header(tcycle, (void *)tc, 0);
 			}
 			break;
@@ -57,7 +55,6 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 						tgx_connection_get_send_resp_file,
 						NULL);
 				tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_MOD, tc->fd, TGX_EVENT_OUT);
-				DEBUG("\n");
 				tgx_connection_get_send_resp_file(tcycle, (void *)tc, 0);
 			}
 			break;
@@ -76,7 +73,6 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 		case TGX_STATUS_ERROR:
 		case TGX_STATUS_CLOSE:
 			{
-				DEBUG("\n");
 				tgx_event_schedule_unregister(tcycle->tevent, tc->fd);
 				tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tc->fd, 0);
 				close(tc->fd);

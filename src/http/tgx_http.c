@@ -77,7 +77,6 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 		return -1;
 	}
 
-	DEBUG("\n");
 	// 复制到path
 	strncpy(path, at, length);
 	path[length] = '\0';
@@ -172,24 +171,26 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 
 	/*free(path);*/
 	// 对于path解析错误， 立刻free掉， 否则将path加入到解析结果中方便查阅
-	DEBUG("\n%s\n", path);
+
 	tconn->http_parser->path = path;
 	return 0;
 }
 
+// 通过下面两个回调将所有的值全部放入到tconn->http_parser
+// 字段中， 然后在complete回调中进行“定制”
 int tgx_http_parser_on_header_field_cb(http_parser * parser, const char *at,
 					 size_t length)
 {
-	/*struct connection *conn = (void *)parser->data;
-	   if (!conn) {
-	   log_err("http_parser_on_path_callback():no data.\n");
-	   return -1;
-	   }
-	   if (conn->last_header_element != FIELD)
-	   conn->num_headers++;
+	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
+	if (!tconn) {
+		log_err("http_parser_on_path_callback():no data.\n");
+		return -1;
+    }
+	if (tconn->http_parser->last_header_element != FIELD)
+		tconn->http_parser->num_headers++;
 
-	   strncat(conn->headers[conn->num_headers-1][0], at, length);
-	   conn->last_header_element = FIELD; */
+	strncat(tconn->http_parser->headers[tconn->http_parser->num_headers-1][0], at, length);
+	tconn->http_parser->last_header_element = FIELD; 
 
 	return 0;
 }
@@ -197,23 +198,55 @@ int tgx_http_parser_on_header_field_cb(http_parser * parser, const char *at,
 int tgx_http_parser_on_header_value_cb(http_parser * parser, const char *at,
 					 size_t length)
 {
-	/*struct connection *conn= parser->data;
-	   if (!conn) {
-	   log_err("http_parser_on_path_callback():no data.\n");
-	   return -1;
-	   }
-	   strncat(conn->headers[conn->num_headers-1][1], at, length);
-	   if (strcmp(conn->headers[conn->num_headers-1][0], "Content-Type") == 0) {
-	   tconn->http_parser->mime_type = get_mime_type(conn->headers[conn->num_headers-1][1]);
-	   printf("doc_type = %s\n", mime_type_string[tconn->http_parser->mime_type]);
-	   }
-	   conn->last_header_element = VALUE; */
+	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
+	if (!tconn) {
+		log_err("http_parser_on_path_callback():no data.\n");
+		return -1;
+	}
+	strncat(tconn->http_parser->headers[tconn->http_parser->num_headers-1][1], at, length);
+	tconn->http_parser->last_header_element = VALUE; 
 
 	return 0;
 }
 
 int tgx_http_parser_on_header_complete_cb(http_parser * parser)
 {
+
+	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
+
+	// 304 功能
+	{
+		if (tconn->http_parser->path_fd < 0) return 0;
+		struct stat statbuf;
+		if (fstat(tconn->http_parser->path_fd, &statbuf) < 0) {
+			log_err("stat():%s\n", strerror(errno));
+			tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
+			tconn->http_parser->path_fd = -1;
+			return 0;
+		}
+
+		int	i;
+		for (i = 0; i < tconn->http_parser->num_headers; i++) {
+			if (strcmp(tconn->http_parser->headers[i][0], "If-Modified-Since") == 0) {
+				char tempstring[256];
+				int len = strlen(tconn->http_parser->headers[i][1]);
+				strncpy(tempstring, tconn->http_parser->headers[i][1], len);
+				tempstring[len] = '\0';
+				struct tm tm;
+				time_t t;
+				strptime(tempstring, RFC1123_DATE_FMT, &tm);
+				tzset();
+				t = mktime(&tm);
+				t -= timezone;
+				gmtime_r(&t, &tm);
+				if (t >= statbuf.st_mtime) {
+					tconn->http_parser->http_status = TGX_HTTP_STATUS_304;
+				}
+			}
+		}
+	}
+
+
 	return 0;
 }
 

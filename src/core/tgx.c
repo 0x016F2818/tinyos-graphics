@@ -521,7 +521,6 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	DEBUG("Now chroot to %s\n", tcycle->srv_root);
 	if (chroot(tcycle->srv_root) < 0) {
 		log_err("chdir():%s\n", strerror(errno));
 		return -1;

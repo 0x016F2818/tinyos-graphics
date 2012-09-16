@@ -19,6 +19,7 @@
 #define TGX_LOCK_FILE			"./tgx.pid"
 #define TGX_CONFIG_FILE			"./tgx.conf"
 #define TGX_MAX_CONNECTION		10000
+#define RFC1123_DATE_FMT "%a, %d %b %Y %H:%M:%S %Z"
 
 
 #define TGX_LOCKMODE			(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)

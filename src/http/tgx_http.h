@@ -69,6 +69,17 @@ struct tgx_http_parser_s {
 	int									mime_type;
 	char								*path;
 	char								http_method[16];
+
+// private
+#define MAX_HEADERS 100
+#define MAX_ELEMENT_SIZE 1000
+	int num_headers;
+	enum { 
+		NONE = 0, 
+		FIELD, 
+		VALUE 
+	} last_header_element;
+	char headers [MAX_HEADERS][2][MAX_ELEMENT_SIZE];
 };
 
 tgx_http_parser_t* tgx_http_parser_init(tgx_cycle_t *tcycle);

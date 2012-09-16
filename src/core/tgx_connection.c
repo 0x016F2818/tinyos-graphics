@@ -133,13 +133,11 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 
 	// 避免缓冲区溢出
 	tconn->buffer->data[tconn->buffer->size - 1] = '\0';
-	DEBUG("request:\n%s\n", tconn->buffer->data);
 	
 	// 如果读到\r\n说明此时读取message header的任务已经完成, 接下来应该是parse message header
 	// 注意虽然读取到\r\n\r\n但是可能buffer中也包含message body， 我们在解析完header之后应该
 	// 去掉header部分
 	if (strstr(tconn->buffer->data, "\r\n\r\n") != NULL) {
-		DEBUG("\n");
 		tgx_http_fsm_set_status(tconn, TGX_STATUS_PARSING_REQUEST_HEADER);
 		tgx_http_fsm_state_machine(tcycle, tconn);
 	}
@@ -157,7 +155,6 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 
 	tgx_connection_t *tconn = (tgx_connection_t *)context;
 
-	DEBUG("\n");
 
 	struct http_parser_settings settings;
 	memset(&settings, 0, sizeof(struct http_parser_settings));
@@ -167,7 +164,6 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 	settings.on_header_value	 = tgx_http_parser_on_header_value_cb;
 	settings.on_headers_complete = tgx_http_parser_on_header_complete_cb;
 
-	DEBUG("\n");
 	size_t nParsed;
 	struct http_parser *parser = (struct http_parser *)calloc(1, sizeof(struct http_parser));
 	if (!parser) {
@@ -176,7 +172,6 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 		tgx_http_fsm_state_machine(tcycle, tconn);
 		return -1;
 	}
-	DEBUG("\n");
 
 	http_parser_init(parser, HTTP_REQUEST);
 	parser->data = (void *)tconn;
@@ -188,7 +183,6 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 		tgx_http_fsm_state_machine(tcycle, tconn);
 		return -1;
 	}
-	DEBUG("\n");
 	free(parser);
 
 	// TODO:先分析一下tconn->http_parser的结果， 然后决定下一个状态是什么
@@ -198,24 +192,20 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 	// 换一个思路， 让状态机决定状态
 
 	// 下一步， 我们先根据解析得到的http_status， 先进行一些“预处理”
-	if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200) {
+	if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200 || 
+		tconn->http_parser->http_status == TGX_HTTP_STATUS_304) {
 		if (strcmp(tconn->http_parser->http_method, "GET") == 0) {
-			DEBUG("\n");
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_GET_SEND_RESPONSE_HEADER);
 		} else if (strcmp(tconn->http_parser->http_method, "POST") == 0) {
-			DEBUG("\n");
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_POST_READ_REQUEST_MESSAGE_BODY);
 		} else {
-			DEBUG("\n");
 			log_err("http_method do not support.\n");
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 		}
 	} else {
-			DEBUG("\n");
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 	}
 	// 进入下一个状态
-	DEBUG("\n");
 	tgx_http_fsm_state_machine(tcycle, tconn);
 
 	return 0;
@@ -252,6 +242,27 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return -1;
 		}
+
+		{
+			// 和304有关
+			char tempstring[256];
+			struct tm tm_t;
+			struct tm *tm;
+			time_t tmt;
+			tmt = time(NULL);
+			tm = gmtime_r(&tmt, &tm_t);
+			strftime(tempstring, sizeof(tempstring), RFC1123_DATE_FMT, tm);
+			COPY("Date: ");
+			COPY("%s\r\n",tempstring);
+
+			// 写入文件修改时间
+			tm = gmtime_r(&statbuf.st_mtime, &tm_t);
+			strftime(tempstring, sizeof(tempstring), RFC1123_DATE_FMT, tm);
+			COPY("Last-modified: ");
+			COPY("%s\r\n", tempstring);
+		}
+
+
 		COPY("Content-Type: %s\r\n", tgx_mime_type_string[tconn->http_parser->mime_type]);
 		COPY("Content-Length: %ld\r\n", statbuf.st_size);
 	}
@@ -262,32 +273,34 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 	// 避免缓冲区溢出
 	response_header[sizeof(response_header)-1] = '\0';
 
-	DEBUG("\nheader:\n%s\n", response_header);
 #undef COPY
 
+	
 	// 接下来， 发送已经填写好的response_header
 	int nWrite;
 	int resp_len = strlen(response_header);
 	while (1) {
-		DEBUG("\n");
 		nWrite =  write(tconn->fd, response_header + tconn->write_pos, resp_len - tconn->write_pos);
 		tconn->write_pos += nWrite;
 		if (nWrite == -1) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {	//缓冲区写满了， 等会事件还会再来的, 先return
-				DEBUG("\n");
 				return 0;
 			}
-			DEBUG("\n");
 			log_err("write():%s\n", strerror(errno));
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return -1;
 		}
 		if (tconn->write_pos == resp_len) {
-			DEBUG("\n");
-			tgx_http_fsm_set_status(tconn, TGX_STATUS_GET_SEND_RESPONSE_FILE);
-			tgx_http_fsm_state_machine(tcycle, tconn);
-			return -1;
+			if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200) {
+				tgx_http_fsm_set_status(tconn, TGX_STATUS_GET_SEND_RESPONSE_FILE);
+				tgx_http_fsm_state_machine(tcycle, tconn);
+				return 0;
+			} else if (tconn->http_parser->http_status == TGX_HTTP_STATUS_304) {
+				tgx_http_fsm_set_status(tconn, TGX_STATUS_CLOSE);
+				tgx_http_fsm_state_machine(tcycle, tconn);
+				return 0;
+			}
 		}
 	}
 
@@ -317,31 +330,25 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 		return -1;
 	}
 
-	DEBUG("\n");
 	int nWrite;
 	// TODO: 不知道为什么， 直接将statbuf.st_size带入sendfile， 就会出现错误
 	int total_length = statbuf.st_size;
 	while (1) {
-		DEBUG("\n");
 		// 使用read_pos记载当前文件传输到什么位置， 下一次读取的最大长度就相应的减小
 		off_t offset = tconn->write_pos;
 		nWrite = sendfile(tconn->fd, tconn->http_parser->path_fd, &offset, total_length - tconn->write_pos);
 		tconn->write_pos = offset;
 		if (nWrite == -1) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) { //缓冲区写满了， 等会事件还会再来的, 先return
-				DEBUG("\n");
 				return 0;
 			}
-			DEBUG("\n");
 			log_err("sendfile():%s\n", strerror(errno));
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return -1;
 		}
 
-		DEBUG("write_pos = %d and total_length = %d\n", tconn->write_pos, total_length);
 		if (tconn->write_pos == total_length) {
-			DEBUG("\n");
  			tgx_http_fsm_set_status(tconn, TGX_STATUS_CLOSE);
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return 0;

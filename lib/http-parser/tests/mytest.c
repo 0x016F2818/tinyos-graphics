@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 /*struct http_parser_settings {
   http_cb      on_message_begin;
   http_data_cb on_url;
