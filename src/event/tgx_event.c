@@ -69,7 +69,7 @@ void tgx_event_destroy (tgx_event_t *te)
 		log_err("null pointer!\n");
 		return;
 	}
-	if (te->free) te->free(te);
+	if (te->event_free) te->event_free(te);
 
 	int i;
 	for (i = 0; i < te->maxfds; i++) {
@@ -266,7 +266,6 @@ void* tgx_event_get_context(tgx_event_t *te, int fd)
 	else if (te->sched_array[r_index]->context)
 		return te->sched_array[r_index]->context;
 
-	log_err("no context found.\n");
 	return NULL;
 }
 

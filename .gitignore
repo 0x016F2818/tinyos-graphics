@@ -3,3 +3,9 @@ a.out
 tinyos-graphics
 tgx
 *.so
+cscope.*
+tags
+.*.swp
+*\~
+*.lo
+*.la

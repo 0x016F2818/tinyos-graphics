@@ -1,6 +1,6 @@
 all:
 	gcc ./core/tgx.c ./core/tgx_connection.c \
-		./core/tgx_cycle.c ./core/tgx_log.c  \
+		./core/tgx_log.c  \
 		./core/tgx_task.c ./event/tgx_event.c \
 		./event/tgx_linux_epoll.c ./http/tgx_http.c \
 		./http/tgx_http_fsm.c ./motes/tgx_serial_msg.c \

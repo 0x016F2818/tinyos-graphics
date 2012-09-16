@@ -17,3 +17,5 @@
 
 #define TGX_STATUS_ERROR								9
 #define TGX_STATUS_CLOSE								10
+void tgx_http_fsm_set_status(tgx_connection_t *tc, int status);
+int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc);

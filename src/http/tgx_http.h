@@ -10,7 +10,8 @@
 	XX(2, 400, HTTP/1.1 400 Bad Request)					\
 	XX(3, 403, HTTP/1.1 403 Forbidden)						\
 	XX(4, 404, HTTP/1.1 404 Not Found)						\
-	XX(5, 505, HTTP/1.1 505 HTTP Version not supported)		\
+	XX(5, 500, HTTP/1.1 500 Internal Server Error)			\
+	XX(6, 505, HTTP/1.1 505 HTTP Version not supported)		\
 
 #undef NULL
 #define NULL ((void *)0)
@@ -66,14 +67,14 @@ struct tgx_http_parser_s {
 	int									is_cgi:1;
 	int									is_wsn_module:1;
 	int									mime_type;
-	tgx_string_t						*path;
-	tgx_string_t						*http_method;
+	char								*path;
+	char								http_method[16];
 };
 
 tgx_http_parser_t* tgx_http_parser_init(tgx_cycle_t *tcycle);
 void tgx_http_parser_free(tgx_http_parser_t *t_http_p);
-int tgx_http_parser_on_url_cb(http_parser * parser, const char *at, size_t length);
-int tgx_http_parser_on_header_field_cb(http_parser * parser, const char *at, size_t length);
-int tgx_http_parser_on_header_value_cb(http_parser * parser, const char *at, size_t length);
-int tgx_http_parser_on_header_complete_cb(http_parser * parser);
-int tgx_http_parser_on_body_cb(http_parser * parser, const char *at, size_t length);
+int tgx_http_parser_on_url_cb(http_parser *parser, const char *at, size_t length);
+int tgx_http_parser_on_header_field_cb(http_parser* parser, const char *at, size_t length);
+int tgx_http_parser_on_header_value_cb(http_parser* parser, const char *at, size_t length);
+int tgx_http_parser_on_header_complete_cb(http_parser *parser);
+int tgx_http_parser_on_body_cb(http_parser *parser, const char *at, size_t length);

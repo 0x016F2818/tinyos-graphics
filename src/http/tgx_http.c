@@ -13,47 +13,71 @@ tgx_mime_type_t tgx_get_mime_type(char *str)
 
 tgx_http_parser_t* tgx_http_parser_init(tgx_cycle_t *tcycle)
 {
-	return NULL;
+	if (!tcycle) {
+		log_err("null pointer\n");
+		return NULL;
+	}
+
+	tgx_http_parser_t *http_parser;
+	// calloc()  已经将http_parser内部清空了
+	http_parser = calloc(1, sizeof(tgx_http_parser_t));
+	if (!http_parser) {
+		log_err("null pointer\n");
+		return NULL;
+	}
+	
+	http_parser->path_fd	 = -1;
+	http_parser->path		 = NULL;
+	return http_parser;
 }
 
 void tgx_http_parser_free(tgx_http_parser_t *t_http_p)
 {
+	if (!t_http_p) {
+		log_err("null pointer\n");
+		return;
+	}
 
+	// 由于path的长度不好控制， 这里根据解析的结果动态的分配
+	if (t_http_p->path) free(t_http_p->path);
+
+	free(t_http_p);
 }
 
-int tgx_http_parser_on_url_cb(http_parser * parser, const char *at,
+int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 				 size_t length)
 {
-	/* 在判断完是否为POST之后， 在每一个return -1处， 都做了一下事情
-	 * 1. free(path)
-	 * 2. conn->doc_fd = NOFILE // 这个主要用于区分服务器到底是发json还是发静态页面的判断条件
-	 * 3. conn->http_status = HTTP_STATUS_XXX // XXX为各种异常的值， 这里使用了400和404
-	 * 4. return -1
-	 * 其实在send_response_header()中首先查看http_status, 如果为异常值， 是不会再去跳到下一个状态，
-	 * 而是直接connection_close(conn), 因此决定下一个状态， 是由http_status和doc_fd两个决定的
-	 * TODO: 可以指定一些异常的页面， 当出现异常时发送异常页面而不是野蛮的关闭连接如404.htm
-	 */
+	// 要区分好服务器内部错误和用户请求错误之间的关系
 
-	/*struct connection *conn = (void *)parser->data;
-	if (!conn) {
-		LOG("http_parser_on_path_callback():no data.\n");
-		conn->http_status = HTTP_STATUS_400;
+	system("pwd");
+	tgx_connection_t *tconn = (void *)parser->data;
+	if (!tconn) {
+		log_err("null pointer\n");
 		return -1;
 	}
 
-	// 对于POST方法我们发送的是message， 因此这边不处理
-	if (strcmp(http_method_str(parser->method), "POST") == 0) 
+	// 判断GET方法还是POST方法
+	if (strcmp(http_method_str(parser->method), "GET") == 0) {
+		sprintf(tconn->http_parser->http_method, "GET");
+	} else if (strcmp(http_method_str(parser->method), "POST") == 0) { 
+		sprintf(tconn->http_parser->http_method, "POST");
+	} else {
+		tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
+		tconn->http_parser->path_fd = -1;
 		return 0;
+	}
+
 
 	// 为path分配空间， 我们必须将at中的数据移到path中
 	char *path = calloc(length + 1, sizeof(char));
 	if (!path) {
-		LOG("calloc():%s\n", strerror(errno));
-		conn->http_status = HTTP_STATUS_400;
-		conn->doc_fd = NOFILE;
+		log_err("calloc():%s\n", strerror(errno));
+		tconn->http_parser->http_status = TGX_HTTP_STATUS_500;
+		tconn->http_parser->path_fd = -1;
 		return -1;
 	}
 
+	DEBUG("\n");
 	// 复制到path
 	strncpy(path, at, length);
 	path[length] = '\0';
@@ -71,23 +95,22 @@ int tgx_http_parser_on_url_cb(http_parser * parser, const char *at,
 	}
 
 	// 过滤掉不支持的服务器脚本语言
-	|+if (strstr(path, ".php") || strstr(path, ".aspx")) {
-		LOG("unsupport cgi error.\n");
+	if (strstr(path, ".php") || strstr(path, ".aspx")) {
+		log_err("unsupport cgi error.\n");
 		free(path);
-		conn->http_status = HTTP_STATUS_400;
-		conn->doc_fd = NOFILE;
-		return -1;
-	}+|
+		tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
+		tconn->http_parser->path_fd = -1;
+		return 0;
+	}
 
 	// 如果path为目录， 需要自动加上index.html
 	struct stat statbuf;
 	if (stat(path, &statbuf) < 0) {
-		LOG("path = %s\n", path);
-		LOG("stat():%s\n", strerror(errno));
+		log_err("path = %s, stat():%s\n", path, strerror(errno));
 		free(path);
-		conn->http_status = HTTP_STATUS_400;
-		conn->doc_fd = NOFILE;
-		return -1;
+		tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
+		tconn->http_parser->path_fd = -1;
+		return 0;
 	}
 	if (S_ISDIR(statbuf.st_mode)) {
 		// 重新分配path空间， 刚刚好为加上strlen("/index.html") byte再加上'\0'
@@ -96,9 +119,9 @@ int tgx_http_parser_on_url_cb(http_parser * parser, const char *at,
 		// 保证即使realloc， path指针不丢失
 		if (!tmp) {
 			free(path);
-			LOG("realloc():%s\n", strerror(errno));
-			conn->doc_fd = NOFILE;
-			conn->http_status = HTTP_STATUS_400;
+			log_err("realloc():%s\n", strerror(errno));
+			tconn->http_parser->path_fd = -1;
+			tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
 			return -1;
 		} else {
 			path = tmp;
@@ -110,42 +133,47 @@ int tgx_http_parser_on_url_cb(http_parser * parser, const char *at,
 		path[strlen(path)] = '\0';
 	}
 
-	LOG("path = %s\n", path);
-
 	// 打开文件
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		free(path);
-		conn->doc_fd = NOFILE;
-		conn->http_status = HTTP_STATUS_404;
-		LOG("open():%s\n", strerror(errno));
+		tconn->http_parser->path_fd = -1;
+		tconn->http_parser->http_status = TGX_HTTP_STATUS_404;
+		log_err("open():%s\n", strerror(errno));
 		return -1;
 	}
 
 	// 设置文件类型， 为发送文件做准备
 	if (strstr(path, ".html") || strstr(path, ".htm"))
-		conn->doc_type = MIME_TYPE_HTML;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_HTML;
 	else if (strstr(path, ".jpeg"))
-		conn->doc_type = MIME_TYPE_JPEG;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_JPEG;
 	else if (strstr(path, ".jpg"))
-		conn->doc_type = MIME_TYPE_JPG;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_JPG;
 	else if (strstr(path, ".png"))
-		conn->doc_type = MIME_TYPE_PNG;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_PNG;
 	else if (strstr(path, ".gif"))
-		conn->doc_type = MIME_TYPE_GIF;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_GIF;
 	else if (strstr(path, ".ico"))
-		conn->doc_type = MIME_TYPE_ICO;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_ICO;
 	else if (strstr(path, ".js"))
-		conn->doc_type = MIME_TYPE_JAVASCRIPT;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_JAVASCRIPT;
 	else if (strstr(path, ".css"))
-		conn->doc_type = MIME_TYPE_CSS;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_CSS;
 	else
-		conn->doc_type = MIME_TYPE_PLAIN;
+		tconn->http_parser->mime_type = TGX_MIME_TYPE_PLAIN;
+	
+	// 这个是专为tinyos项目设置的模块后缀
+	if (strstr(path, ".wsn")) 
+		tconn->http_parser->is_wsn_module = 1;
 
-	conn->doc_fd = fd;
-	conn->http_status = HTTP_STATUS_200;
+	tconn->http_parser->path_fd = fd;
+	tconn->http_parser->http_status = TGX_HTTP_STATUS_200;
 
-	free(path);*/
+	/*free(path);*/
+	// 对于path解析错误， 立刻free掉， 否则将path加入到解析结果中方便查阅
+	DEBUG("\n%s\n", path);
+	tconn->http_parser->path = path;
 	return 0;
 }
 
@@ -154,7 +182,7 @@ int tgx_http_parser_on_header_field_cb(http_parser * parser, const char *at,
 {
 	/*struct connection *conn = (void *)parser->data;
 	   if (!conn) {
-	   LOG("http_parser_on_path_callback():no data.\n");
+	   log_err("http_parser_on_path_callback():no data.\n");
 	   return -1;
 	   }
 	   if (conn->last_header_element != FIELD)
@@ -171,13 +199,13 @@ int tgx_http_parser_on_header_value_cb(http_parser * parser, const char *at,
 {
 	/*struct connection *conn= parser->data;
 	   if (!conn) {
-	   LOG("http_parser_on_path_callback():no data.\n");
+	   log_err("http_parser_on_path_callback():no data.\n");
 	   return -1;
 	   }
 	   strncat(conn->headers[conn->num_headers-1][1], at, length);
 	   if (strcmp(conn->headers[conn->num_headers-1][0], "Content-Type") == 0) {
-	   conn->doc_type = get_mime_type(conn->headers[conn->num_headers-1][1]);
-	   printf("doc_type = %s\n", mime_type_string[conn->doc_type]);
+	   tconn->http_parser->mime_type = get_mime_type(conn->headers[conn->num_headers-1][1]);
+	   printf("doc_type = %s\n", mime_type_string[tconn->http_parser->mime_type]);
 	   }
 	   conn->last_header_element = VALUE; */
 

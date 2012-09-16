@@ -4,9 +4,6 @@
 #include "tgx_core.h"
 
 /* 将特定平台的event转换成通用的event */
-#ifndef TGX_BITSET 
-#define TGX_BITSET(x) (1 << x)
-#endif
 
 #define TGX_EVENT_IN		TGX_BITSET(0)
 #define TGX_EVENT_OUT		TGX_BITSET(1)
@@ -38,7 +35,7 @@ struct tgx_event_s {
 	int epoll_fd; // epoll多路系统用到的句柄, 这个是系统的核心
 	struct epoll_event *epoll_events;   // 这个相当于内存， 每次poll以后数据就存放在这个区域
 #endif
-	void (*free)          (tgx_event_t *te);
+	void (*event_free)          (tgx_event_t *te);
 	int  (*ctl)           (tgx_event_t *te, int op, int fd, int event);
 	int  (*get_event)     (tgx_event_t *te, int index);
 	int  (*get_fd)        (tgx_event_t *te, int index);

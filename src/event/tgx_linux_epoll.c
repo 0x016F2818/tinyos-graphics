@@ -1,6 +1,6 @@
 #include "tgx_event.h"
 
-static void tgx_linux_epoll_free(tgx_event_t *te)
+static void tgx_linux_epoll_event_free(tgx_event_t *te)
 {
 	if (te == NULL) {
 		log_err("null pointer.\n");
@@ -122,7 +122,7 @@ int tgx_linux_epoll_init(tgx_event_t *te)
 #define SET(x) \
 	te->x = tgx_linux_epoll_ ##x
 
-	SET(free);
+	SET(event_free);
 	SET(ctl);
 	SET(get_event);
 	SET(get_fd);

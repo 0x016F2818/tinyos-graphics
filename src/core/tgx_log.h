@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tgx_config.h"
+#include "tgx_setting.h"
 #include "tgx_core.h"
 
 /**********************************************/

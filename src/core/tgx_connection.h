@@ -3,13 +3,6 @@
 #include "tgx_setting.h"
 #include "tgx_core.h"
 
-typedef enum {
-	TGX_HANDLER_FINISHED,
-	TGX_HANDLER_GOON,
-	TGX_HANDLER_ERROR,
-	TGX_HANDLER_CONNECTION_CLOSEED,
-} handler_error_t;
-
 struct tgx_connection_s {
 	int									fd;
 
@@ -29,7 +22,7 @@ void tgx_connection_free(tgx_connection_t *tconn);
 typedef int (tgx_connection_handler_t)(tgx_cycle_t *tcycle, void *context, int event);
 
 tgx_connection_handler_t tgx_connection_read_req_header,
-						 tgx_connection_parse_req,
+						 tgx_connection_parse_req_header,
 						 tgx_connection_get_send_resp_header,
 						 tgx_connection_get_send_resp_file,
 						 tgx_connection_post_send_resp_header,
