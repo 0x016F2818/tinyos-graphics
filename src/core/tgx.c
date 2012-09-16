@@ -34,14 +34,18 @@ static int tgx_analyze_configfile(tgx_cycle_t *tcycle, char *key, char *value)
 		// 超出了正常范围
 		if (tcycle->port > 65535) return -1;
 	} else if (strncmp(key, "root", strlen("root")) == 0) {
-		// 检查value的合法性
+		// TODO:检查value的合法性
 		strcpy(tcycle->srv_root, value);
 	} else if (strncmp(key, "lock", strlen("lock")) == 0) {
-		// 检查value合法性
+		// TODO:检查value合法性
 		strcpy(tcycle->lock_file, value);
 	} else if (strncmp(key, "log", strlen("log")) == 0) {
-		// 检查log合法性
+		// TODO:检查log合法性
 		strcpy(tcycle->log_file, value);
+	} else if (strncmp(key, "404 page", strlen("404 page")) == 0) {
+		if (strstr(value, ".html") == NULL) return -1;
+		if ((tcycle->err_page.e_404 = open(value, O_RDONLY)) < 0) return -1;
+		DEBUG("e_404 = %d, path = %s\n", tcycle->err_page.e_404, value);
 	} else {
 		return -1;
 	}
@@ -236,7 +240,8 @@ static void tgx_sig_handler(int signo)
 		case SIGINT: 
 			running = 0; 
 			log_err("System going to Shutdown or Something...\n");
-			break;
+			exit(0);
+			/*break;*/
 		case SIGPIPE:
 			break;
 		case SIGHUP:
@@ -333,7 +338,7 @@ static int tgx_already_running(tgx_cycle_t *tcycle)
 	int		fd;
 	char	buf[16];
 
-	fd = open(tcycle->log_file, O_RDWR|O_CREAT, TGX_LOCKMODE);
+	fd = open(tcycle->lock_file, O_RDWR|O_CREAT, TGX_LOCKMODE);
 	if (fd < 0) {
 		log_err("can't open %s: %s", tcycle->lock_file, strerror(errno));
 		exit(1);
@@ -403,6 +408,7 @@ static int tgx_acception_handler(tgx_cycle_t *tcycle, void *context, int event)
 			log_err("tgx_event_schedule_register() failure.\n");
 			return -1;
 		}
+		DEBUG("fd = %d server = %s, port = %s\n", infd, sbuf, hbuf);
 	}
 
 	return 0;
@@ -423,7 +429,7 @@ static void tgx_show_help(void)
 
 static void tgx_show_version(void)
 {
-	printf("tinyos graphics/0.0.1 (C) WSN WorkGroup 2012/09\n");
+	printf("tinyos graphics/0.0.1 (C) WSN WorkingGroup 2012/09\n");
 }
 
 static int  tgx_parse_config_file(tgx_cycle_t *tcycle)
@@ -441,16 +447,30 @@ int main(int argc, char *argv[])
 
 	// 先初始化为tcycle的系统默认值
 	tgx_cycle_t *tcycle = (tgx_cycle_t *)calloc(1, sizeof(tgx_cycle_t));
-	tcycle->port = TGX_PORT;
-	tcycle->maxfds = TGX_MAX_CONNECTION;
-	tcycle->event_timeout_ms = 1000;
-	strcpy(tcycle->srv_root, TGX_ROOT);
-	strcpy(tcycle->lock_file, TGX_LOCK_FILE);
-	strcpy(tcycle->log_file, TGX_LOG_FILE);
+	FILE *fp;
+
+	{
+		// 初始化tgx_cycle_t结构体
+		tcycle->port = TGX_PORT;
+		tcycle->maxfds = TGX_MAX_CONNECTION;
+		tcycle->event_timeout_ms = 1000;
+		strcpy(tcycle->srv_root, TGX_ROOT);
+		strcpy(tcycle->lock_file, TGX_LOCK_FILE);
+		strcpy(tcycle->log_file, TGX_LOG_FILE);
+		tcycle->err_page.e_404 = -1;
+		fp = tmpfile();
+		if (!fp) {
+			log_err("tmpfile():%s\n", strerror(errno));
+			return -1;
+		}
+		fputs(TGX_PAGE_404_ERR, fp);
+		tcycle->err_page.e_404 = fileno(fp);
+	}
 
 	int opt = 0;
 	char tconf_path[1024] = {0};
 	strcpy(tconf_path, TGX_CONFIG_FILE);
+	
 
 	// 1. 解析命令行参数
 	while (1) {
@@ -507,8 +527,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	/*if (!(opt & TGX_DO_NOT_DAEMON))*/
-		/*tgx_daemonize(); */
+	/*if (!(opt & TGX_DO_NOT_DAEMON))
+		tgx_daemonize(); */
 
 	if (tgx_already_running(tcycle)) {
 		log_err("tgx already running.\n");

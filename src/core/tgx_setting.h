@@ -4,7 +4,7 @@
 #define USE_GARBAGE_COLLECTION
 #define USE_LINUX_EPOLL
 #define USE_SOCKET_REUSEADDR 
-#define USE_TCP_CORK
+//#define USE_TCP_CORK
 
 #define MAX_BUFFER_SIZE			65535
 #define INITIAL_BUFFER_SIZE     100   // 初始长度 
@@ -19,6 +19,8 @@
 #define TGX_LOCK_FILE			"./tgx.pid"
 #define TGX_CONFIG_FILE			"./tgx.conf"
 #define TGX_MAX_CONNECTION		10000
+#define TGX_PAGE_404_ERR		"<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested URL /smms was not found on this server.</p><hr><address>tinyos-graphics/0.0.1 server</address></body></html>"
+
 #define RFC1123_DATE_FMT "%a, %d %b %Y %H:%M:%S %Z"
 
 

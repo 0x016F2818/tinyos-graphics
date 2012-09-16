@@ -9,6 +9,11 @@ typedef struct tgx_event_s					tgx_event_t;
 typedef struct tgx_schedule_s				tgx_schedule_t;
 typedef struct tgx_http_parser_s			tgx_http_parser_t;
 
+typedef struct {
+	int e_404;
+
+} tgx_err_page_t;
+
 // tcycle是注入到所有的执行handler中的“全局变量”,
 struct tgx_tcycle_s {
 	int				listen_fd;
@@ -17,6 +22,7 @@ struct tgx_tcycle_s {
 	char			srv_root[1024];
 	char			lock_file[1024];
 	char			log_file[1024];
+	tgx_err_page_t  err_page;
 	tgx_event_t		*tevent;
 	int				event_timeout_ms;
 };

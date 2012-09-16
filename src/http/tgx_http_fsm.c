@@ -76,7 +76,8 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				tgx_event_schedule_unregister(tcycle->tevent, tc->fd);
 				tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tc->fd, 0);
 				close(tc->fd);
-				close(tc->http_parser->path_fd);
+				if (tc->http_parser->http_status != TGX_HTTP_STATUS_404)
+					close(tc->http_parser->path_fd);
 			}
 			break;
 	}

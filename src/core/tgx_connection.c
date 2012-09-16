@@ -64,7 +64,7 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 	}
 
 	if (event & TGX_EVENT_ERR || 
-			event & TGX_EVENT_HUP) {
+			event & TGX_EVENT_HUP || !(event & TGX_EVENT_IN)) {
 		log_err("event happens something\n");
 		tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 		tgx_http_fsm_state_machine(tcycle, tconn);
@@ -72,7 +72,6 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 	}
 
 	// 给缓冲区分配空间， 并且让缓冲区动态增长
-
 	if (tconn->buffer->size == 0) {
 		tconn->buffer->size = INITIAL_BUFFER_SIZE;
 		tconn->buffer->data = (char *)calloc(tconn->buffer->size, sizeof(char));
@@ -121,11 +120,10 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 		} else if (nRead == 0) { 
 		  // nRead == 0说明客户端关闭了套接字， 但我们很有可能在event里面
 		  // 已经捕获了， 但这不妨碍， 增加健壮性 
-			sleep(1);
 			log_err("connection close itself fd = %d\n", tconn->fd);
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_CLOSE);
 			tgx_http_fsm_state_machine(tcycle, tconn);
-			return 0;
+			return -1;
 		} else if (nRead > 0) {
 			tconn->read_pos += nRead;
 		}
@@ -173,6 +171,7 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 		return -1;
 	}
 
+	DEBUG("\n");
 	http_parser_init(parser, HTTP_REQUEST);
 	parser->data = (void *)tconn;
 	nParsed = http_parser_execute(parser, &settings, tconn->buffer->data, strlen(tconn->buffer->data));
@@ -193,7 +192,8 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 
 	// 下一步， 我们先根据解析得到的http_status， 先进行一些“预处理”
 	if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200 || 
-		tconn->http_parser->http_status == TGX_HTTP_STATUS_304) {
+		tconn->http_parser->http_status == TGX_HTTP_STATUS_304 ||
+		tconn->http_parser->http_status == TGX_HTTP_STATUS_404) {
 		if (strcmp(tconn->http_parser->http_method, "GET") == 0) {
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_GET_SEND_RESPONSE_HEADER);
 		} else if (strcmp(tconn->http_parser->http_method, "POST") == 0) {
@@ -231,6 +231,15 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 	COPY("%s\r\n", tgx_http_status_string[tconn->http_parser->http_status]);
 	COPY("%s\r\n", "Server: tinyos-graphics/0.0.1");
 	COPY("%s\r\n", "Connection: Close");
+
+	// 针对404 err
+	{
+		if (tconn->http_parser->http_status == TGX_HTTP_STATUS_404) {
+			tconn->http_parser->path_fd = tcycle->err_page.e_404;
+			log_err("err page fd = %d\n", tcycle->err_page.e_404);
+		}
+	}
+
 
 	// 我想对于所有的GET方法， 根据状态的不同， 都会返回相应的文件， 如果是错误的
 	// 那么返回: 404.html, 等等, 当然304 Not Modified， 是不需要发送文件的
@@ -275,6 +284,7 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 
 #undef COPY
 
+	DEBUG("\n");
 	
 	// 接下来， 发送已经填写好的response_header
 	int nWrite;
@@ -292,7 +302,8 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 			return -1;
 		}
 		if (tconn->write_pos == resp_len) {
-			if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200) {
+			if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200 ||
+				tconn->http_parser->http_status == TGX_HTTP_STATUS_404) {
 				tgx_http_fsm_set_status(tconn, TGX_STATUS_GET_SEND_RESPONSE_FILE);
 				tgx_http_fsm_state_machine(tcycle, tconn);
 				return 0;
@@ -315,6 +326,7 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 		return -1;
 	}
 
+
 	if (tconn->http_parser->path_fd < 0) {
 		log_err("file error\n");
 		tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
@@ -329,6 +341,7 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 		tgx_http_fsm_state_machine(tcycle, tconn);
 		return -1;
 	}
+
 
 	int nWrite;
 	// TODO: 不知道为什么， 直接将statbuf.st_size带入sendfile， 就会出现错误
@@ -359,12 +372,12 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 } 
 
 // post 处理函数
-int tgx_connection_post_send_resp_header(tgx_cycle_t *tcycle, void *context, int event)
+int tgx_connection_post_read_req_message_body(tgx_cycle_t *tcycle, void *context, int event)
 {
 	return 0;
 }
 
-int tgx_connection_post_read_req_message_body(tgx_cycle_t *tcycle, void *context, int event)
+int tgx_connection_post_send_resp_header(tgx_cycle_t *tcycle, void *context, int event)
 {
 	return 0;
 }

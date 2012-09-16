@@ -94,12 +94,15 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 	}
 
 	// 过滤掉不支持的服务器脚本语言
-	if (strstr(path, ".php") || strstr(path, ".aspx")) {
-		log_err("unsupport cgi error.\n");
-		free(path);
-		tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
-		tconn->http_parser->path_fd = -1;
-		return 0;
+	char *p = NULL;
+	if ((p = strstr(path, ".php")) || (p = strstr(path, ".aspx"))) {
+		if (strstr(p, "/") == NULL) {
+			log_err("unsupport cgi error.\n");
+			free(path);
+			tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
+			tconn->http_parser->path_fd = -1;
+			return 0;
+		}
 	}
 
 	// 如果path为目录， 需要自动加上index.html
@@ -107,7 +110,7 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 	if (stat(path, &statbuf) < 0) {
 		log_err("path = %s, stat():%s\n", path, strerror(errno));
 		free(path);
-		tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
+		tconn->http_parser->http_status = TGX_HTTP_STATUS_404;
 		tconn->http_parser->path_fd = -1;
 		return 0;
 	}
