@@ -30,10 +30,13 @@ struct tgx_tcycle_s {
 // 目前还没有更好的办法解决鸡生蛋的问题
 // 所以所有的buffer都使用下面这个结构体
 // 其他的还是使用char
+#ifndef TGX_STRING_T
+#define TGX_STRING_T
 typedef struct {
 	int size;
 	char *data;
 } tgx_string_t;
+#endif
 
 #ifndef TGX_BITSET 
 #define TGX_BITSET(x) (1 << x)
@@ -69,6 +72,7 @@ typedef struct {
 #include "tgx_event.h"
 #include "tgx_http_fsm.h"
 #include "tgx_http.h"
+#include "tgx_module_internal.h"
 
 // 使用了垃圾回收器libgc
 #undef USE_GARBAGE_COLLECTION
