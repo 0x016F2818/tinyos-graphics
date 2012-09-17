@@ -17,7 +17,7 @@ int on_task_complete(void *context, int err)
 	return 0;
 }
 
-int task_handler    (void *context)
+int task_handler(void *context)
 {
 	int i, j, k;
 	int m;

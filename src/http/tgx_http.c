@@ -114,6 +114,7 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 		tconn->http_parser->path_fd = -1;
 		return 0;
 	}
+
 	if (S_ISDIR(statbuf.st_mode)) {
 		// 重新分配path空间， 刚刚好为加上strlen("/index.html") byte再加上'\0'
 		char *tmp = realloc(path, strlen(path) + strlen("/index.html") + 1);
@@ -216,10 +217,9 @@ int tgx_http_parser_on_header_complete_cb(http_parser * parser)
 {
 
 	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
+	if (tconn->http_parser->path_fd < 0) return 0;
 
-	// 304 功能
 	{
-		if (tconn->http_parser->path_fd < 0) return 0;
 		struct stat statbuf;
 		if (fstat(tconn->http_parser->path_fd, &statbuf) < 0) {
 			log_err("stat():%s\n", strerror(errno));
@@ -230,25 +230,38 @@ int tgx_http_parser_on_header_complete_cb(http_parser * parser)
 
 		int	i;
 		for (i = 0; i < tconn->http_parser->num_headers; i++) {
-			if (strcmp(tconn->http_parser->headers[i][0], "If-Modified-Since") == 0) {
-				char tempstring[256];
-				int len = strlen(tconn->http_parser->headers[i][1]);
-				strncpy(tempstring, tconn->http_parser->headers[i][1], len);
-				tempstring[len] = '\0';
-				struct tm tm;
-				time_t t;
-				strptime(tempstring, RFC1123_DATE_FMT, &tm);
-				tzset();
-				t = mktime(&tm);
-				t -= timezone;
-				gmtime_r(&t, &tm);
-				if (t >= statbuf.st_mtime) {
-					tconn->http_parser->http_status = TGX_HTTP_STATUS_304;
+
+			// 304 功能
+			{
+				if (strcmp(tconn->http_parser->headers[i][0], "If-Modified-Since") == 0) {
+					char tempstring[256];
+					int len = strlen(tconn->http_parser->headers[i][1]);
+					strncpy(tempstring, tconn->http_parser->headers[i][1], len);
+					tempstring[len] = '\0';
+					struct tm tm;
+					time_t t;
+					strptime(tempstring, RFC1123_DATE_FMT, &tm);
+					tzset();
+					t = mktime(&tm);
+					t -= timezone;
+					gmtime_r(&t, &tm);
+					if (t >= statbuf.st_mtime) {
+						tconn->http_parser->http_status = TGX_HTTP_STATUS_304;
+					}
+				}
+			}
+
+			// 拿到POST的Content-Length
+			{
+				if (strcmp(tconn->http_parser->headers[i][0], "Content-Length") == 0 &&
+					strcmp(tconn->http_parser->http_method, "POST") == 0) {
+					tconn->http_parser->post_content_length = atoi(tconn->http_parser->headers[i][1]);
+					if (tconn->http_parser->post_content_length < 0)
+						return -1;
 				}
 			}
 		}
 	}
-
 
 	return 0;
 }

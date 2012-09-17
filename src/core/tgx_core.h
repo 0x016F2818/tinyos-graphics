@@ -8,6 +8,7 @@ typedef struct tgx_connection_s				tgx_connection_t;
 typedef struct tgx_event_s					tgx_event_t;	
 typedef struct tgx_schedule_s				tgx_schedule_t;
 typedef struct tgx_http_parser_s			tgx_http_parser_t;
+typedef struct tgx_module_http_s			tgx_module_http_t;
 
 typedef struct {
 	int e_404;
@@ -16,15 +17,18 @@ typedef struct {
 
 // tcycle是注入到所有的执行handler中的“全局变量”,
 struct tgx_tcycle_s {
-	int				listen_fd;
-	int				port;
-	int				maxfds;
-	char			srv_root[1024];
-	char			lock_file[1024];
-	char			log_file[1024];
-	tgx_err_page_t  err_page;
-	tgx_event_t		*tevent;
-	int				event_timeout_ms;
+	int					listen_fd;
+	int					port;
+	int					maxfds;
+	char				srv_root[1024];
+	char				lock_file[1024];
+	char				log_file[1024];
+	tgx_err_page_t		err_page;
+	tgx_event_t			*tevent;
+	int					event_timeout_ms;
+
+	tgx_task_schedule_t *task_sched;
+	int					numThreads;
 };
 
 // 目前还没有更好的办法解决鸡生蛋的问题
@@ -37,6 +41,11 @@ typedef struct {
 	char *data;
 } tgx_string_t;
 #endif
+
+// 为了让用户只拿到tgx_module_http_t类型的参数， 
+// 这里只能采用一个封装器了， 任务调度器拿到的是
+// 是我包装的函数， 然后在这个函数内部去执行用户
+// 的模块函数
 
 #ifndef TGX_BITSET 
 #define TGX_BITSET(x) (1 << x)
@@ -65,6 +74,7 @@ typedef struct {
 #include <sys/resource.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <dlfcn.h>
 
 #include "tgx_log.h"
 #include "tgx_connection.h"

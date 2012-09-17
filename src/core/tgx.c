@@ -43,7 +43,7 @@ static int tgx_analyze_configfile(tgx_cycle_t *tcycle, char *key, char *value)
 		// TODO:检查log合法性
 		strcpy(tcycle->log_file, value);
 	} else if (strncmp(key, "404 page", strlen("404 page")) == 0) {
-		if (strstr(value, ".html") == NULL) return -1;
+		/*if (strstr(value, ".htm") == NULL) return -1;*/
 		if ((tcycle->err_page.e_404 = open(value, O_RDONLY)) < 0) return -1;
 		DEBUG("e_404 = %d, path = %s\n", tcycle->err_page.e_404, value);
 	} else {
@@ -465,6 +465,8 @@ int main(int argc, char *argv[])
 		}
 		fputs(TGX_PAGE_404_ERR, fp);
 		tcycle->err_page.e_404 = fileno(fp);
+
+		tcycle->numThreads = 20;
 	}
 
 	int opt = 0;
@@ -560,6 +562,14 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	tcycle->tevent = tevent;
+
+	// 初始化任务调度器
+	tgx_task_schedule_t *task_sched = tgx_task_schedule_init(tcycle->numThreads);
+	if (!task_sched) {
+		log_err("task engine start failure\n");
+		return -1;
+	}
+	tcycle->task_sched = task_sched;
 
 	// 初始化服务器socket
 	if (tgx_socket_init(tcycle) < 0) {

@@ -13,9 +13,10 @@ typedef struct tgx_task_queue_s				tgx_task_queue_t;
 // 调度器内部检查此次task是否合法， 还有一个回调函数在task
 // 执行完产生， 这样用户就可以继续调用状态机继续程序逻辑
 
+
 struct tgx_task_s {
 	pthread_mutex_t     *task_lock;
-	void				*context;
+	void				*context; // 这个将作为函数的形参
 
 // 函数指针变量
 	int (*on_post)         (void *context);

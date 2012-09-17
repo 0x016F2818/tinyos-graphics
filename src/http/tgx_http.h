@@ -69,6 +69,7 @@ struct tgx_http_parser_s {
 	int									mime_type;
 	char								*path;
 	char								http_method[16];
+	int									post_content_length;
 
 // private
 #define MAX_HEADERS 100

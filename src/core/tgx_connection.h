@@ -9,10 +9,19 @@ struct tgx_connection_s {
 	// 状态机中的状态， 不是http的状态， 所有与http有关的解析信息全在http_parser中
 	int									status;
 
+	// 由于老的接口中大量使用了buffer这个名字， 
+	// 因此新增加了两个buffer， 而暂时不对老的
+	// 构成影响
 	tgx_string_t						*buffer;
+
+	// new, 用来接收客户端请求和向客户端发送数据
+	tgx_string_t						*httpRequest;
+	tgx_string_t						*httpResponse;
+
 	int									read_pos;
 	int									write_pos;
 	tgx_http_parser_t					*http_parser;
+	void								*dlopen_handle;
 };
 
 tgx_connection_t *tgx_connection_init(tgx_cycle_t *tcycle, int fd);

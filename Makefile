@@ -13,7 +13,7 @@ all:
 		-I../lib/json-c -I./lib/sf \
 		-Isrc/core -Isrc/event -Isrc/http -Isrc/motes -Isrc/serial \
 		-Isrc/modules \
-		-lpthread -lmote -ljson	-lgc\
+		-lpthread -lmote -ljson	-lgc -ldl\
 		-o bin/tinyos-graphics
 	
 clean:

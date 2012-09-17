@@ -1,0 +1,57 @@
+.com {
+	color: rgb(147, 161, 161);
+}
+.lit {
+	color: rgb(25, 95, 145);
+}
+.pun {
+	color: rgb(147, 161, 161);
+}
+.opn {
+	color: rgb(147, 161, 161);
+}
+.clo {
+	color: rgb(147, 161, 161);
+}
+.fun {
+	color: rgb(220, 50, 47);
+}
+.str {
+	color: rgb(221, 17, 68);
+}
+.atv {
+	color: rgb(221, 17, 68);
+}
+.kwd {
+	color: rgb(30, 52, 123);
+}
+.linenums .tag {
+	color: rgb(30, 52, 123);
+}
+.typ {
+	color: teal;
+}
+.atn {
+	color: teal;
+}
+.dec {
+	color: teal;
+}
+.var {
+	color: teal;
+}
+.pln {
+	color: rgb(72, 72, 76);
+}
+.prettyprint {
+	padding: 8px; border: 1px solid rgb(225, 225, 232); background-color: rgb(247, 247, 249);
+}
+.linenums.prettyprint {
+	box-shadow: inset 40px 0px 0px #fbfbfc, inset 41px 0px 0px #ececf0; -webkit-box-shadow: inset 40px 0 0 #fbfbfc, inset 41px 0 0 #ececf0; -moz-box-shadow: inset 40px 0 0 #fbfbfc, inset 41px 0 0 #ececf0;
+}
+ol.linenums {
+	margin: 0px 0px 0px 33px;
+}
+ol.linenums li {
+	color: rgb(190, 190, 197); line-height: 18px; padding-left: 12px; text-shadow: 0 1px 0 #fff;
+}

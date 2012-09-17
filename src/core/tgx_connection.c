@@ -11,7 +11,9 @@ tgx_connection_t *tgx_connection_init(tgx_cycle_t *tcycle, int fd)
 	tconn->fd                  = fd;
 	tconn->status              = TGX_STATUS_CONNECT;
 	tconn->buffer			   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
-	if (!tconn->buffer) {
+	tconn->httpRequest		   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
+	tconn->httpResponse		   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
+	if (!tconn->buffer || tconn->httpResponse || !tconn->httpResponse) {
 		log_err("calloc():%s\n", strerror(errno));
 		return NULL;
 	}
@@ -34,6 +36,16 @@ void tgx_connection_free(tgx_connection_t *tconn)
 	if (tconn->buffer) {
 		if (tconn->buffer->data) free(tconn->buffer->data);
 		free(tconn->buffer);
+	}
+
+	if (tconn->httpRequest) {
+		if (tconn->httpRequest->data) free(tconn->httpRequest->data);
+		free(tconn->httpRequest);
+	}
+
+	if (tconn->httpResponse) {
+		if (tconn->httpResponse->data) free(tconn->httpResponse->data);
+		free(tconn->httpResponse);
 	}
 
 	free(tconn);
@@ -374,16 +386,179 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 // post 处理函数
 int tgx_connection_post_read_req_message_body(tgx_cycle_t *tcycle, void *context, int event)
 {
+	if (!tcycle || !context) {
+		log_err("null pointer\n");
+		return -1;
+	}
+	
+	tgx_connection_t *tconn = (void *)context;
+	// buffer指针需要向前滑动， 到达message body位置, 这个工作交给状态机去做
+	// 到达这个函数时假定一切环境都成熟了
+
+
+	// 给缓冲区分配空间， 并且让缓冲区动态增长
+	if (tconn->buffer->size == 0) {
+		tconn->buffer->size = INITIAL_BUFFER_SIZE;
+		tconn->buffer->data = (char *)calloc(tconn->buffer->size, sizeof(char));
+		if (!tconn->buffer->data) {
+			log_err("calloc():%s\n", strerror(errno));
+			tgx_http_fsm_set_status(tconn, TGX_EVENT_ERR);
+			tgx_http_fsm_state_machine(tcycle, tconn);
+			return -1;
+		}
+	}
+	
+	int nRead;
+	while (1) {
+
+		// TODO：这里的代码直接拷贝自read header函数， 其实应该将这些部分独立
+		// 出去， 包装
+		if (tconn->read_pos > tconn->buffer->size - BUFFER_NEARLY_BOUNDRY &&
+				tconn->buffer->size < MAX_BUFFER_SIZE) {
+			tconn->buffer->size += INCR_FACTOR * INCR_LENGTH * sizeof(char);
+
+			char *p = NULL;
+			p = realloc(tconn->buffer->data, tconn->buffer->size);
+			if (!p) {
+				log_err("realloc():%s\n", strerror(errno));
+				tgx_http_fsm_set_status(tconn, TGX_EVENT_ERR);
+				tgx_http_fsm_state_machine(tcycle, tconn);
+				return -1;
+			}
+			tconn->buffer->data = p;
+		}
+
+		nRead = read(tconn->fd, tconn->buffer->data + tconn->read_pos, 
+				tconn->buffer->size - tconn->read_pos);
+		if (nRead == -1) {
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				// 发生这两个事件， 一般是网速太慢， 缓冲区读完了， 新数据还没有到
+				// 要么是客户端已经发送完毕数据， 因此我们break， 根据http请求的头部
+				// 特征， 来判断到底怎么回事
+				break;
+			} else {
+				log_err("read():%s\n", strerror(errno));
+				tgx_http_fsm_set_status(tconn, TGX_EVENT_ERR);
+				tgx_http_fsm_state_machine(tcycle, tconn);
+				return -1;
+			}
+		} else if (nRead == 0) { 
+		  // nRead == 0说明客户端关闭了套接字， 但我们很有可能在event里面
+		  // 已经捕获了， 但这不妨碍， 增加健壮性 
+			log_err("connection close itself fd = %d\n", tconn->fd);
+			tgx_http_fsm_set_status(tconn, TGX_STATUS_CLOSE);
+			tgx_http_fsm_state_machine(tcycle, tconn);
+			return -1;
+		} else if (nRead > 0) {
+			tconn->read_pos += nRead;
+		}
+	}
+
+	// 避免缓冲区溢出
+	tconn->buffer->data[tconn->buffer->size - 1] = '\0';
+
+	// 一旦读取完毕， 我们就可以仍给状态机了， 实际上状态机将把这个
+	// 人物连同查询到的模块的函数入口一起仍给任务调度器， 主线程继续
+	// 返回监听其他的客户端
+	if (tconn->read_pos >= tconn->http_parser->post_content_length) {
+		tgx_http_fsm_set_status(tconn, TGX_STATUS_POST_PARSING_REQUEST_MESSAGE_BODY);
+		tgx_http_fsm_state_machine(tcycle, tconn);
+		return 0;
+	}
+	
+	// 否则直接返回， 事件还会被触发的
 	return 0;
 }
 
 int tgx_connection_post_send_resp_header(tgx_cycle_t *tcycle, void *context, int event)
 {
+	tgx_connection_t *tconn = (tgx_connection_t *)context;
+	if (!tconn) {
+		log_err("null pointer\n");
+		return -1;
+	}
+
+	// TODO：这里没有使用tgx_string_t
+	char response_header[MAX_BUFFER_SIZE];
+	int buff_pos = 0;
+
+#undef COPY
+#define COPY(...) \
+	buff_pos += sprintf(response_header + buff_pos, __VA_ARGS__)
+
+	COPY("%s\r\n", tgx_http_status_string[tconn->http_parser->http_status]);
+	COPY("%s\r\n", "Server: tinyos-graphics/0.0.1");
+	COPY("%s\r\n", "Connection: Close");
+
+	COPY("Content-Type: %s\r\n", tgx_mime_type_string[tconn->http_parser->mime_type]);
+
+	tconn->httpResponse->data[tconn->httpResponse->size - 1] = '\0';
+	COPY("Content-Length: %d\r\n", strlen(tconn->httpResponse->data));
+
+	// 再添加一行， header结束
+	COPY("\r\n");
+
+	// 避免缓冲区溢出
+	response_header[sizeof(response_header)-1] = '\0';
+
+#undef COPY
+
+	DEBUG("\n");
+	
+	// 接下来， 发送已经填写好的response_header
+	int nWrite;
+	int resp_len = strlen(response_header);
+	while (1) {
+		nWrite =  write(tconn->fd, response_header + tconn->write_pos, resp_len - tconn->write_pos);
+		tconn->write_pos += nWrite;
+		if (nWrite == -1) {
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {	//缓冲区写满了， 等会事件还会再来的, 先return
+				return 0;
+			}
+			log_err("write():%s\n", strerror(errno));
+			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
+			tgx_http_fsm_state_machine(tcycle, tconn);
+			return -1;
+		}
+		if (tconn->write_pos == resp_len) {
+				tgx_http_fsm_set_status(tconn, TGX_STATUS_POST_SEND_RESPONSE_DATA);
+				tgx_http_fsm_state_machine(tcycle, tconn);
+				return 0;
+		}
+	}
+
 	return 0;
 }
 
 int tgx_connection_post_send_resp_data(tgx_cycle_t *tcycle, void *context, int event)
 {
+	tgx_connection_t *tconn = (tgx_connection_t *)context;
+	if (!tconn) {
+		log_err("null pointer\n");
+		return -1;
+	}
+
+	int nWrite;
+	int resp_len = strlen(tconn->httpResponse->data);
+	while (1) {
+		nWrite =  write(tconn->fd, tconn->httpResponse->data + tconn->write_pos, resp_len - tconn->write_pos);
+		tconn->write_pos += nWrite;
+		if (nWrite == -1) {
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {	//缓冲区写满了， 等会事件还会再来的, 先return
+				return 0;
+			}
+			log_err("write():%s\n", strerror(errno));
+			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
+			tgx_http_fsm_state_machine(tcycle, tconn);
+			return -1;
+		}
+		if (tconn->write_pos == resp_len) {
+				tgx_http_fsm_set_status(tconn, TGX_STATUS_CLOSE);
+				tgx_http_fsm_state_machine(tcycle, tconn);
+				return 0;
+		}
+	}
+
 	return 0;
 }
 

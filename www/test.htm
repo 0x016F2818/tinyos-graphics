@@ -1,0 +1,184 @@
+<html>
+  <head>
+    <title></title>
+    <script type="text/javascript" src="./lib/jquery.js"></script>
+    <script type="text/javascript" src="./lib/bootstrap.min.js"></script>
+    <link href="./css/bootstrap.min.css" type="text/css" rel="stylesheet">
+    <!-- <script type="text/javascript" src="./js/test.js"></script> -->
+
+    <script type="text/javascript" src="./lib/highcharts.js"></script>
+    <script type="text/javascript" src="./lib/exporting.js"></script>
+
+    <script type="text/javascript" src="./js/spline.js"></script>
+    <script type="text/javascript" src="./js/pageControl.js"></script>
+
+  </head>
+
+  <body>
+
+    <div class="modal hide" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h3 id="myModalLabel">Modal header</h3>
+      </div>
+      <div class="modal-body">
+        <p>
+          $(function () {
+    var chart;
+    $(document).ready(function() {
+        chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'container',
+                type: 'line',
+                marginRight: 130,
+                marginBottom: 25
+            },
+            title: {
+                text: 'Monthly Average Temperature',
+                x: -20 //center
+            },
+            subtitle: {
+                text: 'Source: WorldClimate.com',
+                x: -20
+            },
+            xAxis: {
+                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            },
+            yAxis: {
+                title: {
+                    text: 'Temperature (°C)'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                formatter: function() {
+                        return '<b>'+ this.series.name +'</b><br/>'+
+                        this.x +': '+ this.y +'°C';
+                }
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'top',
+                x: -10,
+                y: 100,
+                borderWidth: 0
+            },
+            series: [{
+                name: 'Tokyo',
+                data: [7.0, 6.9, 9.5, 14.5, 18.2, 21.5, 25.2, 26.5, 23.3, 18.3, 13.9, 9.6]
+            }, {
+                name: 'New York',
+                data: [-0.2, 0.8, 5.7, 11.3, 17.0, 22.0, 24.8, 24.1, 20.1, 14.1, 8.6, 2.5]
+            }, {
+                name: 'Berlin',
+                data: [-0.9, 0.6, 3.5, 8.4, 13.5, 17.0, 18.6, 17.9, 14.3, 9.0, 3.9, 1.0]
+            }, {
+                name: 'London',
+                data: [3.9, 4.2, 5.7, 8.5, 11.9, 15.2, 17.0, 16.6, 14.2, 10.3, 6.6, 4.8]
+            }]
+        });
+    });
+    
+});​
+  几乎每次去做大众讲座，都会被问一个问题：蔬菜中的农药怎么去掉？是泡好还是焯好？后来还附加了很多内容：草酸怎么去掉？亚硝酸盐怎么去掉？重金属怎么去掉？……
+
+    要回答这些问题，先要弄清楚几件事情：第一，蔬菜是最不安全的食品吗？第二，要去掉的这些成分，真的易溶于水吗？第三，要去掉的这些成分，真能从蔬菜细胞里跑出来吗？第四，要去掉这些不利健康的成分，会不会让有益于健康的成分也跑掉呢？
+
+    第一个问题：蔬菜真的那么不安全吗？
+
+    蔬菜中多少都会有点农药残留，发达国家也不例外。它们只要不超过标准，就无须太担心太纠结。按中国食品安全信息网提供的信息，大城市的超市和市场蔬菜农药超标率和超标程度已经比前些年有明显下降。由于国家陆续禁止了多种高毒高残留农药，目前蔬菜中使用的农药毒性较小，降解性较好，在喷药后几天会快速降解，烹调中还会有明显下降，大部分在体内并不会蓄积。所以，只要用国家许可使用的农药品种，残留不超标，没有想象中那么可怕。
+
+    有机食品是不许可使用化学合成农药的，合格的有机蔬菜农药方面的安全性会好一些，但某些环境污染物如六六六也多少有点残留。因为这类农药百年不能降解，即便已经停用二十多年，在土壤和水中仍有残留。对于这类农药，蔬菜中的残留量还是比较低的，鱼类、肉类等动物性食品中的含量要比蔬菜中高很多倍，这是因为难分解污染物遵守“生物放大”的规律，越是在食物链顶端的生物，其中难分解污染物含量就越高，比如六六六等有机氯农药，二噁英、多氯联苯等经典环境污染物，还有汞、镉等重金属。
+
+    比如说，根据我国国标，DDT的限量在蔬菜中是0.1mg/kg，而鱼里面是1.0mg/kg。为什么鱼的残留宽容度更大？是因为这种农药环境难分解，还容易在动物脂肪中蓄积。因此，动物产品中的浓度往往会大大高于水果蔬菜。例如某地的测定数据发现，六六六在蔬菜中的残留量是0.80～9.30mg/kg，而肉类样品是10.20～302.00mg/kg，当地人的脂肪当中含量高达22.23～1053.50mg/kg（资料来源：谢军勤等，重金属及农药在孝感市食品及人体中蓄积的研究，湖北职业技术学院学报，2003）。
+
+    这些数据看起来是不是有点恐怖？其实很多污染事故都有类似规律。比如欧盟多次发生过的食品中二噁英污染，饲料中超标40倍时，到了鸡蛋当中，就超标200倍以上了，这就是“生物放大”作用的结果。这些数据告诉我们：因为农药而害怕吃蔬菜，恐怕并不能保障食品安全，因为鱼肉蛋奶中的难分解农药、重金属和其他污染物的残留量更大。多吃植物性食品，控制动物性食品，从食品安全角度来说，要更靠谱一些。
+
+    草酸不是一种环境污染物，它存在于所有蔬菜当中，但含量差异非常大。只有菠菜、苦瓜、茭白、牛皮菜等有明显涩味的蔬菜，草酸含量才比较高。大白菜小白菜油菜圆白菜之类蔬菜，草酸含量甚微，无需引起关注。至于亚硝酸盐，它们在新鲜蔬菜中含量甚低，通常低于4mg/kg，几乎无需担心。所以，对于亚硝酸盐而言，买新鲜菜、吃新鲜菜，比浸泡、焯水等处理都重要。
+
+    第二个问题：要去掉的这些成分易溶于水吗？
+
+    目前我国农业中常用的有机磷农药，多半易溶于水。六六六之类有机氯农药则不溶于水。亚硝酸盐易溶于水，而重金属盐多半是难溶于水的。所以泡也好，焯也好，都很难去掉有机氯农药和重金属。而通过溶水处理去掉有机磷农药和亚硝酸盐，还是很有希望的。
+
+    第三个问题：要去掉的这些成分是在哪里，能从细胞里跑出来么？
+
+    目前能找到的数据证明，蔬菜通过浸泡，可以把大部分表面上没吸进去的农药去掉。但是，一旦已经吸入细胞中，浸泡就不起作用了。我校戴蕴青老师指导的实验证明，用盐水泡也好，弱碱水也好，洗涤灵也好，效果的差异并不是非常大，而且20分钟以上的浸泡不会带来更好的效果。最近我院的本科生毕业研究也证明，对于菌类食品，浸泡并不能降低重金属的含量。甚至还有研究表明，蔬菜浸泡超过20分钟，亚硝酸盐含量会上升（见相关博文）。所以，不推荐长时间浸泡蔬菜。
+
+    用沸水焯蔬菜，对于去除有机磷农药的效果是肯定的，而且加热本身对于有机磷农药具有分解作用，因此烹调之后，有机磷农药含量会大幅度下降。同时，焯菜还能有效去除草酸和亚硝酸盐。我的学生在实验中偶然发现，焯烫时间过长的时候，某些蔬菜的亚硝酸盐的含量又会有一个上升，只不过总量仍然很低，还在安全范围之内。
+
+    焯的处理对于去除重金属似乎效果不大，可能主要是由于重金属元素常常呈现不溶解状态，或者与纤维素等大分子结合而留在细胞结构中。
+
+    第四个问题，浸泡和焯烫，会不会让有益于健康的成分也跑掉呢？
+
+    浸泡时间较短，对细胞结构尚未产生破坏之前，理论上是不会造成营养素损失的。但是焯烫则不然，它既增加细胞膜渗透性而造成细胞内容物溶出，又因为加热和氧化而导致食物成分发生变化。我这里学生的实验也发现，随着焯烫时间的延长，蔬菜中的维生素C、维生素B2等水溶性维生素含量下降，酚类物质的含量也会下降。钾是一种可溶性元素，它也随着焯烫时间的延长而逐渐溶入水中，从而损失增大；镁元素也会有部分损失。
+
+    不过，焯烫还是可以保存一部分营养保健成分，比如不溶于水的类胡萝卜素和维生素K，以及不溶于水的钙、铁等元素，含量不会下降。
+
+   综上所述，可以得到以下结论：
+
+    1 吃蔬菜并不比吃肉更危险。其中难分解污染物的含量大大低于动物性食品的水平。
+
+    2 没吸收进去的有机磷农药可以洗掉，吸收进去的也能通过焯水去掉，但它本来就不容易蓄积中毒，加热也容易分解。而有机氯农药和重金属洗不掉，焯不掉，能蓄积中毒。
+
+    3 一定要先用流水洗净蔬菜，此后可以浸泡一会儿，但时间不宜过长，以20分钟之内为宜。不要搓洗伤害细胞。
+
+    4 焯烫虽然能有效去掉农药和草酸，但同时也会损失很多营养和保健成分。是否要这么做，看自己的选择。如果选择焯烫，请尽量缩短时间。
+
+    5 亚硝酸盐可以通过焯烫去除，但对于新鲜蔬菜来说，这本来就不是个安全问题。新鲜的蔬菜不仅亚硝酸盐含量低，而且营养素含量高，何必要等到不新鲜再吃呢。
+
+    无数研究证实，蔬菜摄入量与多种癌症和心脑血管疾病危险呈现反相关，说明蔬菜吃得越多，人们越能远离疾病。蔬菜里不仅有农药，还有那么多营养成分和保健成分，我们怎能无视呢？所以，完全没必要因为怕农药而大量吃肉不敢吃菜，多吃菜少吃肉才是更安全更健康的选择。
+本文由 范志红 授权果壳网（guokr.com）发表，文章著作权归原作者所有。
+          
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+        <button class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+
+    <a href="#myModal" role="button" class="btn" data-toggle="modal" class="btn btn-primary btn-large">Launch demo modal</a>
+    <!-- <div id="container" class="span10" style="min-width: 400px; height: 400px; margin: 0 auto"></div> -->
+
+
+    <!-- <div id="myCarousel" class="carousel slide"> -->
+    <!--   <\!-- Carousel items -\-> -->
+    <!--   <div class="carousel-inner"> -->
+    <!--     <div class="active item"> -->
+    <!--       <img src="./imgs/Aqua.jpg" alt=""> -->
+    <!--       <\!-- <iframe id="preview" src="./nodeInformation.htm" frameborder="0" width="94%" height="400px"></iframe> -\-> -->
+    <!--     </div> -->
+    <!--     <div class="item"> -->
+    <!--       <img src="./imgs/Blinds.jpg" alt=""> -->
+    <!--     </div> -->
+    <!--     <div class="item"> -->
+    <!--       <img src="./imgs/FootFall.png" alt=""> -->
+    <!--     </div> -->
+    <!--   </div> -->
+    <!--   <\!-- Carousel nav -\-> -->
+    <!--   <a class="carousel-control left" href="#myCarousel" data-slide="prev">&lsaquo;</a> -->
+    <!--   <a class="carousel-control right" href="#myCarousel" data-slide="next">&rsaquo;</a> -->
+    <!-- </div> -->
+
+    <img id="loader" src="./imgs/loader.gif" class="loader" alt="loading..." style=""/>
+    <style type="text/css" media="screen">
+      .loader{
+      z-index: 1000; 
+      position: absolute;
+      text-align: center;
+      top: 84%;
+      left: 63%;
+      margin: -250px 0 0 -280px;
+      box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+      -webkit-background-clip: padding-box;
+      }
+    </style>
+
+  </body>
+</html>
