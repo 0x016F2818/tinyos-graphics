@@ -543,10 +543,10 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if (chroot(tcycle->srv_root) < 0) {
+	/*if (chroot(tcycle->srv_root) < 0) {
 		log_err("chdir():%s\n", strerror(errno));
 		return -1;
-	}
+	}*/
 	
 	// 初始化信号处理函数
 	signal(SIGINT,  tgx_sig_handler);

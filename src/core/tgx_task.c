@@ -31,7 +31,10 @@ static void *do_pthread(void *arg)
 		if (t_task_sched->keep_alive) {
 			pthread_mutex_lock(t_task_sched->sched_lock);
 			task = tgx_task_queue_pop_front(t_task_sched->task_queue);
+			DEBUG("\n");
 			ret = task->task_handler(task->context);
+
+			DEBUG("\n");
 
 			if (task->on_task_complete) {
 				task->on_task_complete(task->context, ret);

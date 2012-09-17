@@ -102,6 +102,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				// 先查找是否已经打开， 就是在tcycle中保存一个模块的数组
 				// 这样很可能减小客户端请求的时间, 但也需要经过测试才可以
 
+				DEBUG("\n");
 				int (*user_handler)(tgx_module_http_t *http);
 				char *error;
 
@@ -110,6 +111,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 					log_err("%s\n", dlerror());
 					return -1;
 				}
+				DEBUG("\n");
 
 				dlerror();		/* Clear any existing error */
 
@@ -122,6 +124,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 
 				// 填写将要post task的task结构体
 
+				DEBUG("\n");
 				tgx_module_http_t *http = calloc(1, sizeof(tgx_module_http_t));
 				if (!http) {
 					log_err("calloc():%s\n", strerror(errno));
@@ -130,11 +133,13 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				http->req  = tc->buffer;
 				http->resp = tc->httpResponse;
 
+				DEBUG("\n");
 				{
 					// 这里构造了一个适配器， 用户就可以拿到它所关注的数据， 而不是其他
 					// 在服务器内部跑的数据结构
 					// 注意虽然这里的函数块内的指针生存期非常短， 但是使用堆分配，内存块
 					// 并未被释放
+					DEBUG("\n");
 					tgx_task_module_wrapper_context_t *task_context = 
 						calloc(1, sizeof(tgx_task_module_wrapper_context_t));
 					if (!task_context) {
@@ -147,6 +152,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 					task_context->http = http;
 					task_context->user_handler = user_handler;
 
+					DEBUG("\n");
 					tgx_task_t *task = tgx_task_init();
 					if (!task) {
 						log_err("tgx_task_init() error\n");
@@ -158,27 +164,40 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 					task->task_handler		= module_task_handler;
 					task->context = (void *)task_context;
 					if (tgx_post_task(tcycle->task_sched, task) < 0) return -1;
+					DEBUG("\n");
 				}
 
 			}
 			break;
 		case TGX_STATUS_POST_SEND_RESPONSE_HEADER:
 			{
+				tc->read_pos = tc->write_pos = 0;
+				tgx_event_set_handler(tcycle->tevent, tc->fd,
+						tgx_connection_post_send_resp_header,
+						NULL);
+				tgx_connection_post_send_resp_header(tcycle, (void *)tc, 0);
 
 			}
 			break;
 		case TGX_STATUS_POST_SEND_RESPONSE_DATA:
 			{
-
+				DEBUG("\n%s\n", tc->httpResponse->data);
+				tc->read_pos = tc->write_pos = 0;
+				tgx_event_set_handler(tcycle->tevent, tc->fd,
+						tgx_connection_post_send_resp_data,
+						NULL);
+				tgx_connection_post_send_resp_data(tcycle, (void *)tc, 0);
 			}
 			break;
 		case TGX_STATUS_ERROR:
 		case TGX_STATUS_CLOSE:
 			{
+				DEBUG("\n");
 				tgx_event_schedule_unregister(tcycle->tevent, tc->fd);
 				tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tc->fd, 0);
 				close(tc->fd);
-				if (tc->http_parser->http_status != TGX_HTTP_STATUS_404)
+				if (tc->http_parser->http_status != TGX_HTTP_STATUS_404 &&
+						tc->http_parser->path_fd > 0)
 					close(tc->http_parser->path_fd);
 			}
 			break;
@@ -199,6 +218,7 @@ static int module_on_post(void *context)
 	// 这样就可以保证用一个用户无法post两次， 不过这个问题也可以
 	// 通过锁来解决， 实际上任务调度器本身的task_lock字段就是来
 	// 解决这个问题的
+	DEBUG("\n");
 	tgx_task_module_wrapper_context_t *wrapper_context = (
 			tgx_task_module_wrapper_context_t *)context;
 	if (!wrapper_context) return -1;
@@ -210,16 +230,21 @@ static int module_on_post(void *context)
 
 static int module_task_handler(void *context)
 {
+	DEBUG("\n");
+	int ret;
 	tgx_task_module_wrapper_context_t *wrapper_context = (
 			tgx_task_module_wrapper_context_t *)context;
 	if (!wrapper_context) return -1;
 
-	return wrapper_context->user_handler(wrapper_context->http);
+	ret = wrapper_context->user_handler(wrapper_context->http);
+	DEBUG("\n");
+	return ret;
 }
 
 static int module_on_task_complete(void *context, int err)
 {
 
+	DEBUG("\n");
 	tgx_task_module_wrapper_context_t *wrapper_context = (
 			tgx_task_module_wrapper_context_t *)context;
 		if (!wrapper_context) return -1;
@@ -229,13 +254,22 @@ static int module_on_task_complete(void *context, int err)
 		tgx_http_fsm_state_machine(wrapper_context->tcycle, wrapper_context->tconn);
 		return -1;
 	}
+	dlclose(wrapper_context->tconn->dlopen_handle);
 
 	// 将fd再次添加到event系统， 并且将事件调整为监视写
 	tgx_event_ctl(wrapper_context->tcycle->tevent, 
 			TGX_EVENT_CTL_ADD, wrapper_context->tconn->fd, 0);
 	tgx_event_ctl(wrapper_context->tcycle->tevent, 
 			TGX_EVENT_CTL_MOD, wrapper_context->tconn->fd, TGX_EVENT_OUT);
+	DEBUG("fd = %d\n", wrapper_context->tconn->fd);
+
+	// 注意在回调函数里面不要直接调用状态机， 设置状态即可， 否则会造成很严重的
+	// 同步和嵌套调用问题
+	tgx_event_set_handler(wrapper_context->tcycle->tevent, wrapper_context->tconn->fd,
+						tgx_connection_post_send_resp_header,
+						NULL);
+
 	tgx_http_fsm_set_status(wrapper_context->tconn, TGX_STATUS_POST_SEND_RESPONSE_HEADER);
-	tgx_http_fsm_state_machine(wrapper_context->tcycle, wrapper_context->tconn);
+
 	return 0;
 }

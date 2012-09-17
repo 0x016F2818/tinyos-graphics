@@ -13,7 +13,7 @@ tgx_connection_t *tgx_connection_init(tgx_cycle_t *tcycle, int fd)
 	tconn->buffer			   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
 	tconn->httpRequest		   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
 	tconn->httpResponse		   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
-	if (!tconn->buffer || tconn->httpResponse || !tconn->httpResponse) {
+	if (!tconn->buffer || !tconn->httpResponse || !tconn->httpResponse) {
 		log_err("calloc():%s\n", strerror(errno));
 		return NULL;
 	}
@@ -195,6 +195,7 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 		return -1;
 	}
 	free(parser);
+	DEBUG("\n");
 
 	// TODO:先分析一下tconn->http_parser的结果， 然后决定下一个状态是什么
 
@@ -206,9 +207,11 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 	if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200 || 
 		tconn->http_parser->http_status == TGX_HTTP_STATUS_304 ||
 		tconn->http_parser->http_status == TGX_HTTP_STATUS_404) {
+		DEBUG("\n");
 		if (strcmp(tconn->http_parser->http_method, "GET") == 0) {
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_GET_SEND_RESPONSE_HEADER);
 		} else if (strcmp(tconn->http_parser->http_method, "POST") == 0) {
+			DEBUG("\n");
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_POST_READ_REQUEST_MESSAGE_BODY);
 		} else {
 			log_err("http_method do not support.\n");
@@ -408,13 +411,16 @@ int tgx_connection_post_read_req_message_body(tgx_cycle_t *tcycle, void *context
 		}
 	}
 	
+	DEBUG("\n");
 	int nRead;
 	while (1) {
 
+		DEBUG("\n");
 		// TODO：这里的代码直接拷贝自read header函数， 其实应该将这些部分独立
 		// 出去， 包装
 		if (tconn->read_pos > tconn->buffer->size - BUFFER_NEARLY_BOUNDRY &&
 				tconn->buffer->size < MAX_BUFFER_SIZE) {
+			DEBUG("\n");
 			tconn->buffer->size += INCR_FACTOR * INCR_LENGTH * sizeof(char);
 
 			char *p = NULL;
@@ -428,6 +434,7 @@ int tgx_connection_post_read_req_message_body(tgx_cycle_t *tcycle, void *context
 			tconn->buffer->data = p;
 		}
 
+		DEBUG("\n");
 		nRead = read(tconn->fd, tconn->buffer->data + tconn->read_pos, 
 				tconn->buffer->size - tconn->read_pos);
 		if (nRead == -1) {
@@ -435,14 +442,17 @@ int tgx_connection_post_read_req_message_body(tgx_cycle_t *tcycle, void *context
 				// 发生这两个事件， 一般是网速太慢， 缓冲区读完了， 新数据还没有到
 				// 要么是客户端已经发送完毕数据， 因此我们break， 根据http请求的头部
 				// 特征， 来判断到底怎么回事
+				DEBUG("\n");
 				break;
 			} else {
+				DEBUG("\n");
 				log_err("read():%s\n", strerror(errno));
 				tgx_http_fsm_set_status(tconn, TGX_EVENT_ERR);
 				tgx_http_fsm_state_machine(tcycle, tconn);
 				return -1;
 			}
 		} else if (nRead == 0) { 
+			DEBUG("\n");
 		  // nRead == 0说明客户端关闭了套接字， 但我们很有可能在event里面
 		  // 已经捕获了， 但这不妨碍， 增加健壮性 
 			log_err("connection close itself fd = %d\n", tconn->fd);
@@ -454,13 +464,16 @@ int tgx_connection_post_read_req_message_body(tgx_cycle_t *tcycle, void *context
 		}
 	}
 
+	DEBUG("\n");
 	// 避免缓冲区溢出
 	tconn->buffer->data[tconn->buffer->size - 1] = '\0';
 
 	// 一旦读取完毕， 我们就可以仍给状态机了， 实际上状态机将把这个
 	// 人物连同查询到的模块的函数入口一起仍给任务调度器， 主线程继续
 	// 返回监听其他的客户端
+	DEBUG("\n");
 	if (tconn->read_pos >= tconn->http_parser->post_content_length) {
+		DEBUG("\n");
 		tgx_http_fsm_set_status(tconn, TGX_STATUS_POST_PARSING_REQUEST_MESSAGE_BODY);
 		tgx_http_fsm_state_machine(tcycle, tconn);
 		return 0;
@@ -516,6 +529,7 @@ int tgx_connection_post_send_resp_header(tgx_cycle_t *tcycle, void *context, int
 				return 0;
 			}
 			log_err("write():%s\n", strerror(errno));
+			DEBUG("\n");
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return -1;
