@@ -41,8 +41,8 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 			break;
 		case TGX_STATUS_PARSING_REQUEST_HEADER:
 			{
+				/*DEBUG("\n");*/
 				DEBUG("\n");
-				/*DEBUG("\n");
 				// 第四个参数NULL表示不改变context
 				tgx_event_set_handler(tcycle->tevent, tc->fd, 
 						tgx_connection_parse_req_header,
@@ -51,7 +51,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				// 之所以这边没有给出第三个参数， 是因为一般来到状态机内部就不需要
 				// 事件了， 状态机的调用必然发生在由event驱动系统出发的handler之内
 				// 而这些事件都被处理了
-				tgx_connection_parse_req_header(tcycle, (void *)tc, 0);*/
+				tgx_connection_parse_req_header(tcycle, (void *)tc, 0);
 			}
 			break;
 		case TGX_STATUS_GET_SEND_RESPONSE_HEADER:
@@ -62,8 +62,8 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				tgx_event_set_handler(tcycle->tevent, tc->fd,
 						tgx_connection_get_send_resp_header,
 						NULL);
-				tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_ADD, tc->fd, TGX_EVENT_OUT);
-				/*tgx_connection_get_send_resp_header(tcycle, (void *)tc, 0);*/
+				/*tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_ADD, tc->fd, TGX_EVENT_OUT);*/
+				tgx_connection_get_send_resp_header(tcycle, (void *)tc, 0);
 			}
 			break;
 		case TGX_STATUS_GET_SEND_RESPONSE_FILE:
@@ -74,7 +74,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				tgx_event_set_handler(tcycle->tevent, tc->fd,
 						tgx_connection_get_send_resp_file,
 						NULL);
-				/*tgx_connection_get_send_resp_file(tcycle, (void *)tc, 0);*/
+				tgx_connection_get_send_resp_file(tcycle, (void *)tc, 0);
 			}
 			break;
 		case TGX_STATUS_POST_READ_REQUEST_MESSAGE_BODY:

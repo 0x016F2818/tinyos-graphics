@@ -20,6 +20,7 @@ static void tgx_linux_epoll_event_free(tgx_event_t *te)
 
 static int tgx_linux_epoll_ctl(tgx_event_t *te, int op, int fd, int event_flag)
 {
+	DEBUG("fd = %d, ctl in epoll\n", fd);
 	if (te == NULL) {
 		log_err("null pointer.\n");
 		return -1;
