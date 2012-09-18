@@ -41,6 +41,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 			break;
 		case TGX_STATUS_PARSING_REQUEST_HEADER:
 			{
+				DEBUG("\n");
 				/*DEBUG("\n");
 				// 第四个参数NULL表示不改变context
 				tgx_event_set_handler(tcycle->tevent, tc->fd, 
@@ -98,7 +99,7 @@ int tgx_http_fsm_state_machine(tgx_cycle_t *tcycle, tgx_connection_t *tc)
 				tgx_event_set_handler(tcycle->tevent, tc->fd,
 						tgx_connection_post_read_req_message_body,
 						NULL);
-				/*tgx_connection_post_read_req_message_body(tcycle, (void *)tc, 0);*/
+				tgx_connection_post_read_req_message_body(tcycle, (void *)tc, 0);
 			}
 			break;
 		case TGX_STATUS_POST_PARSING_REQUEST_MESSAGE_BODY:
@@ -262,8 +263,9 @@ static int module_on_task_complete(void *context, int err)
 		if (!wrapper_context) return -1;
 
 	if (err < 0) {
+		DEBUG("\n");
 		tgx_http_fsm_set_status(wrapper_context->tconn, TGX_STATUS_ERROR);
-		tgx_http_fsm_state_machine(wrapper_context->tcycle, wrapper_context->tconn);
+		/*tgx_http_fsm_state_machine(wrapper_context->tcycle, wrapper_context->tconn);*/
 		return -1;
 	}
 	dlclose(wrapper_context->tconn->dlopen_handle);

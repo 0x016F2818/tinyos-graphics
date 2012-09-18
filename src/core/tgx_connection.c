@@ -69,6 +69,7 @@ void tgx_connection_free(tgx_connection_t *tconn)
 int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event)
 {
 	
+	DEBUG("\n");
 	tgx_connection_t *tconn = (tgx_connection_t *)context;
 	if (!tconn) {
 		log_err("null pointer\n");
@@ -100,6 +101,7 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 
 		// TODO：检查当前容量是否不够, 不过这也带来一个问题， 如果客户端不断发数据， 会
 		// 造成很严重的内存问题， 这里的INCR_FACTOR为增长因子
+		DEBUG("\n");
 		if (tconn->read_pos > tconn->buffer->size - BUFFER_NEARLY_BOUNDRY &&
 				tconn->buffer->size < MAX_BUFFER_SIZE) {
 			tconn->buffer->size += INCR_FACTOR * INCR_LENGTH * sizeof(char);
@@ -122,6 +124,7 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 				// 发生这两个事件， 一般是网速太慢， 缓冲区读完了， 新数据还没有到
 				// 要么是客户端已经发送完毕数据， 因此我们break， 根据http请求的头部
 				// 特征， 来判断到底怎么回事
+				DEBUG("\n");
 				break;
 			} else {
 				log_err("read():%s\n", strerror(errno));
@@ -137,6 +140,7 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return -1;
 		} else if (nRead > 0) {
+			DEBUG("\n");
 			tconn->read_pos += nRead;
 		}
 	}
@@ -147,7 +151,9 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 	// 如果读到\r\n说明此时读取message header的任务已经完成, 接下来应该是parse message header
 	// 注意虽然读取到\r\n\r\n但是可能buffer中也包含message body， 我们在解析完header之后应该
 	// 去掉header部分
+	DEBUG("buffer = \n%s\n", tconn->buffer->data);
 	if (strstr(tconn->buffer->data, "\r\n\r\n") != NULL) {
+		DEBUG("\n");
 		tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tconn->fd, 0);
 		tgx_connection_parse_req_header(tcycle, (void *)tconn, 0);
 		/*tgx_http_fsm_set_status(tconn, TGX_STATUS_PARSING_REQUEST_HEADER);*/
@@ -186,12 +192,16 @@ int tgx_connection_parse_req_header(tgx_cycle_t *tcycle, void *context, int even
 	}
 
 	DEBUG("\n");
+	DEBUG("\n");
 	http_parser_init(parser, HTTP_REQUEST);
+	DEBUG("\n");
 	parser->data = (void *)tconn;
+	DEBUG("\n");
 	nParsed = http_parser_execute(parser, &settings, tconn->buffer->data, strlen(tconn->buffer->data));
+	DEBUG("\n");
 	if (nParsed != strlen(tconn->buffer->data)) {
 		free(parser);
-		log_err("http parser error", tconn->fd);
+		log_err("http parser error\n", tconn->fd);
 		tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 		tgx_http_fsm_state_machine(tcycle, tconn);
 		return -1;

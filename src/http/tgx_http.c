@@ -61,6 +61,7 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 	} else if (strcmp(http_method_str(parser->method), "POST") == 0) { 
 		sprintf(tconn->http_parser->http_method, "POST");
 	} else {
+		DEBUG("\n");
 		tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
 		tconn->http_parser->path_fd = -1;
 		return 0;
