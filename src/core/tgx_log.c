@@ -1,5 +1,7 @@
 #include "tgx_log.h"
 
+void no_op() { }
+
 void log_print(int level, int use, const char *file, int line, const char *function, const char *format, ...)
 {
 	va_list ap;

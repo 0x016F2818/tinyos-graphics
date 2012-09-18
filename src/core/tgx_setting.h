@@ -5,6 +5,7 @@
 #define USE_LINUX_EPOLL
 #define USE_SOCKET_REUSEADDR 
 //#define USE_TCP_CORK
+//#define DEBUG_PRINT
 
 #define MAX_BUFFER_SIZE			65535
 #define INITIAL_BUFFER_SIZE     100   // 初始长度 

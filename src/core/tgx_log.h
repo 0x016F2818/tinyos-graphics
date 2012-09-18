@@ -3,19 +3,21 @@
 #include "tgx_setting.h"
 #include "tgx_core.h"
 
+
 /**********************************************/
 /* DEBUG代码时用到, 在正式使用时， undef即可 */
 /**********************************************/
-#if defined(DEBUG_PRINT) || !defined(DEBUG)
+#if defined(DEBUG_PRINT)
 #define DEBUG(...) \
 	do { \
 		fprintf(stderr, "[DEBUG]:%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__); \
 		fprintf(stderr, __VA_ARGS__); \
 	} while(0)
-#else /* DEBUG */
-inline void no_op(void) { }
+#else
+void no_op();
 #define DEBUG(...) no_op()
 #endif /* NO_DEBUG */
+
 
 /**********************************************/
 /*打印信息，分为几个级别info/trace/warning/err*/

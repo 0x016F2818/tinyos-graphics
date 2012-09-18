@@ -95,6 +95,10 @@ tgx_task_schedule_t* tgx_task_schedule_init(int n_threads)
 	// 5. init n_threads
 	t_task_sched->n_threads = n_threads;
 
+	/*pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);*/
+
 	// 6. start threads
 	int i;
 	for (i = 0; i < n_threads; i++) {
@@ -104,6 +108,8 @@ tgx_task_schedule_t* tgx_task_schedule_init(int n_threads)
 			return NULL;
 		}
 	}
+
+	/*pthread_attr_destroy(&attr);*/
 	
 	// 7. set keep alive
 	t_task_sched->keep_alive = 1;
@@ -155,6 +161,10 @@ void tgx_task_schedule_destroy(tgx_task_schedule_t *t_task_sched)
 	// 3. destroy queue
 	if (t_task_sched->task_queue) {
 		tgx_task_queue_empty(t_task_sched->task_queue);
+		//  补充: 销毁信号量
+		sem_destroy(t_task_sched->task_queue->resource);
+		free(t_task_sched->task_queue->resource);
+
 		free(t_task_sched->task_queue);
 	}
 	

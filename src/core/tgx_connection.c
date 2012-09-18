@@ -148,8 +148,10 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 	// 注意虽然读取到\r\n\r\n但是可能buffer中也包含message body， 我们在解析完header之后应该
 	// 去掉header部分
 	if (strstr(tconn->buffer->data, "\r\n\r\n") != NULL) {
-		tgx_http_fsm_set_status(tconn, TGX_STATUS_PARSING_REQUEST_HEADER);
-		tgx_http_fsm_state_machine(tcycle, tconn);
+		tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tconn->fd, 0);
+		tgx_connection_parse_req_header(tcycle, (void *)tconn, 0);
+		/*tgx_http_fsm_set_status(tconn, TGX_STATUS_PARSING_REQUEST_HEADER);*/
+		/*tgx_http_fsm_state_machine(tcycle, tconn);*/
 	}
 	
 	// 否则直接返回， 事件还会被触发的
@@ -305,12 +307,15 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 	int nWrite;
 	int resp_len = strlen(response_header);
 	while (1) {
+		DEBUG("\n");
 		nWrite =  write(tconn->fd, response_header + tconn->write_pos, resp_len - tconn->write_pos);
 		tconn->write_pos += nWrite;
 		if (nWrite == -1) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {	//缓冲区写满了， 等会事件还会再来的, 先return
+				DEBUG("\n");
 				return 0;
 			}
+			DEBUG("\n");
 			log_err("write():%s\n", strerror(errno));
 			tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
 			tgx_http_fsm_state_machine(tcycle, tconn);
@@ -319,10 +324,13 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 		if (tconn->write_pos == resp_len) {
 			if (tconn->http_parser->http_status == TGX_HTTP_STATUS_200 ||
 				tconn->http_parser->http_status == TGX_HTTP_STATUS_404) {
+				DEBUG("staus = %d\n", TGX_STATUS_GET_SEND_RESPONSE_FILE);
 				tgx_http_fsm_set_status(tconn, TGX_STATUS_GET_SEND_RESPONSE_FILE);
+				DEBUG("status = %d\n", tconn->status);
 				tgx_http_fsm_state_machine(tcycle, tconn);
 				return 0;
 			} else if (tconn->http_parser->http_status == TGX_HTTP_STATUS_304) {
+				DEBUG("\n");
 				tgx_http_fsm_set_status(tconn, TGX_STATUS_CLOSE);
 				tgx_http_fsm_state_machine(tcycle, tconn);
 				return 0;
@@ -335,6 +343,7 @@ int tgx_connection_get_send_resp_header(tgx_cycle_t *tcycle, void *context, int 
 
 int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int event)
 {
+	DEBUG("\n");
 	tgx_connection_t *tconn = (tgx_connection_t *)context;
 	if (!tconn) {
 		log_err("null pointer\n");
@@ -342,6 +351,7 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 	}
 
 
+	DEBUG("\n");
 	if (tconn->http_parser->path_fd < 0) {
 		log_err("file error\n");
 		tgx_http_fsm_set_status(tconn, TGX_STATUS_ERROR);
@@ -349,6 +359,7 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 		return -1;
 	}
 
+	DEBUG("\n");
 	struct stat statbuf;
 	if (fstat(tconn->http_parser->path_fd, &statbuf) < 0) {
 		log_err("fstat():%s\n", strerror(errno));
@@ -363,6 +374,7 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 	int total_length = statbuf.st_size;
 	while (1) {
 		// 使用read_pos记载当前文件传输到什么位置， 下一次读取的最大长度就相应的减小
+		DEBUG("\n");
 		off_t offset = tconn->write_pos;
 		nWrite = sendfile(tconn->fd, tconn->http_parser->path_fd, &offset, total_length - tconn->write_pos);
 		tconn->write_pos = offset;
@@ -375,8 +387,10 @@ int tgx_connection_get_send_resp_file(tgx_cycle_t *tcycle, void *context, int ev
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return -1;
 		}
+		DEBUG("\n");
 
 		if (tconn->write_pos == total_length) {
+			DEBUG("\n");
  			tgx_http_fsm_set_status(tconn, TGX_STATUS_CLOSE);
 			tgx_http_fsm_state_machine(tcycle, tconn);
 			return 0;

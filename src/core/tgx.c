@@ -33,21 +33,36 @@ static int tgx_analyze_configfile(tgx_cycle_t *tcycle, char *key, char *value)
 
 		// 超出了正常范围
 		if (tcycle->port > 65535) return -1;
-	} else if (strncmp(key, "root", strlen("root")) == 0) {
+	} 
+	
+	if (strncmp(key, "root", strlen("root")) == 0) {
 		// TODO:检查value的合法性
 		strcpy(tcycle->srv_root, value);
-	} else if (strncmp(key, "lock", strlen("lock")) == 0) {
+	} 
+	
+	if (strncmp(key, "lock", strlen("lock")) == 0) {
 		// TODO:检查value合法性
 		strcpy(tcycle->lock_file, value);
-	} else if (strncmp(key, "log", strlen("log")) == 0) {
+	} 
+	
+	if (strncmp(key, "log", strlen("log")) == 0) {
 		// TODO:检查log合法性
 		strcpy(tcycle->log_file, value);
-	} else if (strncmp(key, "404 page", strlen("404 page")) == 0) {
+	} 
+	
+	if (strncmp(key, "404 page", strlen("404 page")) == 0) {
 		/*if (strstr(value, ".htm") == NULL) return -1;*/
 		if ((tcycle->err_page.e_404 = open(value, O_RDONLY)) < 0) return -1;
 		DEBUG("e_404 = %d, path = %s\n", tcycle->err_page.e_404, value);
 	} else {
-		return -1;
+		char template[] = "/tmp/tgx_XXXXXX";
+		tcycle->err_page.e_404 = mkstemp(template);
+		int nWrite;
+		nWrite = write(tcycle->err_page.e_404, TGX_PAGE_404_ERR, strlen(TGX_PAGE_404_ERR));
+		if (nWrite != strlen(TGX_PAGE_404_ERR)) {
+			log_err("write() error\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -240,8 +255,8 @@ static void tgx_sig_handler(int signo)
 		case SIGINT: 
 			running = 0; 
 			log_err("System going to Shutdown or Something...\n");
-			exit(0);
-			/*break;*/
+			/*exit(0);*/
+			break;
 		case SIGPIPE:
 			break;
 		case SIGHUP:
@@ -437,6 +452,35 @@ static int  tgx_parse_config_file(tgx_cycle_t *tcycle)
 	return 0;
 }
 
+
+static int tgx_restart_service(tgx_cycle_t *tcycle)
+{
+	tgx_event_destroy(tcycle->tevent);
+	tcycle->tevent = tgx_event_init(tcycle, tcycle->maxfds);
+	if (!tcycle->tevent) {
+		log_err("tgx_event_init() error\n");
+		return -1;
+	}
+
+	// 初始化服务器socket
+	/*if (tgx_socket_init(tcycle) < 0) {
+		log_err("tgx_socket_init() error\n");
+		return -1;
+	}*/
+	
+	if (tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_ADD, tcycle->listen_fd, TGX_EVENT_IN) < 0) {
+		log_err("tgx_event_ctl():%s\n", strerror(errno));
+		return -1;
+	}
+
+	if (tgx_event_schedule_register(tcycle->tevent, tcycle->listen_fd, tgx_acception_handler, NULL) < 0) {
+		log_err("tgx_event_schedule_register():%s\n", strerror(errno));
+		return -1;
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {   
 
@@ -447,7 +491,6 @@ int main(int argc, char *argv[])
 
 	// 先初始化为tcycle的系统默认值
 	tgx_cycle_t *tcycle = (tgx_cycle_t *)calloc(1, sizeof(tgx_cycle_t));
-	FILE *fp;
 
 	{
 		// 初始化tgx_cycle_t结构体
@@ -458,14 +501,7 @@ int main(int argc, char *argv[])
 		strcpy(tcycle->lock_file, TGX_LOCK_FILE);
 		strcpy(tcycle->log_file, TGX_LOG_FILE);
 		tcycle->err_page.e_404 = -1;
-		fp = tmpfile();
-		if (!fp) {
-			log_err("tmpfile():%s\n", strerror(errno));
-			return -1;
-		}
-		fputs(TGX_PAGE_404_ERR, fp);
-		tcycle->err_page.e_404 = fileno(fp);
-
+		
 		tcycle->numThreads = 20;
 	}
 
@@ -542,11 +578,6 @@ int main(int argc, char *argv[])
 		log_err("tgx_scan_config_file() error\n");
 		return -1;
 	}
-
-	/*if (chroot(tcycle->srv_root) < 0) {
-		log_err("chdir():%s\n", strerror(errno));
-		return -1;
-	}*/
 	
 	// 初始化信号处理函数
 	signal(SIGINT,  tgx_sig_handler);
@@ -564,11 +595,13 @@ int main(int argc, char *argv[])
 	tcycle->tevent = tevent;
 
 	// 初始化任务调度器
-	tgx_task_schedule_t *task_sched = tgx_task_schedule_init(tcycle->numThreads);
+	/*tgx_task_schedule_t *task_sched = tgx_task_schedule_init(tcycle->numThreads);*/
+	tgx_task_schedule_t *task_sched = tgx_task_schedule_init(300);
 	if (!task_sched) {
 		log_err("task engine start failure\n");
 		return -1;
 	}
+
 	tcycle->task_sched = task_sched;
 
 	// 初始化服务器socket
@@ -577,6 +610,11 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
+	if (chdir(tcycle->srv_root) < 0) {
+		log_err("chdir():%s\n", strerror(errno));
+		return -1;
+	}
+
 	// 事件系统loop and dispatch
 	int nEvent, event;
 	int fd, index, i;
@@ -597,8 +635,15 @@ int main(int argc, char *argv[])
 			event   = tgx_event_get_event(tevent, index);
 
 			if (handler == NULL) {
-				log_err("tgx event handler not found.\n");
-				continue;
+				log_err("tgx event handler not found. fd = %d, Context = %s, now event fd used = %d\n", fd, 
+						context == NULL?"NULL" : "Not NULL", tevent->usedfds);
+				// 发生致命错误重启event系统
+				log_err("restarting event system...\n");
+				tgx_restart_service(tcycle);
+				tevent = tcycle->tevent;
+				log_err("restarting event system done...\n");
+
+				break;
 			}
 			
 			if (handler(tcycle, context, event) < 0) {
@@ -607,6 +652,16 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+
+	if (!running) {
+		log_err("hello world\n");
+		tgx_event_destroy(tcycle->tevent);
+		tgx_task_schedule_destroy(tcycle->task_sched);
+		if (tcycle->err_page.e_404 > 0)
+			close(tcycle->err_page.e_404);
+		free(tcycle);
+	}
+
 	
 	return 0;
 }
