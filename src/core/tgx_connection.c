@@ -11,6 +11,7 @@ tgx_connection_t *tgx_connection_init(tgx_cycle_t *tcycle, int fd)
 	tconn->fd                  = fd;
 	tconn->status              = TGX_STATUS_CONNECT;
 	tconn->buffer			   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
+	memset(tconn->buffer, 0, sizeof(tgx_string_t));
 	tconn->httpRequest		   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
 	tconn->httpResponse		   = (tgx_string_t *)calloc(1, sizeof(tgx_string_t));
 	if (!tconn->buffer || !tconn->httpResponse || !tconn->httpResponse) {
@@ -95,6 +96,9 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 			return -1;
 		}
 	}
+
+
+	memset(tconn->buffer->data, 0, sizeof(tconn->buffer->size) * sizeof(char));
 	
 	int nRead;
 	while (1) {
@@ -154,10 +158,10 @@ int tgx_connection_read_req_header(tgx_cycle_t *tcycle, void *context, int event
 	DEBUG("buffer = \n%s\n", tconn->buffer->data);
 	if (strstr(tconn->buffer->data, "\r\n\r\n") != NULL) {
 		DEBUG("\n");
-		tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tconn->fd, 0);
-		tgx_connection_parse_req_header(tcycle, (void *)tconn, 0);
-		/*tgx_http_fsm_set_status(tconn, TGX_STATUS_PARSING_REQUEST_HEADER);*/
-		/*tgx_http_fsm_state_machine(tcycle, tconn);*/
+		/*tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tconn->fd, 0);*/
+		/*tgx_connection_parse_req_header(tcycle, (void *)tconn, 0);*/
+		tgx_http_fsm_set_status(tconn, TGX_STATUS_PARSING_REQUEST_HEADER);
+		tgx_http_fsm_state_machine(tcycle, tconn);
 	}
 	
 	// 否则直接返回， 事件还会被触发的
