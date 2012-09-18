@@ -49,7 +49,6 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 {
 	// 要区分好服务器内部错误和用户请求错误之间的关系
 
-	system("pwd");
 	tgx_connection_t *tconn = (void *)parser->data;
 	if (!tconn) {
 		log_err("null pointer\n");
@@ -69,7 +68,7 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 
 
 	// 为path分配空间， 我们必须将at中的数据移到path中
-	char *path = calloc(length + 1, sizeof(char));
+	char *path = calloc(length + 2, sizeof(char));
 	if (!path) {
 		log_err("calloc():%s\n", strerror(errno));
 		tconn->http_parser->http_status = TGX_HTTP_STATUS_500;
@@ -78,8 +77,10 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 	}
 
 	// 复制到path
-	strncpy(path, at, length);
-	path[length] = '\0';
+	// 注意：由于没有使用chroot， 因此必须在前面加一个“.”表示当前目录
+	// 这只能算一个技巧了
+	snprintf(path, length+2, ".%s", at);
+	path[length+1] = '\0';
 
 	// 去除掉'?'
 	char *ch;

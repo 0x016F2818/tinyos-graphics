@@ -7,5 +7,4 @@ $(function() {
         $("#clockIEFF").addClass("hide");
         $("#clock").load(updateTime);
     }
-    
 })

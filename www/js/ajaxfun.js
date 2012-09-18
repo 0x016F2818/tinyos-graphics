@@ -1,6 +1,6 @@
-//$(function() {
-		//setInterval(go, 300);
-//});
+$(function() {
+        setInterval(go, 300);
+});
 
 var xmlhttp, alerted, JSONalerted=false, readyStatealerted=false;
 /*@cc_on*/

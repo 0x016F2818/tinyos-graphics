@@ -74,11 +74,13 @@ void tgx_event_destroy (tgx_event_t *te)
 	int i;
 	for (i = 0; i < te->maxfds; i++) {
 		if (te->sched_array[i]) {
+			/*if (te->sched_array[i]->fd > 0) close(te->sched_array[i]->fd);*/
 			free(te->sched_array[i]);
 		}
 	}
+	free(te->sched_array);
 	free(te);
-} 
+}
  
 
 int	tgx_event_schedule_register(tgx_event_t *te, 
@@ -86,6 +88,10 @@ int	tgx_event_schedule_register(tgx_event_t *te,
 								 tgx_handler_t handler,
 								 void* context)
 {
+
+	
+	log_info("registering, fd = %d\n", fd);
+
 	if (!te) {
 		log_err("null pointer...\n");
 		return -1;
@@ -133,6 +139,7 @@ int	tgx_event_schedule_register(tgx_event_t *te,
 // unregister时请记住还需要delete event from event system
 int tgx_event_schedule_unregister(tgx_event_t *te, int fd)
 {
+	log_info("unregistering, fd = %d\n", fd);
 	if (!te) {
 		log_err("null pointer\n");
 		return -1;
@@ -152,6 +159,10 @@ int tgx_event_schedule_unregister(tgx_event_t *te, int fd)
 		free(te->sched_array[r_index]);
 		te->sched_array[r_index] = NULL;
 	}
+	if (fd > 0)
+		close(fd);
+	else
+		log_warning("there is something wrong when close fd\n");
 
 	te->usedfds--;
 	return 0;
