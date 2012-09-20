@@ -893,6 +893,7 @@ static int _task_end_travelling                 (void *context, int err)
 		tgx_close_connection(wrapper_context->tcycle, wrapper_context->tconn);
 		return -1;
 	}
+	free(wrapper_context);
 	/****************************************************/
 	return 0;
 }

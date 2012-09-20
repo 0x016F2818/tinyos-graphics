@@ -644,7 +644,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	/*pid_t pid = fork();	*/
+	pid_t pid = fork();	
 
 	// 初始化任务调度器
 	/*tgx_task_schedule_t *task_sched = tgx_task_schedule_init(tcycle->numThreads);*/
