@@ -11,7 +11,7 @@ typedef struct tgx_http_parser_s			tgx_http_parser_t;
 typedef struct tgx_module_http_s			tgx_module_http_t;
 
 typedef struct {
-	int e_404;
+	char e_404[256];
 
 } tgx_err_page_t;
 
@@ -80,8 +80,7 @@ typedef struct {
 #include "tgx_connection.h"
 #include "tgx_task.h"
 #include "tgx_event.h"
-#include "tgx_http_fsm.h"
-#include "tgx_http.h"
+#include "tgx_http_parser.h"
 #include "tgx_module_internal.h"
 
 // 使用了垃圾回收器libgc

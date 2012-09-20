@@ -13,8 +13,9 @@ static int tgx_find_schedule_index(tgx_event_t *te, int fd)
 	} else {
 		int i;
 		for (i = 0; i < te->maxfds; i++) {
-			if (te->sched_array[i] && te->sched_array[i]->fd == fd)
-				return fd;
+			if (te->sched_array[i] && te->sched_array[i]->fd == fd) {
+				return i;
+			}
 		}
 		return TGX_NO_INDEX_FIND;
 	}
@@ -30,6 +31,13 @@ static int tgx_find_schedule_index(tgx_event_t *te, int fd)
 
 tgx_event_t* tgx_event_init(tgx_cycle_t *tcycle, int maxfds)
 {
+	if (!tcycle) {
+		log_err("arg error\n");
+		return NULL;
+	}
+
+	maxfds = maxfds > 0 ? maxfds : 1;
+
 	tgx_event_t *te;
 	te = calloc(1, sizeof(*te));
 	if (!te) {
@@ -74,7 +82,6 @@ void tgx_event_destroy (tgx_event_t *te)
 	int i;
 	for (i = 0; i < te->maxfds; i++) {
 		if (te->sched_array[i]) {
-			/*if (te->sched_array[i]->fd > 0) close(te->sched_array[i]->fd);*/
 			free(te->sched_array[i]);
 		}
 	}
@@ -89,11 +96,8 @@ int	tgx_event_schedule_register(tgx_event_t *te,
 								 void* context)
 {
 
-	
-	log_info("registering, fd = %d\n", fd);
-
-	if (!te) {
-		log_err("null pointer...\n");
+	if (!te || !handler || fd < 0) {
+		log_err("arg error\n");
 		return -1;
 	}
 	te->usedfds++;
@@ -135,12 +139,9 @@ int	tgx_event_schedule_register(tgx_event_t *te,
 	return 0;
 }
 
-// 我们没有将删除事件和unregister做到一起， 因此在使用
-// unregister时请记住还需要delete event from event system
 int tgx_event_schedule_unregister(tgx_event_t *te, int fd)
 {
-	log_info("unregistering, fd = %d\n", fd);
-	if (!te) {
+	if (!te || fd < 0) {
 		log_err("null pointer\n");
 		return -1;
 	}
@@ -159,10 +160,6 @@ int tgx_event_schedule_unregister(tgx_event_t *te, int fd)
 		free(te->sched_array[r_index]);
 		te->sched_array[r_index] = NULL;
 	}
-	if (fd > 0)
-		close(fd);
-	else
-		log_warning("there is something wrong when close fd\n");
 
 	te->usedfds--;
 	return 0;
@@ -184,12 +181,10 @@ int	tgx_event_poll(tgx_event_t *te, int timeout_ms)
 	return -1;
 }
 
-// tgx_event_ctl函数可以删除， 修改， 添加事件到event 系统中 
-// 之所以让register和ctl分开设计， 这两个接口耦合在一起太复杂
 int	tgx_event_ctl(tgx_event_t *te, int op, int fd, int event)
 {
-	if (!te) {
-		log_err("null pointer\n");
+	if (!te || fd < 0) {
+		log_err("arg error\n");
 		return -1;
  	}
 
@@ -201,8 +196,8 @@ int	tgx_event_ctl(tgx_event_t *te, int op, int fd, int event)
 
 int	tgx_event_get_fd(tgx_event_t *te, int index)
 { 
-	if (!te) {
-		log_err("null pointer\n");
+	if (!te || index < 0) {
+		log_err("arg error\n");
 		return -1;
  	}
 
@@ -214,8 +209,8 @@ int	tgx_event_get_fd(tgx_event_t *te, int index)
  
 tgx_handler_t tgx_event_get_handler(tgx_event_t *te, int fd)
 { 
- 	if (!te) {
-		log_err("null pointer\n");
+ 	if (!te || fd < 0) {
+		log_err("arg error\n");
 		return NULL;
  	}
 
@@ -231,7 +226,6 @@ tgx_handler_t tgx_event_get_handler(tgx_event_t *te, int fd)
 } 
 
 
-
 // context是可选的， 未来可能会支持， 默认为NULL， 也就是不修改context
 int tgx_event_set_handler(tgx_event_t *te, int fd, tgx_handler_t handler, void *context)
 {
@@ -242,9 +236,9 @@ int tgx_event_set_handler(tgx_event_t *te, int fd, tgx_handler_t handler, void *
 
 	int r_index;
 	r_index = tgx_find_schedule_index(te, fd);
-	if (r_index == TGX_NO_INDEX_FIND)
+	if (r_index == TGX_NO_INDEX_FIND) {
 		return -1;
-	else if (te->sched_array[r_index]->handler) {
+	} else if (te->sched_array[r_index]->handler) {
 		te->sched_array[r_index]->handler = handler;
 
 		// TODO：这里有点问题， context指针指向新的空间， 老的空间谁来释放?

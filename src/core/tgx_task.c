@@ -31,16 +31,14 @@ static void *do_pthread(void *arg)
 		if (t_task_sched->keep_alive) {
 			pthread_mutex_lock(t_task_sched->sched_lock);
 			task = tgx_task_queue_pop_front(t_task_sched->task_queue);
-			DEBUG("\n");
-			ret = task->task_handler(task->context);
+			pthread_mutex_unlock(t_task_sched->sched_lock); 
 
-			DEBUG("\n");
+			ret = task->task_handler(task->context);
 
 			if (task->on_task_complete) {
 				task->on_task_complete(task->context, ret);
 			}
 			free(task);
-			pthread_mutex_unlock(t_task_sched->sched_lock); 
 
 		} else {
 			pthread_exit((void *)0);
@@ -141,6 +139,7 @@ void tgx_task_schedule_destroy(tgx_task_schedule_t *t_task_sched)
 
 	// 对每一个线程pthread_join， 回收线程资源
 	for (i = 0; i < t_task_sched->n_threads; i++) {
+		DEBUG("pthread join......\n");
 		ret = pthread_join(t_task_sched->tids[i], NULL);
 		if (ret < 0) {
 			log_err("pthread_join():%s\n", strerror(errno));

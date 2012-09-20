@@ -1,4 +1,4 @@
-#include "tgx_http.h"
+#include "tgx_http_parser.h"
 
 tgx_mime_type_t tgx_get_mime_type(char *str)
 {
@@ -11,43 +11,17 @@ tgx_mime_type_t tgx_get_mime_type(char *str)
 	return -1;
 }
 
-tgx_http_parser_t* tgx_http_parser_init(tgx_cycle_t *tcycle)
-{
-	if (!tcycle) {
-		log_err("null pointer\n");
-		return NULL;
-	}
-
-	tgx_http_parser_t *http_parser;
-	// calloc()  已经将http_parser内部清空了
-	http_parser = calloc(1, sizeof(tgx_http_parser_t));
-	if (!http_parser) {
-		log_err("null pointer\n");
-		return NULL;
-	}
-	
-	http_parser->path_fd	 = -1;
-	http_parser->path		 = NULL;
-	return http_parser;
-}
-
-void tgx_http_parser_free(tgx_http_parser_t *t_http_p)
-{
-	if (!t_http_p) {
-		log_err("null pointer\n");
-		return;
-	}
-
-	// 由于path的长度不好控制， 这里根据解析的结果动态的分配
-	if (t_http_p->path) free(t_http_p->path);
-
-	free(t_http_p);
-}
-
 int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 				 size_t length)
 {
-	// 要区分好服务器内部错误和用户请求错误之间的关系
+
+	DEBUG("req:\n%s\n", at);
+
+
+	// 解析过程中遇到自己不支持或者找不到指定文件这些不属于解析错误，
+	// 应该返回0, 同时设置TGX_HTTP_STATUS_XXX即可， 返回-1表示终止
+	// 链接， 服务器将认为http request本身有问题
+
 
 	tgx_connection_t *tconn = (void *)parser->data;
 	if (!tconn) {
@@ -55,39 +29,34 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 		return -1;
 	}
 
+	// 目前只支持GET与POST
 	// 判断GET方法还是POST方法
 	if (strcmp(http_method_str(parser->method), "GET") == 0) {
 		sprintf(tconn->http_parser->http_method, "GET");
 	} else if (strcmp(http_method_str(parser->method), "POST") == 0) { 
 		sprintf(tconn->http_parser->http_method, "POST");
 	} else {
-		DEBUG("\n");
 		tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
-		tconn->http_parser->path_fd = -1;
 		return 0;
 	}
 
-
 	// 为path分配空间， 我们必须将at中的数据移到path中
-	char *path = calloc(length + 2, sizeof(char));
+	char *path = calloc(length + 3, sizeof(char));
 	if (!path) {
 		log_err("calloc():%s\n", strerror(errno));
 		tconn->http_parser->http_status = TGX_HTTP_STATUS_500;
-		tconn->http_parser->path_fd = -1;
-		return -1;
+		return 0;
 	}
 
 	// 复制到path
-	// 注意：由于没有使用chroot， 因此必须在前面加一个“.”表示当前目录
-	// 这只能算一个技巧了
-	snprintf(path, length+2, ".%s", at);
-	path[length+1] = '\0';
+	snprintf(path, length+1, "%s", at);
+
 
 	// 去除掉'?'
 	char *ch;
 	while ((ch = strchr(path, '?'))) *ch = '\0';
 
-	// 去掉最后一个'/', 可以去除尾部多个问号, 但是保证不把最后一和/删除
+	// 去掉最后一个'/', 可以去除尾部多个问号, 但是保证不把最后一个/删除
 	while ((ch = strrchr(path, '/'))) {
 		if (ch == path + strlen(path) - 1 && ch != path)
 			*ch = '\0';
@@ -97,99 +66,114 @@ int tgx_http_parser_on_url_cb(http_parser *parser, const char *at,
 
 	// 过滤掉不支持的服务器脚本语言
 	char *p = NULL;
-	if ((p = strstr(path, ".php")) || (p = strstr(path, ".aspx"))) {
+
+	// 由于c语言的短路规则， 因此只要有一个为真， 就执行下面的语句，
+	// 这个逻辑是正确的
+	if ((p = strstr(path, ".php")) || (p = strstr(path, ".aspx")) ||
+			(p = strstr(path, ".jsp"))) {
 		if (strstr(p, "/") == NULL) {
 			log_err("unsupport cgi error.\n");
 			free(path);
 			tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
-			tconn->http_parser->path_fd = -1;
 			return 0;
 		}
 	}
 
+	// path主要检查uri本身的错误
+	// path的使命完成了， 将path拷贝到tconn->http_parser->path,
+	// 加上当前目录.标志
+	sprintf(tconn->http_parser->path, 
+			".%s", 
+			path);
+	free(path);
+
+
 	// 如果path为目录， 需要自动加上index.html
 	struct stat statbuf;
-	if (stat(path, &statbuf) < 0) {
-		log_err("path = %s, stat():%s\n", path, strerror(errno));
-		free(path);
+	if (stat(tconn->http_parser->path, &statbuf) < 0) {
+		log_err("path = %s, stat():%s\n", tconn->http_parser->path, strerror(errno));
 		tconn->http_parser->http_status = TGX_HTTP_STATUS_404;
-		tconn->http_parser->path_fd = -1;
 		return 0;
 	}
 
 	if (S_ISDIR(statbuf.st_mode)) {
-		// 重新分配path空间， 刚刚好为加上strlen("/index.html") byte再加上'\0'
-		char *tmp = realloc(path, strlen(path) + strlen("/index.html") + 1);
-
-		// 保证即使realloc， path指针不丢失
-		if (!tmp) {
-			free(path);
-			log_err("realloc():%s\n", strerror(errno));
-			tconn->http_parser->path_fd = -1;
-			tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
+		int find = 0;
+		struct stat statbuf_tmp;
+		char *path_tmp;
+		path_tmp = calloc(1, sizeof(tconn->http_parser->path));
+		if (!path_tmp) {
+			log_err("calloc():%s\n", strerror(errno));
 			return -1;
-		} else {
-			path = tmp;
 		}
 
-		sprintf(path, "%s/index.html", path);
+		while (1) {
+			// 1. 测试index.html是否存在
+			sprintf(path_tmp, "%s/index.html", tconn->http_parser->path);
+			if (stat(path_tmp, &statbuf_tmp) == 0) {
+				find = 1;
+				strcpy(tconn->http_parser->path, path_tmp);
+				break;
+			}
 
-		// 阻止缓冲区溢出
-		path[strlen(path)] = '\0';
-	}
+			// 2. 测试index.htm是否存在
+			sprintf(path_tmp, "%s/index.htm", tconn->http_parser->path);
+			if (stat(path_tmp, &statbuf_tmp) == 0) {
+				find = 1;
+				strcpy(tconn->http_parser->path, path_tmp);
+				break;
+			}
 
-	// 打开文件
-	int fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		free(path);
-		tconn->http_parser->path_fd = -1;
-		tconn->http_parser->http_status = TGX_HTTP_STATUS_404;
-		log_err("open():%s\n", strerror(errno));
-		return -1;
+			// 避免死循环
+			break;
+		}
+		free(path_tmp);
+		if (!find) {
+			tconn->http_parser->http_status = TGX_HTTP_STATUS_404;
+			return 0;
+		}
 	}
 
 	// 设置文件类型， 为发送文件做准备
-	if (strstr(path, ".html") || strstr(path, ".htm"))
+	if (strstr(tconn->http_parser->path, ".html") || strstr(tconn->http_parser->path, ".htm"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_HTML;
-	else if (strstr(path, ".jpeg"))
+	else if (strstr(tconn->http_parser->path, ".jpeg"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_JPEG;
-	else if (strstr(path, ".jpg"))
+	else if (strstr(tconn->http_parser->path, ".jpg"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_JPG;
-	else if (strstr(path, ".png"))
+	else if (strstr(tconn->http_parser->path, ".png"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_PNG;
-	else if (strstr(path, ".gif"))
+	else if (strstr(tconn->http_parser->path, ".gif"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_GIF;
-	else if (strstr(path, ".ico"))
+	else if (strstr(tconn->http_parser->path, ".ico"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_ICO;
-	else if (strstr(path, ".js"))
+	else if (strstr(tconn->http_parser->path, ".js"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_JAVASCRIPT;
-	else if (strstr(path, ".css"))
+	else if (strstr(tconn->http_parser->path, ".css"))
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_CSS;
 	else
 		tconn->http_parser->mime_type = TGX_MIME_TYPE_PLAIN;
 	
-	// 这个是专为tinyos项目设置的模块后缀
-	if (strstr(path, ".wsn")) 
-		tconn->http_parser->is_wsn_module = 1;
+	// http_parser填充特殊字段部分
+	{
+		if (strstr(tconn->http_parser->path, ".wsn")) 
+			tconn->http_parser->mod_flag = WSN_MODULE;
 
-	tconn->http_parser->path_fd = fd;
+		// if ...
+
+		// if ...
+	}
+
 	tconn->http_parser->http_status = TGX_HTTP_STATUS_200;
 
-	/*free(path);*/
-	// 对于path解析错误， 立刻free掉， 否则将path加入到解析结果中方便查阅
-
-	tconn->http_parser->path = path;
 	return 0;
 }
 
-// 通过下面两个回调将所有的值全部放入到tconn->http_parser
-// 字段中， 然后在complete回调中进行“定制”
 int tgx_http_parser_on_header_field_cb(http_parser * parser, const char *at,
 					 size_t length)
 {
 	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
 	if (!tconn) {
-		log_err("http_parser_on_path_callback():no data.\n");
+		log_err("null pointer\n");
 		return -1;
     }
 	if (tconn->http_parser->last_header_element != FIELD)
@@ -206,9 +190,9 @@ int tgx_http_parser_on_header_value_cb(http_parser * parser, const char *at,
 {
 	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
 	if (!tconn) {
-		log_err("http_parser_on_path_callback():no data.\n");
+		log_err("null pointer\n");
 		return -1;
-	}
+    }
 	strncat(tconn->http_parser->headers[tconn->http_parser->num_headers-1][1], at, length);
 	tconn->http_parser->last_header_element = VALUE; 
 
@@ -219,14 +203,17 @@ int tgx_http_parser_on_header_complete_cb(http_parser * parser)
 {
 
 	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
-	if (tconn->http_parser->path_fd < 0) return 0;
+	if (!tconn) {
+		log_err("null pointer\n");
+		return -1;
+    }
+
 
 	{
 		struct stat statbuf;
-		if (fstat(tconn->http_parser->path_fd, &statbuf) < 0) {
+		if (stat(tconn->http_parser->path, &statbuf) < 0) {
 			log_err("stat():%s\n", strerror(errno));
-			tconn->http_parser->http_status = TGX_HTTP_STATUS_400;
-			tconn->http_parser->path_fd = -1;
+			tconn->http_parser->http_status = TGX_HTTP_STATUS_404;
 			return 0;
 		}
 
@@ -252,24 +239,28 @@ int tgx_http_parser_on_header_complete_cb(http_parser * parser)
 					}
 				}
 			}
-
-			// 拿到POST的Content-Length
-			{
-				if (strcmp(tconn->http_parser->headers[i][0], "Content-Length") == 0 &&
-					strcmp(tconn->http_parser->http_method, "POST") == 0) {
-					tconn->http_parser->post_content_length = atoi(tconn->http_parser->headers[i][1]);
-					if (tconn->http_parser->post_content_length < 0)
-						return -1;
-				}
-			}
 		}
 	}
 
 	return 0;
 }
 
-// 由于读body任务没有放在解析器中做， 这里body是不会回调的
 int tgx_http_parser_on_body_cb(http_parser * parser, const char *at, size_t length)
 {
+	tgx_connection_t *tconn = (tgx_connection_t *)parser->data;
+	if (!tconn) {
+		log_err("null pointer\n");
+		return -1;
+    }
+
+	if (tconn->httpRespBody->size < length+1) {
+		tconn->httpReqBody->data = calloc(length+1, sizeof(char));
+		tconn->httpReqBody->size = length+1;
+	} else {
+		memset(tconn->httpReqBody->data, 0, sizeof(tconn->httpReqBody->data));
+	}
+
+	strncpy(tconn->httpReqBody->data, at, length);
+
 	return 0;
 }

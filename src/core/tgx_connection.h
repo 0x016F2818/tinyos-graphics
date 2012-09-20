@@ -4,38 +4,48 @@
 #include "tgx_core.h"
 
 struct tgx_connection_s {
+#define TGX_NO_VALUE			-1
+#define TGX_MAX_HEADERS			128
+#define TGX_MAX_ELEMENT_SIZE	1024
+#define TGX_MAX_PATH_LENGTH		4096
 	int									fd;
 
-	// 状态机中的状态， 不是http的状态， 所有与http有关的解析信息全在http_parser中
-	int									status;
+	// 打算GET和POST都写2个writer
+	// writer_header
+	// writer_body, GET的writer_body发送文件, POST的writer_body发送模块产生的数据
+	// 然后写完一部分就改变指针, 进入下一个环节
+	tgx_string_t						*httpReqBuf;
+	tgx_string_t						*httpReqBody;
+	tgx_string_t						*httpRespHeader;
+	tgx_string_t						*httpRespBody;
 
-	// 由于老的接口中大量使用了buffer这个名字， 
-	// 因此新增加了两个buffer， 而暂时不对老的
-	// 构成影响
-	tgx_string_t						*buffer;
+	pthread_mutex_t						*lock;
 
-	// new, 用来接收客户端请求和向客户端发送数据
-	tgx_string_t						*httpRequest;
-	tgx_string_t						*httpResponse;
+	int									rw_pos;
+	struct tgx_http_parser_s {
+		int     http_status;
+		int		mime_type;
+		char	path[4096];
+		char	http_method[16];
+		int		content_length;
+		int num_headers;
+		enum { 
+			NONE = 0, 
+			FIELD, 
+			VALUE 
+		} last_header_element;
+		char headers[TGX_MAX_HEADERS][2][TGX_MAX_ELEMENT_SIZE];
 
-	int									read_pos;
-	int									write_pos;
-	tgx_http_parser_t					*http_parser;
-	void								*dlopen_handle;
+		enum {
+			CGI_MODULE = 1,
+			WSN_MODULE,
+		} mod_flag;
+	} *http_parser;
+
+	void							*dlopen_handle;
 };
 
-tgx_connection_t *tgx_connection_init(tgx_cycle_t *tcycle, int fd);
-void tgx_connection_free(tgx_connection_t *tconn);
-
-// 这里可以注册多个handler， 我们使用状态机在多个handler之间切换
-typedef int (tgx_connection_handler_t)(tgx_cycle_t *tcycle, void *context, int event);
-
-tgx_connection_handler_t tgx_connection_read_req_header,
-						 tgx_connection_parse_req_header,
-						 tgx_connection_get_send_resp_header,
-						 tgx_connection_get_send_resp_file,
-						 tgx_connection_post_send_resp_header,
-						 tgx_connection_post_read_req_message_body,
-						 tgx_connection_post_send_resp_data,
-						 tgx_connection_close,
-						 tgx_connection_error;
+tgx_connection_t *tgx_new_connection(tgx_cycle_t *tcycle, int fd);
+void tgx_free_connection(tgx_connection_t *tconn);
+int tgx_connection_handler_read             (tgx_cycle_t *tcycle, void *context, int event);
+void tgx_connection_handler_close           (tgx_cycle_t *tcycle, void *context, int event);

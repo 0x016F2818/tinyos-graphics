@@ -50,19 +50,15 @@ static int tgx_analyze_configfile(tgx_cycle_t *tcycle, char *key, char *value)
 		strcpy(tcycle->log_file, value);
 	} 
 	
-	if (strncmp(key, "404 page", strlen("404 page")) == 0) {
-		/*if (strstr(value, ".htm") == NULL) return -1;*/
-		if ((tcycle->err_page.e_404 = open(value, O_RDONLY)) < 0) return -1;
-		DEBUG("e_404 = %d, path = %s\n", tcycle->err_page.e_404, value);
+	if (strncmp(key, "err_page 404", strlen("err_page 404")) == 0) {
+		sprintf(tcycle->err_page.e_404, ".%s", value);
 	} else {
-		char template[] = "/tmp/tgx_XXXXXX";
-		tcycle->err_page.e_404 = mkstemp(template);
-		int nWrite;
-		nWrite = write(tcycle->err_page.e_404, TGX_PAGE_404_ERR, strlen(TGX_PAGE_404_ERR));
-		if (nWrite != strlen(TGX_PAGE_404_ERR)) {
-			log_err("write() error\n");
-			return -1;
-		}
+		// 对于tmpnam产生的已经是绝对路径， 因此不需要加.符号
+		sprintf(tcycle->err_page.e_404, "%s", tmpnam(NULL));
+		
+		FILE *fp = fopen(tcycle->err_page.e_404, "w");
+		fputs(TGX_PAGE_404_ERR, fp);
+		fclose(fp);
 	}
 
 	return 0;
@@ -412,18 +408,19 @@ static int tgx_acception_handler(tgx_cycle_t *tcycle, void *context, int event)
 			return -1;
 		}
 
-		tgx_connection_t *tconn = tgx_connection_init(tcycle, infd);
+		tgx_connection_t *tconn = tgx_new_connection(tcycle, infd);
 		if (!tconn) {
 			log_err("tgx_connection_init() error\n");
 			return -1;
 		}
 
+		DEBUG("a new connection connect, fd = %d, host = %s, port = %s\n",
+				infd, hbuf, sbuf);
 		if (tgx_event_schedule_register(tcycle->tevent, infd, 
-					tgx_connection_read_req_header, (void *)tconn) < 0) {
+					tgx_connection_handler_read, (void *)tconn) < 0) {
 			log_err("tgx_event_schedule_register() failure.\n");
 			return -1;
 		}
-		DEBUG("fd = %d server = %s, port = %s\n", infd, sbuf, hbuf);
 	}
 
 	return 0;
@@ -453,14 +450,56 @@ static int  tgx_parse_config_file(tgx_cycle_t *tcycle)
 }
 
 
+#ifdef OPEN_MAX
+static long openmax = OPEN_MAX;
+#else
+static long openmax = 0;
+#endif
+
+static long get_max_fd(void)
+{
+#define OPEN_MAX_GUESS 256
+	if (openmax == 0) {
+		errno = 0;
+		if ((openmax = sysconf(_SC_OPEN_MAX)) < 0) {
+			if (errno == 0) 
+				openmax = OPEN_MAX_GUESS;
+			else
+				log_err("sysconf error for _SC_OPEN_MAX\n");
+		}
+	}
+	return (openmax);
+}
+
 static int tgx_restart_service(tgx_cycle_t *tcycle)
 {
 	tgx_event_destroy(tcycle->tevent);
+	tgx_task_schedule_destroy(tcycle->task_sched);
+
+	int i, maxfd;
+	maxfd = get_max_fd();
+	for (i = 0; i < maxfd; i++) {
+		if (i == tcycle->listen_fd ||
+			i == STDIN_FILENO ||
+			i == STDOUT_FILENO ||
+			i == STDERR_FILENO) continue;
+		close(i);
+	}
+
 	tcycle->tevent = tgx_event_init(tcycle, tcycle->maxfds);
 	if (!tcycle->tevent) {
 		log_err("tgx_event_init() error\n");
 		return -1;
 	}
+
+	tgx_task_schedule_t *task_sched = tgx_task_schedule_init(30);
+	if (!task_sched) {
+		log_err("task engine start failure\n");
+		return -1;
+	}
+
+	tcycle->task_sched = task_sched;
+
 
 	// 初始化服务器socket
 	/*if (tgx_socket_init(tcycle) < 0) {
@@ -477,6 +516,8 @@ static int tgx_restart_service(tgx_cycle_t *tcycle)
 		log_err("tgx_event_schedule_register():%s\n", strerror(errno));
 		return -1;
 	}
+
+	
 
 	return 0;
 }
@@ -500,8 +541,6 @@ int main(int argc, char *argv[])
 		strcpy(tcycle->srv_root, TGX_ROOT);
 		strcpy(tcycle->lock_file, TGX_LOCK_FILE);
 		strcpy(tcycle->log_file, TGX_LOG_FILE);
-		tcycle->err_page.e_404 = -1;
-		
 		tcycle->numThreads = 20;
 	}
 
@@ -594,16 +633,6 @@ int main(int argc, char *argv[])
 	}
 	tcycle->tevent = tevent;
 
-	// 初始化任务调度器
-	/*tgx_task_schedule_t *task_sched = tgx_task_schedule_init(tcycle->numThreads);*/
-	tgx_task_schedule_t *task_sched = tgx_task_schedule_init(300);
-	if (!task_sched) {
-		log_err("task engine start failure\n");
-		return -1;
-	}
-
-	tcycle->task_sched = task_sched;
-
 	// 初始化服务器socket
 	if (tgx_socket_init(tcycle) < 0) {
 		log_err("tgx_socket_init() error\n");
@@ -614,6 +643,18 @@ int main(int argc, char *argv[])
 		log_err("chdir():%s\n", strerror(errno));
 		return -1;
 	}
+
+	/*pid_t pid = fork();	*/
+
+	// 初始化任务调度器
+	/*tgx_task_schedule_t *task_sched = tgx_task_schedule_init(tcycle->numThreads);*/
+	tgx_task_schedule_t *task_sched = tgx_task_schedule_init(30);
+	if (!task_sched) {
+		log_err("task engine start failure\n");
+		return -1;
+	}
+
+	tcycle->task_sched = task_sched;
 
 	// 事件系统loop and dispatch
 	int nEvent, event;
@@ -654,14 +695,30 @@ int main(int argc, char *argv[])
 	}
 
 	if (!running) {
-		log_err("hello world\n");
-		tgx_event_destroy(tcycle->tevent);
+		if (tcycle->tevent->event_free) 
+			tcycle->tevent->event_free(tcycle->tevent);
+
+		for (i = 0; i < tcycle->tevent->maxfds; i++) {
+			if (tcycle->tevent->sched_array[i]) {
+				if (tcycle->tevent->sched_array[i]->fd == tcycle->listen_fd) {
+					close(tcycle->listen_fd);	
+					free(tcycle->tevent->sched_array[i]);
+					tcycle->tevent->sched_array[i] = NULL;
+				} else if (tcycle->tevent->sched_array[i]->context) { //说明是连接客户端fd
+					tgx_connection_t *tconn = 
+						(tgx_connection_t *)tcycle->tevent->sched_array[i]->context;
+					tgx_free_connection(tconn);
+					free(tcycle->tevent->sched_array[i]);
+					tcycle->tevent->sched_array[i] = NULL;
+				}
+			}
+		}
+		free(tcycle->tevent->sched_array);
+		free(tcycle->tevent);
 		tgx_task_schedule_destroy(tcycle->task_sched);
-		if (tcycle->err_page.e_404 > 0)
-			close(tcycle->err_page.e_404);
+		unlink(tcycle->err_page.e_404);
 		free(tcycle);
 	}
 
-	
 	return 0;
 }
