@@ -50,27 +50,27 @@ typedef struct {
 	double      x_mag;
 	double      y_mag;
 	char        time[30]; // ctime()返回的指针是一个指向静态区的指针, 因此这里没有分配空间
-} sensor_t;
+}sensor_t;
 
 typedef struct {
     int         node_id;
     int         parent_id;
     double      quality;
-} network_t;
+}network_t;
 
-typedef struct {
-    enum {
-        DB_SELEC_ALL_RECORD = 0,
-        DB_SELEC_NETWORK_INFO,
-        DB_SELEC_ALL_NODE_INFO,
-        DB_SELEC_TIME_BACK_RECORD,
-        DB_SELEC_TIMERANGE_RECORD,
-        DB_SELEC_TIME_AHEAD_RECORD
-    }search_type;
-    char        starttime[20];
-    char        endtime[20];
-    int         record_num;
-}select_options_t;
+/*typedef struct {*/
+/*enum {*/
+/*DB_SELEC_ALL_RECORD = 0,*/
+/*DB_SELEC_NETWORK_INFO,*/
+/*DB_SELEC_ALL_NODE_INFO,*/
+/*DB_SELEC_TIME_BACK_RECORD,*/
+/*DB_SELEC_TIMERANGE_RECORD,*/
+/*DB_SELEC_TIME_AHEAD_RECORD*/
+/*}search_type;*/
+/*char        starttime[20];*/
+/*char        endtime[20];*/
+/*int         record_num;*/
+/*}select_options_t;*/
 
 /*typedef struct {*/
 /*node_t      *node_info;*/
@@ -84,7 +84,7 @@ typedef struct {
     char        user[20];
     char        password[60];
     char        db_name[20];
-} db_connect_info_t;
+}db_connect_info_t;
 
 /*typedef struct {*/
 /*enum {*/
@@ -102,6 +102,7 @@ int insert_sense_record(MYSQL *mysql,sensor_t info);
 int update_network(MYSQL *mysql,network_t info);
 int update_node_info(MYSQL *mysql,node_t info);
 int all_node_info(MYSQL *mysql,node_t *info);
-int all_record(MYSQL *mysql,sensor_t *info);
+long all_record(MYSQL *mysql,sensor_t *info);
 int get_latest_record(MYSQL *mysql,sensor_t *info,int id);
 int get_absolute_record(MYSQL *mysql,sensor_t *info,int id,char * start_time,char *end_time);
+long get_relative_record(MYSQL *mysql,sensor_t *info,int id,char *sensor,char *start_time,long record_num);
