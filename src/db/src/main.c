@@ -84,31 +84,6 @@ int main(int argc,char *argv[])
             printf("\n");
         }
     }
-    //j = get_absolute_record(&mysql,sensor_info,98,"20120919171908","20120919171909");
-    //if(j==-1)
-    //return -1;
-    //else{
-    //printf("get_absolute_record:\n");
-    //for(i = 0;i < j;i++){
-    ////printf("node_id:%d\t"          ,node_info[i].node_id);
-    ////printf("parent_id:%d\t"        ,node_info[i].parent_id);
-    ////printf("power:%d\t"            ,node_info[i].power);
-    ////printf("position_x:%6.2lf\t"   ,node_info[i].position.x);
-    ////printf("position_y:%6.2lf\t"   ,node_info[i].position.y);
-
-    //printf("node_id:%d\t"          ,sensor_info[i].node_id);
-    //printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
-    ////printf("photo:%6.2lf\t"        ,sensor_info[i].photo);
-    ////printf("sound:%6.2lf\t"        ,sensor_info[i].sound);
-    ////printf("x_acc:%6.2lf\t"        ,sensor_info[i].x_acc);
-    ////printf("y_acc:%6.2lf\t"        ,sensor_info[i].y_acc);
-    ////printf("x_mag:%6.2lf\t"        ,sensor_info[i].x_mag);
-    ////printf("y_mag:%6.2lf\t"        ,sensor_info[i].y_mag);
-
-    //printf("insert_time:%s\t"      ,sensor_info[i].time);
-    //printf("\n");
-    //}
-    //}
     mysql_close(&mysql);
     return 0;
 }
