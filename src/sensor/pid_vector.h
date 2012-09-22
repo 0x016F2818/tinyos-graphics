@@ -9,7 +9,7 @@ typedef struct pid_info {
 	int     client_fd;
 	pid_t   pid;
 	int     pipe_r;  // pipe write
-	int     pipr_w;  // pipe read
+	int     pipe_w;  // pipe read
 
 	// network info
 	int     id;

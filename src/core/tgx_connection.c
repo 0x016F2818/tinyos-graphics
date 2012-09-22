@@ -173,9 +173,9 @@ void tgx_close_connection            (tgx_cycle_t *tcycle, tgx_connection_t *tco
 {
 	if (!tcycle || !tconn) return;
 
-	/*pthread_mutex_lock(&tcycle_lock);*/
+	pthread_mutex_lock(&tcycle_lock);
 	tgx_event_schedule_unregister(tcycle->tevent, tconn->fd);
-	/*pthread_mutex_unlock(&tcycle_lock);*/
+	pthread_mutex_unlock(&tcycle_lock);
 	tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tconn->fd, 0);
 	tgx_free_connection(tconn);
 }

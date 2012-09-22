@@ -106,7 +106,11 @@ tgx_task_schedule_t* tgx_task_schedule_init(int n_threads)
 			return NULL;
 		}
 	}
+	/*printf("before pthread_getconcurrency() = %d\n", pthread_getconcurrency());*/
 
+	/*pthread_setconcurrency(n_threads);*/
+
+	/*printf("after pthread_getconcurrency() = %d\n", pthread_getconcurrency());*/
 	/*pthread_attr_destroy(&attr);*/
 	
 	// 7. set keep alive
@@ -139,7 +143,7 @@ void tgx_task_schedule_destroy(tgx_task_schedule_t *t_task_sched)
 
 	// 对每一个线程pthread_join， 回收线程资源
 	for (i = 0; i < t_task_sched->n_threads; i++) {
-		DEBUG("pthread join......\n");
+		/*DEBUG("pthread join......\n");*/
 		ret = pthread_join(t_task_sched->tids[i], NULL);
 		if (ret < 0) {
 			log_err("pthread_join():%s\n", strerror(errno));

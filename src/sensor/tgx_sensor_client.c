@@ -68,6 +68,31 @@ void sig_handler(int signo)
 	}
 }
 
+int mypow(int x, int y)
+{
+	int i;
+	int m = 1;
+	for (i = 0; i < y; i++)
+		m *= x;
+	return m;
+}
+
+int to_int(const char *str, int len)
+{
+	int i, j;
+	int sum = 0;
+	char tmp;
+	for (i = len-1; i >=0; i--) {
+		tmp = str[i];
+		for (j = 0; j < 8; j++) {
+			if (tmp & (1 << j)) {
+				sum += mypow(2, j + (len- i - 1) * 8);
+			}
+		}
+	}
+	return sum;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc != 3)
@@ -122,8 +147,52 @@ int main(int argc, char *argv[])
 					}
 
 					int nwrite;
-					printf("write len = %d\n", len);
+#define LEFT  1
+#define RIGHT 2
+					int tmp;
+					/*printf("write len = %d\n", len);*/
 					nwrite = safewrite(srv_source, packet, len);
+					for (i = 0; i < nwrite; i++) {
+						if (i > 7) {
+							if (i % 2 == 0) {
+								switch (i) {
+									case 16: 
+										printf("T:  ");
+										break;
+									case 18:
+										printf("L:  ");
+										break;
+									case 20:
+										printf("S:  ");
+										break;
+									case 22:
+										printf("Ax: ");
+										break;
+									case 24:
+										printf("Ay: ");
+										break;
+									case 26:
+										printf("Mx: ");
+										break;
+									case 28:
+										printf("My: ");
+										break;
+								}
+								printf("%3d ", to_int(packet+i, 2));;
+							}
+						} else {
+							printf("%02x ", packet[i]);
+						}
+						if (i >= 7 && i < nwrite-1) {
+							if (i == 7) printf("( ");
+							else if (i % 2 != 0) {
+								printf(") ( ");
+							}
+						}
+					}
+					printf(")\n");
+					fflush(stdout);
+
 					if (nwrite == -1) {
 						if (errno == EINTR) continue;
 						kill(pid, SIGKILL);

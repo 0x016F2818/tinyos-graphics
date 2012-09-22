@@ -36,13 +36,15 @@ void pid_vector_destroy(pid_vector_t *pv)
 	pv->num_process = 0;
 }
 
-static pid_vector_t* pid_vector_query_by_name(pid_vector_t *pv, char *name)
+static pid_info_t* pid_vector_query_by_name(pid_vector_t *pv, char *name)
 {
+	return NULL;
 
 }
 
-static pid_vector_t* pid_vector_query_by_id  (pid_vector_t *pv, int id)
+static pid_info_t* pid_vector_query_by_id  (pid_vector_t *pv, int id)
 {
+	return NULL;
 	
 }
 
@@ -72,7 +74,7 @@ int pid_vector_query_pipe(pid_vector_t *pv, int id, char *name, int flag)
 		case PIPE_READER:
 			return r->pipe_r;
 		case PIPE_WRITER:
-			return r->pipr_w;
+			return r->pipe_w;
 		default:
 			return -1;
 	}

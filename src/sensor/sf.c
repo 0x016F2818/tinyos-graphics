@@ -26,7 +26,7 @@ struct client_list {
 int unix_check(const char *msg, int result)
 {
 	if (result < 0) {
-		perror(msg);
+		/*perror(msg);*/
 		exit(2);
 	}
 
@@ -53,8 +53,8 @@ void fd_wait(fd_set * fds, int *maxfd, int fd)
 
 void pstatus(void)
 {
-	printf("clients %d, read %d, wrote %d\n", num_clients, packets_read,
-	       packets_written);
+	/*printf("clients %d, read %d, wrote %d\n", num_clients, packets_read,*/
+		   /*packets_written);*/
 }
 
 void forward_packet(const void *packet, int len);
@@ -153,6 +153,10 @@ void open_server_socket(int port)
 	unix_check("bind",
 		   bind(server_socket, (struct sockaddr *)&me, sizeof me));
 	unix_check("listen", listen(server_socket, 0));
+
+
+	/*bind(server_socket, (struct sockaddr *)&me, sizeof me);*/
+	/*listen(server_socket, 0);*/
 }
 
 void check_new_client(void)

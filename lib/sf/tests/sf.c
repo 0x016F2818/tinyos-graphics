@@ -53,8 +53,8 @@ void fd_wait(fd_set * fds, int *maxfd, int fd)
 
 void pstatus(void)
 {
-	printf("clients %d, read %d, wrote %d\n", num_clients, packets_read,
-	       packets_written);
+	/*printf("clients %d, read %d, wrote %d\n", num_clients, packets_read,*/
+		   /*packets_written);*/
 }
 
 void forward_packet(const void *packet, int len);

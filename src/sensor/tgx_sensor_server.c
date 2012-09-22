@@ -12,10 +12,12 @@
 #include <errno.h>
 #include <signal.h>
 #include <mysql.h>
+#include <getopt.h>
 
 #include "sfsource.h"
 #include "sensor.h"
 #include "message.h"
+#include "pid_vector.h"
 
 #ifndef MAX_BUFF_LENGTH
 #define MAX_BUFF_LENGTH 1024
@@ -23,7 +25,7 @@
 
 void log_err(const char *format, ...);
 
-/*static pid_vector_t pv;*/
+static pid_vector_t pv;
 static int id;
 
 // server 采用多进程模型
@@ -76,6 +78,7 @@ int open_interact_udp_socket(int port)
 
 	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 		log_err("bind\n");
+	printf("set udp port done!\n");
 	return sockfd;
 }
 
@@ -100,10 +103,6 @@ void sig_handler(int errno)
 			break;
 	}
 }
-
-int insert_sense_record(MYSQL *mysql,sensor_t info);
-int update_network(MYSQL *mysql,network_t info);
-int update_node_info(MYSQL *mysql,node_t info);
 
 int insert_mesg_to_db(MYSQL *mysql, char *msg, int len)
 {
@@ -143,11 +142,36 @@ int insert_mesg_to_db(MYSQL *mysql, char *msg, int len)
     return 0;
 }
 
+int str_to_argc_argv(char *str, int len, int *argc, char *argv[])
+{
+	char *p = str;
+	// 从第一个不是空格的地方开始
+	while (*p == ' ') p++;
+
+	int i = 0, j;
+	while ((p - str) < len) {
+		j = 0;
+		while (*p != ' ' && (p - str) < len) {
+			argv[i][j++] = *p;
+			p++;
+		}
+		while (*p == ' ' && (p - str) < len) {
+			p++;
+		}
+		i++;
+	}
+
+	*argc = i;
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
+	int i;
+
 	if (argc != 3)
 		log_err("Usage: ./sensor_server [sensor_port] [interactive_port]\n");
-	/*pid_vector_init(&pv);*/
+	pid_vector_init(&pv);
 		
 	int sensor_socket, interact_socket, maxfd;
 	sensor_socket   = open_sensor_tcp_socket  (atoi(argv[1]));
@@ -158,6 +182,7 @@ int main(int argc, char *argv[])
 	socklen_t in_len;
 	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 	fd_set readfds, testfds, errorfds;
+	unsigned char msg[MAX_BUFF_LENGTH] = {0};
 
 	FD_ZERO(&readfds);
 	FD_SET (sensor_socket,   &readfds);
@@ -185,12 +210,12 @@ int main(int argc, char *argv[])
 			}
 			if (FD_ISSET(fd, &testfds)) {
 				if (fd == sensor_socket) {
-					/*pid_info_t *pinfo;*/
-					/*pinfo = calloc(1, sizeof(pid_info_t));*/
-					/*if (pinfo == NULL)*/
-						/*log_err("calloc\n");*/
+					pid_info_t *pinfo;
+					pinfo = calloc(1, sizeof(pid_info_t));
+					if (pinfo == NULL)
+						log_err("calloc\n");
 
-					/*int fd[2];*/
+					int fd[2];
 					pid_t pid;
 
 					if ((in_fd = accept(sensor_socket, NULL, NULL)) < 0)
@@ -199,27 +224,27 @@ int main(int argc, char *argv[])
 						// 这一块将来可以先read(in_fd)
 					}
 
-					/*if (pipe(fd) < 0)*/
-						/*log_err("pipe\n");*/
+					if (pipe(fd) < 0)
+						log_err("pipe\n");
 
-					/*pinfo->client_fd = infd;*/
-					/*pinfo->pipe_r  = fd[0];*/
-					/*pinfo->pipe_w = fd[1];*/
-					/*pinfo->id = net_id++;*/
+					pinfo->client_fd = in_fd;
+					pinfo->pipe_r  = fd[0];
+					pinfo->pipe_w = fd[1];
+					pinfo->id = id++;
 
 					getnameinfo(&in_addr, in_len,
 					hbuf, sizeof hbuf,
 					sbuf, sizeof sbuf,
 					NI_NUMERICHOST | NI_NUMERICSERV);
-					/*snprintf(pinfo->name, MAX_BUFF_LENGTH, "%s:%s", sbuf, hbuf);*/
+					snprintf(pinfo->name, MAX_BUFF_LENGTH, "%s:%s", sbuf, hbuf);
 
 					// 进程散结构
 					{
 						if ((pid = fork()) < 0) 
 							log_err("fork\n");
 						else if (pid == 0) { // child
-							/*int pipe_r  = fd[0],*/
-							/*pipe_w = fd[1];*/
+							int pipe_r = fd[0];
+							int pipe_w = fd[1];
 
 							// 1. 构造select 将pipe_r, in_fd加入到fd_set中, 监视读事件
 							//    1) 对于pipe_r读事件解析并且转发给sensor_client
@@ -240,9 +265,8 @@ int main(int argc, char *argv[])
 							}
 
 										
-							int nread, i;
+							int nread;
 							while (1) {
-								unsigned char msg[MAX_BUFF_LENGTH] = {0};
 								nread = read(in_fd, msg, MAX_BUFF_LENGTH);
 								if (nread == -1) {
 									if (errno == EINTR) continue;
@@ -258,21 +282,110 @@ int main(int argc, char *argv[])
 							}
 							mysql_close(&mysql);
 						} else if (pid > 0) { // parent
-							/*pinfo->pid = pid;*/
-							/*pid_vector_add(&pv, pinfo);*/
+							pinfo->pid = pid;
+							pid_vector_add(&pv, pinfo);
 							close(in_fd);
 						}
 					}
 
 				} else if (fd == interact_socket) {
-					char msg[MAX_BUFF_LENGTH] = {0};
 					// 1. readfrom()
 					// 2. 解析mesg
 					// 3. 将请求就地执行或者传给对应的子进程
-				}
-			}
-		}
-	}
+					int nread;
+					struct sockaddr_in cliaddr;
+					socklen_t len;
+					char msg[MAX_BUFF_LENGTH] = {0};
+					nread = recvfrom(interact_socket, msg, MAX_BUFF_LENGTH, 
+							0, (struct sockaddr *)&cliaddr, &len);
+
+
+					// 这部分处理用户的输入, 并且做一个转发
+					{
+						// 由于手工处理用户输入通常繁琐因此这里处理用户输入
+						// 打算构造一个argc, argv， 然后使用getopt_long函数
+						// 来辅助解析
+						int argc_x;
+						char *argv_x[128];
+						
+						for (i = 0; i < 128; i++)
+							argv_x[i] = calloc(128, sizeof(char));
+
+							
+						str_to_argc_argv(msg, nread, &argc_x, argv_x);
+
+						// 1. 解析命令行参数
+						// 命令分为get/set， demos:
+						//      get --sysinfo
+						//      set --ip 127.0.0.1 --port 8901 --periodic 1000
+						//      set --id 1 --periodic 500
+						
+						char ip[128], port[16], 
+							 periodic[16], id[16];
+
+						int flag = 0;
+
+						while (1) {
+							char ch;
+							int option_index = 0;
+							static struct option long_options[] = {
+								{"ip",          required_argument,  0, 0},
+								{"port",	    required_argument,  0, 0},
+								{"id",	        required_argument,  0, 0},
+								{"periodic",    required_argument,  0, 0},
+								{"sysinfo",     no_argument,        0, 0},
+								{0, 0, 0, 0}
+							};
+
+							ch = getopt_long(argc, argv, "",
+									long_options, &option_index);
+							if (ch == -1)
+								break;
+
+							switch (ch) {
+								case 0:
+									if (strstr(long_options[option_index].name, "ip") != NULL) {
+										snprintf(ip, 128, "%s", optarg);
+										flag += 8;
+									} else if (strstr(long_options[option_index].name, "port") != NULL) {
+										snprintf(port, 16, "%s", optarg);
+										flag += 4;
+									} else if (strstr(long_options[option_index].name, "id") != NULL) {
+										snprintf(id, 16, "%s", optarg);
+										flag += 2;
+									} else if (strstr(long_options[option_index].name, "periodic") != NULL) {
+										snprintf(periodic, 16, "%s", optarg);
+										flag += 1;
+									}
+									break;
+								default:
+									printf("invalid option: %s\n", optarg);
+									break;
+							} // switch
+						} // while
+
+
+						// 2. 根据结果做相应的动作
+						switch (flag) {
+							case 3:
+								// 按id找到对应的管道， 然后向管道内写入控制信息
+								break;
+							case 13:
+							case 15:
+								// 按ip:port找到对应的管道， 然后向管道内写入控制信息
+								break;
+							default:
+								break;
+						}
+					}
+
+				} // else if (fd == interact_socket)
+
+			} // if (FD_ISSET(fd, &testfds))
+
+		} // for (fd = 0; fd < maxfd + 1; fd++)
+
+	} // top while loop
 
 	return 0;
 }
