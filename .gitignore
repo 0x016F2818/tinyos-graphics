@@ -11,3 +11,4 @@ tags
 *.la
 tgx_sensor_server
 tgx_sensor_client
+*.wsn
