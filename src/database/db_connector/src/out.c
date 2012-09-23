@@ -20,11 +20,15 @@ int all_node_info(MYSQL *mysql,node_t *info){
     results = mysql_store_result(mysql);
     if (results) {
         while((record = mysql_fetch_row(results))){
-            info[i].node_id      = atoi(record[0]);
-            info[i].parent_id    = atoi(record[1]);
-            info[i].power       = atoi(record[4]);
-            info[i].position.x  = strtod(record[5],NULL);
-            info[i].position.y  = strtod(record[6],NULL);
+            info[i].network_id   = atoi(record[0]);
+            info[i].node_id      = atoi(record[2]);
+            info[i].parent_id    = atoi(record[3]);
+            info[i].power       = atoi(record[6]);
+            info[i].position.x  = strtod(record[7],NULL);
+            info[i].position.y  = strtod(record[8],NULL);
+            strcpy(info[i].network_name,record[1]);
+            strcpy(info[i].work_state,record[4]);
+            strcpy(info[i].node_status,record[5]);
             i++;
         } 
         mysql_free_result(results);
@@ -71,14 +75,16 @@ long all_record(MYSQL *mysql,sensor_t *info){
     results = mysql_store_result(mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
-            info[i].node_id = atoi(record[0]);
-            info[i].temp  = strtod(record[1],NULL);
-            info[i].photo = strtod(record[2],NULL);
-            info[i].sound = strtod(record[3],NULL);
-            info[i].x_acc = strtod(record[4],NULL);
-            info[i].y_acc = strtod(record[5],NULL);
-            info[i].x_mag = strtod(record[6],NULL);
-            info[i].y_mag = strtod(record[7],NULL);
+            info[i].network_id  = atoi(record[0]);
+            info[i].node_id     = atoi(record[2]);
+            info[i].temp  = strtod(record[3],NULL);
+            info[i].photo = strtod(record[4],NULL);
+            info[i].sound = strtod(record[5],NULL);
+            info[i].x_acc = strtod(record[6],NULL);
+            info[i].y_acc = strtod(record[7],NULL);
+            info[i].x_mag = strtod(record[8],NULL);
+            info[i].y_mag = strtod(record[9],NULL);
+            strcpy(info[i].network_name,record[1]);
             i++;
         }
         mysql_free_result(results);
@@ -105,13 +111,13 @@ long all_record(MYSQL *mysql,sensor_t *info){
 //
 //RETURNS:the line number of the records
 //#################################################
-int get_latest_record(MYSQL *mysql,sensor_t *info,int id){
+int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_latest_record(%d,'temperature')",id);
+    sprintf(command,"call sp_get_latest_record(%d,'%s')",nod_id,sense);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
@@ -153,13 +159,13 @@ int get_latest_record(MYSQL *mysql,sensor_t *info,int id){
 //
 //RETURNS:the line number of the records
 //#################################################
-int get_absolute_record(MYSQL *mysql,sensor_t *info,int id,char * start_time,char *end_time){
+int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int id,char sense[50],char * start_time,char *end_time){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_absolute_record(%d,'temperature',%s,%s)",id,start_time,end_time);
+    sprintf(command,"call sp_get_absolute_record(%d,'%s',%s,%s)",id,sense,start_time,end_time);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
@@ -201,13 +207,13 @@ int get_absolute_record(MYSQL *mysql,sensor_t *info,int id,char * start_time,cha
 //
 //RETURNS:the line number of the records
 //#################################################
-long get_relative_record(MYSQL *mysql,sensor_t *info,int id,char *sensor,char *start_time,long record_num){
+long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int id,char *sensor,char *start_time,long record_num){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_relative_record(%d,'temperature',%s,%ld)",id,start_time,record_num);
+    sprintf(command,"call sp_get_relative_record(%d,'%s',%s,%ld)",id,sensor,start_time,record_num);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
