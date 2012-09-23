@@ -5,33 +5,40 @@ function drawRotatedColumn() {
             chart: {
                 renderTo: 'rotatedcolumn',
                 type: 'column',
-                margin: [ 50, 50, 100, 80]
+                // margin: [ 50, 50, 100, 80]
             },
             title: {
                 text: 'World\'s largest cities per 2008'
             },
             xAxis: {
                 categories: [
-                    'Tokyo',
-                    'Jakarta',
-                    'New York',
-                    'Seoul',
-                    'Manila',
-                    'Mumbai',
-                    'Sao Paulo',
-                    'Mexico City',
-                    'Dehli',
-                    'Osaka',
-                    'Cairo',
-                    'Kolkata',
-                    'Los Angeles',
-                    'Shanghai',
-                    'Moscow',
-                    'Beijing',
-                    'Buenos Aires',
-                    'Guangzhou',
-                    'Shenzhen',
-                    'Istanbul'
+                    // 'Tokyo',
+                    // 'Jakarta',
+                    // 'New York',
+                    // 'Seoul',
+                    // 'Manila',
+                    // 'Mumbai',
+                    // 'Sao Paulo',
+                    // 'Mexico City',
+                    // 'Dehli',
+                    // 'Osaka',
+                    // 'Cairo',
+                    // 'Kolkata',
+                    // 'Los Angeles',
+                    // 'Shanghai',
+                    // 'Moscow',
+                    // 'Beijing',
+                    // 'Buenos Aires',
+                    // 'Guangzhou',
+                    // 'Shenzhen',
+                    // 'Istanbul'
+                    'Moday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thusday',
+                    'Friday',
+                    'Saturday',
+                    'Sunday'
                 ],
                 labels: {
                     rotation: -45,
@@ -48,9 +55,9 @@ function drawRotatedColumn() {
                     text: 'Population (millions)'
                 }
             },
-            legend: {
-                enabled: false
-            },
+            // legend: {
+            //     enabled: false
+            // },
             tooltip: {
                 formatter: function() {
                     return '<b>'+ this.x +'</b><br/>'+
@@ -58,11 +65,38 @@ function drawRotatedColumn() {
                         ' millions';
                 }
             },
+            plotOptions: {
+                column: {
+                    stacking: 'percent'
+                }
+            },
             series: [{
-                name: 'Population',
-                data: [34.4, 21.8, 20.1, 20, 19.6, 19.5, 19.1, 18.4, 18,
-                       17.3, 16.8, 15, 14.7, 14.5, 13.3, 12.8, 12.4, 11.8,
-                       11.7, 11.2],
+                name: 'Max',
+                // data: [34.4, 21.8, 20.1, 20, 19.6, 19.5, 19.1, 18.4, 18,
+                //        17.3, 16.8, 15, 14.7, 14.5, 13.3, 12.8, 12.4, 11.8,
+                //        11.7, 11.2],
+                data: [34.4, 21.8, 20.1, 20, 19.6, 19.5, 19.1],
+                dataLabels: {
+                    enabled: true,
+                    rotation: -90,
+                    color: '#FFFFFF',
+                    align: 'right',
+                    x: -3,
+                    y: 10,
+                    formatter: function() {
+                        return this.y;
+                    },
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            }, {
+                name: 'Min',
+                // data: [34.4, 21.8, 20.1, 20, 19.6, 19.5, 19.1, 18.4, 18,
+                //        17.3, 16.8, 15, 14.7, 14.5, 13.3, 12.8, 12.4, 11.8,
+                //        11.7, 11.2],
+                data:[17.3, 16.8, 15, 14.7, 14.5, 13.3, 12.8],
                 dataLabels: {
                     enabled: true,
                     rotation: -90,
@@ -82,6 +116,55 @@ function drawRotatedColumn() {
         });
     });
 }
+
+
+function drawRotatedColumn2() {
+    var chart;
+    $(document).ready(function() {
+        chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'rotatedcolumn',
+                type: 'column'
+            },
+            title: {
+                text: 'Stacked column chart'
+            },
+            xAxis: {
+                categories: ['Apples', 'Oranges', 'Pears', 'Grapes', 'Bananas']
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Total fruit consumption'
+                }
+            },
+            tooltip: {
+                formatter: function() {
+                    return ''+
+                        this.series.name +': '+ this.y +' ('+ Math.round(this.percentage) +'%)';
+                }
+            },
+            plotOptions: {
+                column: {
+                    stacking: 'percent'
+                }
+            },
+            series: [{
+                name: 'John',
+                data: [5, 3, 4, 7, 2]
+            }, {
+                name: 'Jane',
+                data: [2, 2, 3, 2, 1]
+            }, {
+                name: 'Joe',
+                data: [3, 4, 4, 2, 5]
+            }]
+        });
+    });
+    
+};
+
+
 
 function drawMaxandMinColumn() {
     var chart;

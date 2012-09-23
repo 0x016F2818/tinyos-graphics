@@ -25,15 +25,16 @@ function showEnergy(value) {
 }
 
 
-$(function() {
-    for (i = 0; i < n; i++) {
-        id = i+1;
-        $("#energy").append(
-            "Node "+ id
-        ).append(
-            showEnergy(energy[i])
-        ).css({
-            'color':'#000000'
-        })
-    }
-})
+// The before version use these to test
+// $(function() {
+//     for (i = 0; i < n; i++) {
+//         id = i+1;
+//         $("#energy").append(
+//             "Node "+ id
+//         ).append(
+//             showEnergy(energy[i])
+//         ).css({
+//             'color':'#000000'
+//         })
+//     }
+// })

@@ -20,6 +20,7 @@ struct tgx_connection_s {
 	tgx_string_t						*httpRespBody;
 
 	pthread_mutex_t						*lock;
+	int									travelling:1;
 
 	int									rw_pos;
 	struct tgx_http_parser_s {

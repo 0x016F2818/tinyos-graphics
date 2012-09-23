@@ -70,7 +70,6 @@
     <!-- <script type="text/javascript" src="./lib/prototype.js"></script> -->
     <!-- <script type="text/javascript" src="./lib/jstorage.min.js"></script> -->
 
-    <script type="text/javascript" src="./js/clock.js"></script>
     <script type="text/javascript" src="./js/energy.js"></script>
 
   </head>
@@ -165,7 +164,7 @@
         <h3 id="myModalLabel">LICENCE</h3>
       </div>
       <div style="text-align: center;">
-        <iframe src="LICENCE" frameborder:0 height="410px" width="90%"></iframe>
+        <iframe src="LICENCE.txt" frameborder:0 height="410px" width="90%"></iframe>
       </div>
       <div class="modal-footer">
         <!-- <a class="reference external" ><button class="btn btn-primary" >Ok, Send</button></a> -->
@@ -237,12 +236,15 @@
           <div class="well sidebar-nav">
             <li class="nav-header">Now Time</li>
             <!-- Clock -->
+            <!-- <div id="clock"> </div> -->
             <!-- This is for IE or Firefox -->
-            <div id="clockIEFF" class="hide" style="width:100%;height: 30%;position: relative;"> Enjoy the best feature with <a href="https://www.google.com/intl/en/chrome/browser/" target="_blank">chrome</a><br /> <span id="clock2"></span></div>
+            <div id="clockIEFF" class="hide" style="width:100%;height: 30%;position: relative;"> Enjoy the best feature with the newest <a href="https://www.google.com/intl/en/chrome/browser/" target="_blank">chrome</a><br /> 
+              <span id="clock2"></span>
+            </div>
             <!-- This is for chrome(This is my favourite browser) -->
             <div id="clockSVG" style="width:100%;height: 30%;position: relative;">
               <!-- viewBox is coordinate system, width and height are on-screen size -->
-              <svg id="clock" viewBox="0 0 100 100"> 
+              <svg id="clock" viewBox="0 0 100 100">
                 <defs>   <!-- Define a filter for drop-shadows -->
                   <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur" />
@@ -278,9 +280,18 @@
                 </g>
               </svg>
             </div> <!-- Clock End -->
-
+            <script type="text/javascript" src="./js/clock.js"></script>
 
           </div>
+
+          <div class="well sidebar-nav" id="nodeNetwork">
+            <ul class="nav nav-list nav-pills nav-stacked">
+              <li class="nav-header">Node Network</li>
+              <p>Here will be show the node network</p>
+            </ul>
+          </div>
+
+          <!-- </div> -->
           <div class="well sidebar-nav">
             <ul class="nav nav-list nav-pills nav-stacked">
               <li class="nav-header">System Information</li>
@@ -289,22 +300,22 @@
               <!-- <iframe src="http://127.0.0.1:8001" frameborder:0 height="100%" width="100%"></iframe> -->
             </ul>
           </div>
+
         </div> <!-- Span 2 End -->
 
-        <div class="span10" >
-          <!-- This is a loading.... -->
-          <img id="loader" src="./imgs/loader.gif" class="loader" alt="loading..." style=""/>
-          <!-- Here is the node distribute -->
-          <div id="sigma-node" class="sigma-parent"></div>
-        </div>
+        <div class="span10" id="network">
 
+        </div> <!-- span 10 network end-->
+        
       </div>
     </div> <!-- Layoyt end -->
 
-  </body>
-  <script type="text/javascript" src="./js/node.js"></script>
-  <script type="text/javascript" src="./js/drawNode.js"></script>
-  <script type="text/javascript" src="./js/dataDispatch.js"></script>
-  <script type="text/javascript" src="./js/ajaxfun.js"></script>
-  <script type="text/javascript" src="./js/indexControl.js"></script>
+</body>
+
+<script type="text/javascript" src="./js/nodeBasicInfo.js"></script> 
+<script type="text/javascript" src="./js/ajaxRequest.js"></script>
+<script type="text/javascript" src="./js/drawNode.js"></script>
+<script type="text/javascript" src="./js/drawNetworkChart.js"></script>
+<script type="text/javascript" src="./js/indexControl.js"></script>
+
 </html>

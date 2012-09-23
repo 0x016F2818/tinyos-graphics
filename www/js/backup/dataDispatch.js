@@ -6,7 +6,7 @@ var nodeCount = 4;
 var isDraw = false;
 var isDrawSpline = false;
 
-function dispatch(data) {
+function getNodeBasicInformation(data) {
     var i = 0, isExist = false;
 
     for( i = 0; i < nodeSlot.length; i++ ) {
@@ -27,19 +27,22 @@ function dispatch(data) {
         n.parentId = data["parentId"];
         n.energy = 44;
         n.coordinate = new coordinate(data["position_x"], data["position_y"]);
-        n.addTemp(data["temp"]);
-        n.addPhoto(data["photo"]);
-        n.addSound(data["sound"]);
+
+        // this will remove a place where want these data. For example: temperatuer.html
+        // n.addTemp(data["temp"]);
+        // n.addPhoto(data["photo"]);
+        // n.addSound(data["sound"]);
+
         nodeSlot.push(n);
     }
     if(nodeSlot.length === nodeCount && !isDraw) {
         drawNode(nodeSlot);
         isDraw = true;
     }
-    if(nodeSlot[1] && nodeSlot[1].temp && nodeSlot[1].temp.length == 50 && !isDrawSpline) {
-        drawSpline("temp", nodeSlot[1].temp);
-        isDraw = true;
-    }
+    // if(nodeSlot[1] && nodeSlot[1].temp && nodeSlot[1].temp.length == 50 && !isDrawSpline) {
+    //     drawSpline("temp", nodeSlot[1].temp);
+    //     isDraw = true;
+    // }
 }
 
 // function dispatch(data) {

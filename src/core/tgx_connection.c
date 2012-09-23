@@ -122,6 +122,7 @@ tgx_connection_t *tgx_new_connection(tgx_cycle_t *tcycle, int fd)
 	tconn->httpRespHeader = calloc(1, sizeof(tgx_string_t));
 	tconn->httpRespBody   = calloc(1, sizeof(tgx_string_t));
 	tconn->lock = calloc(1, sizeof(pthread_mutex_t));
+	tconn->travelling = 0;
 	tconn->http_parser = calloc(1, sizeof(struct tgx_http_parser_s));
 
 	if (tconn->httpReqBuf == NULL || tconn->httpRespHeader == NULL || 
@@ -154,6 +155,7 @@ void tgx_free_connection(tgx_connection_t *tconn)
 	if (tconn->lock) {
 		pthread_mutex_destroy(tconn->lock);
 		free(tconn->lock);
+		tconn->lock = NULL;
 	}
 
 	if (tconn->fd > 0) close(tconn->fd);
@@ -176,7 +178,8 @@ void tgx_close_connection            (tgx_cycle_t *tcycle, tgx_connection_t *tco
 	pthread_mutex_lock(&tcycle_lock);
 	tgx_event_schedule_unregister(tcycle->tevent, tconn->fd);
 	pthread_mutex_unlock(&tcycle_lock);
-	tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tconn->fd, 0);
+	if (!tconn->travelling)
+		tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_DEL, tconn->fd, 0);
 	tgx_free_connection(tconn);
 }
 
@@ -303,6 +306,11 @@ int tgx_connection_handler_write_header     (tgx_cycle_t *tcycle, void *context,
 
 	DEBUG("\n");
 	int nWrite;
+	if (!tconn->httpRespHeader->data || tconn->httpRespHeader->size == 0) {
+		tgx_close_connection(tcycle, tconn);
+		return -1;
+	}
+
 	int headerLength = strlen(tconn->httpRespHeader->data);
 	while (1) {
 		DEBUG("\n");
@@ -509,6 +517,7 @@ static int _task_start_travelling               (void *context)
 		log_err("tgx_event_ctl() error\n");
 		return -1;
 	}
+	wrapper_context->tconn->travelling = 1;
 	/*************************************/
 	return 0;
 }
@@ -657,7 +666,7 @@ static int _task_get_prepare_write_do           (void *context)
 		{
 			if (tconn->http_parser->http_status == TGX_HTTP_STATUS_404) {
 
-				log_err("404 err, Now response 404.html to browser.\n");
+				log_err("404 err, Now response 404.html path = %s to browser.\n", tcycle->err_page.e_404);
 				strcpy(tconn->http_parser->path, tcycle->err_page.e_404);
 			}
 		}
@@ -671,7 +680,7 @@ static int _task_get_prepare_write_do           (void *context)
 	struct stat statbuf;
 	if (stat(tconn->http_parser->path, &statbuf) < 0) {
 		log_err("fstat():%s\n", strerror(errno));
-		tgx_close_connection(tcycle, tconn);
+		/*tgx_close_connection(tcycle, tconn);*/
 		return -1;
 	}
 
@@ -718,7 +727,11 @@ static int _task_post_prepare_module_on_post    (void *context)
 	int (*user_handler)(tgx_module_http_t *http);
 	char *error;
 
-	DEBUG("\n");
+#include <time.h>
+	clock_t t1, t2;
+	t1 = t2 = clock();
+
+
 	wrapper_context->tconn->dlopen_handle = 
 		dlopen(wrapper_context->tconn->http_parser->path, RTLD_LAZY | RTLD_LOCAL);
 	if (!wrapper_context->tconn->dlopen_handle) {
@@ -735,6 +748,11 @@ static int _task_post_prepare_module_on_post    (void *context)
 		return -1;
 	}
 
+	while (t1 == t2)
+		t2 = clock();
+	DEBUG("loading modules %s takes %lf ms\n", wrapper_context->tconn->http_parser->path, 
+			(double)(t2-t1) / CLOCKS_PER_SEC * 1000);
+
 	// 这里使用了一些淫技 --!
 	wrapper_context->context = user_handler;
 
@@ -748,8 +766,8 @@ static int _task_post_prepare_module_do         (void *context)
 	if (!wrapper_context) {
 		return -1;
 	}
-
 	DEBUG("\n");
+
 	tgx_module_http_t *http = calloc(1, sizeof(tgx_module_http_t));
 	if (!http) return -1;
 
@@ -758,7 +776,9 @@ static int _task_post_prepare_module_do         (void *context)
 
 	// 转化成函数指针， 执行
 	int ret;
+	DEBUG("\n");
 	ret = ((int (*)(tgx_module_http_t *))wrapper_context->context)(http);
+	DEBUG("\n");
 
 	/*free(http);*/
 	return ret;
@@ -766,7 +786,6 @@ static int _task_post_prepare_module_do         (void *context)
 
 static int _task_post_prepare_module_on_complete(void *context, int err)
 {
-	DEBUG("\n");
 	_task_context_wrapper_t *wrapper_context = (_task_context_wrapper_t *)context;
 
 	if (!wrapper_context) {
@@ -798,14 +817,12 @@ static int _task_post_prepare_module_on_complete(void *context, int err)
 static int _task_post_prepare_write_on_post     (void *context)
 {
 	// 还没发现要处理什么
-	DEBUG("\n");
 	return 0;
 }
 
 static int _task_post_prepare_write_do          (void *context)
 {
 
-	DEBUG("\n");
 	// 实际上用户已经填写好了body， 我们要做的就是根据body填写好一份
 	// header即可
 	_task_context_wrapper_t *wrapper_context = (_task_context_wrapper_t *)context;
@@ -843,6 +860,7 @@ static int _task_post_prepare_write_do          (void *context)
 
 	// 测试了一下即使size == strlen(data)， 也就是结尾没有\0， 完全填满了， strlen函数
 	// 返回的结果也是正确的, 这正好符合要求
+	if (!tconn->httpRespBody->data || tconn->httpRespBody->size == 0) return -1;
 	COPY("Content-Length: %d\r\n", strlen(tconn->httpRespBody->data));
 	COPY("\r\n");
 

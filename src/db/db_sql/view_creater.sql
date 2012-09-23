@@ -1,30 +1,46 @@
-create or replace view node_viw as
-    select * from node_tb;
-create or replace view work_state_viw as
-    select * from work_state_tb;
-create or replace view node_status_viw as
-    select * from node_status_tb;
-create or replace view network_viw as
-    select * from network_tb
-    order by node_id
-    with cascaded check option;
-create or replace view sense_viw as
-    select * from sense_tb;
+drop view if exists viw_node;
+drop view if exists viw_network;
+drop view if exists viw_work_state;
+drop view if exists viw_node_status;
+drop view if exists viw_network_segment;
 
-create or replace view temperature_viw as
-    select order_num,node_id,temperature,sense_time,insert_time from sense_tb;
-create or replace view humidity_viw as
-    select order_num,node_id,humidity,sense_time,insert_time from sense_tb;
-create or replace view brightness_viw as
-    select order_num,node_id,brightness,sense_time,insert_time from sense_tb;
-create or replace view microphone_viw as
-    select order_num,node_id,microphone,sense_time,insert_time from sense_tb;
-create or replace view terre_mag_viw as
-    select order_num,node_id,terre_mag_x,terre_mag_y,sense_time,insert_time from sense_tb;
-create or replace view pressure_viw as
-    select order_num,node_id,pressure,sense_time,insert_time from sense_tb;
-create or replace view accelerate_viw as
-    select order_num,node_id,accelerate_x,accelerate_y,sense_time,insert_time from sense_tb;
-create or replace view shoke_viw as
-    select order_num,node_id,shoke,sense_time,insert_time from sense_tb;
+drop view if exists viw_sense;
+drop view if exists viw_temperature;
+drop view if exists viw_humidity;
+drop view if exists viw_brightness;
+drop view if exists viw_microphone;
+drop view if exists viw_terre_mag;
+drop view if exists viw_pressure;
+drop view if exists viw_accelerate;
+drop view if exists viw_shoke;
+
+create or replace view viw_node as
+    select * from tb_node;
+create or replace view viw_work_state as
+    select * from tb_work_state;
+create or replace view viw_node_status as
+    select * from tb_node_status;
+create or replace view viw_network as
+    select * from tb_network;
+create or replace view viw_network_segment as
+    select * from tb_network_segment;
+create or replace view viw_sense as
+    select * from tb_sense;
+
+create or replace view viw_temperature as
+    select order_num,network_id,node_id,temperature,sense_time,insert_time from tb_sense;
+create or replace view viw_humidity as
+    select order_num,network_id,node_id,humidity,sense_time,insert_time from tb_sense;
+create or replace view viw_brightness as
+    select order_num,network_id,node_id,brightness,sense_time,insert_time from tb_sense;
+create or replace view viw_microphone as
+    select order_num,network_id,node_id,microphone,sense_time,insert_time from tb_sense;
+create or replace view viw_terre_mag as
+    select order_num,network_id,node_id,terre_mag_x,terre_mag_y,sense_time,insert_time from tb_sense;
+create or replace view viw_pressure as
+    select order_num,network_id,node_id,pressure,sense_time,insert_time from tb_sense;
+create or replace view viw_accelerate as
+    select order_num,network_id,node_id,accelerate_x,accelerate_y,sense_time,insert_time from tb_sense;
+create or replace view viw_shoke as
+    select order_num,network_id,node_id,shoke,sense_time,insert_time from tb_sense;
 

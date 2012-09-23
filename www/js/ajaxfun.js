@@ -1,8 +1,8 @@
 $(function() {
-        setInterval(go, 300);
+        setInterval(go, 200);
 });
 
-var xmlhttp, alerted, JSONalerted=false, readyStatealerted=false;
+var xmlhttp, alerted;
 /*@cc_on*/
 /*@if (@_jscript_version >= 5)
   try {
@@ -30,22 +30,21 @@ if (!xmlhttp && !alerted) {
 function RSchange() {
     if (xmlhttp.readyState == 4) {
         var jsondata = xmlhttp.responseText;
-        if(jsondata !== undefined) {
+        if(jsondata != undefined) {
             var data = JSON.parse(xmlhttp.responseText);
             //Function dispatch define in data.js
             dispatch(data);
         }
         // else
-        //     if(!JSONalerted) {
-        //         alert("Sorry. There is no data. Maybe that server is donw now.");
-        //         JSONalerted = true;
+        //     if(!alerted) {
+        //         alert("Sorry. The server is donw now.");
+        //         alerted = false;
         //     }
     } 
     // else {
-    //     if(!readyStatealerted) {
-    //         alert("Sorry, maybe our server is shutdown now!");
-    //         // $("#myAlert").removeClass("hide");
-    //         readyStatealerted = true;
+    //     if(!alerted) {
+    //         alert("Sorry, please comfire the network!");
+    //         alerted = false;
     //     }
     // }
 }

@@ -1,3 +1,10 @@
+/**
+* nodeSlot is to store the ndoe
+*/
+var nodeSlot=new Array();
+var nodeCount = 3;
+var isDraw = false;
+
 function coordinate(x, y) {
     this.x = x;
     this.y = y;

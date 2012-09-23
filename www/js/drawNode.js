@@ -1,9 +1,13 @@
 // var isStarted = false;
-var drawNode = function(nodeSlot) {
+/**
+ * draw the node distribute
+ * nodeSlot is where the node information(id, position_x, position_y, energy) storage
+ **/
+var drawNode = function(networkID, networkName, nodeSlot) {
     var rootSize = 15;
-
+    var sigmaNodeName = '#sigma-node' + networkID;
     // Instanciate sigma.js and customize it :
-    var sigInst = sigma.init($('#sigma-node')[0]).drawingProperties({
+    var sigInst = sigma.init($(sigmaNodeName)[0]).drawingProperties({
         defaultLabelColor: '#000',
         // defaultLabelSize:
         // defaultLabelBGColor:
@@ -16,16 +20,17 @@ var drawNode = function(nodeSlot) {
         minEdgeSize:4,
         maxEdgeSize:10
     }).mouseProperties({
-        maxRatio:4
+        maxRatio:8
         // mouseEnable:
     });
-    $('#loader').addClass("hide");
+
+    $('#loader'+networkID).addClass("hide");
     var i, N = nodeSlot.length;
 
     for(i = 0; i < N; i++){
         sigInst.addNode(nodeSlot[i].nodeId,{
-            'x': nodeSlot[i].coordinate.x,
-            'y': nodeSlot[i].coordinate.y,
+            'x': nodeSlot[i].position_x,
+            'y': nodeSlot[i].position_y,
             'label': 'Node '+ nodeSlot[i].nodeId,
             'size': 14,
             // 'color': 'rgb('+Math.round(Math.random()*256)+','+
@@ -50,8 +55,8 @@ var drawNode = function(nodeSlot) {
 
         //show node information
         function nodeInfoDisplay(node) {
-            return  "X:" + node.coordinate.x +"<br />"+
-                "Y:" + node.coordinate.y +"<br />"+
+            return  "X:" + node.position_x +"<br />"+
+                "Y:" + node.position_y +"<br />"+
                 showEnergy(node.energy);
             // return  "X:" + nodeSlot[i].coordinate.x +"<br />"+
             //         "Y:" + nodeSlot[i].coordinate.y +"<br />"+
@@ -95,7 +100,7 @@ var drawNode = function(nodeSlot) {
                 'width': '155px'
             });
             // $('ul',popUp).css('margin','0 0 0 20px');
-            $('#sigma-node').append(popUp);
+            $(sigmaNodeName).append(popUp);
         }
 
         function hideNodeInfo(event) {
@@ -108,7 +113,14 @@ var drawNode = function(nodeSlot) {
         function clickNode() {
             if(overNode) {
                 // drawSpline("temp", nodeSlot[getPosition(nodeID, nodeSlot)]);
-                window.location = "./nodeinfo.htm";
+                // cookie
+                if(navigator.cookieEnabled)
+                    document.cookie = "requestNode" + "=" + encodeURIComponent(nodeID);
+
+                // localStorage
+                // var name = "requestNode"+nodeID;
+                // localStorage.setItem(name, nodeID);
+                window.location = "./nodeinfo.htm?networkID="+networkID+"&&networkName="+networkName+"&&nodeID="+nodeID;
                 overNode = false;
             }
         }
@@ -145,7 +157,7 @@ var drawNode = function(nodeSlot) {
                 'width': '155px'
             });
             // $('ul',popUp).css('margin','0 0 0 20px');
-            $('#sigma-node').append(popUp);
+            $(sigmaNodeName).append(popUp);
         }
 
         function myContentMenuHiden(event) {
@@ -160,9 +172,11 @@ var drawNode = function(nodeSlot) {
         }).bind('outnodes', function() {
             hideNodeInfo.apply(self, arguments);
         });
-        document.getElementById("sigma-node").addEventListener('dblclick', clickNode, false);
+        document.getElementById("sigma-node"+networkID).addEventListener('dblclick', clickNode, false);
+        // $(sigmaNodeName).addEventListener('dblclick', clickNode, false);
         
-        $("#sigma-node").bind("contextmenu", function() { return false; });
+        // turn off the right click menu
+        $(sigmaNodeName).bind("contextmenu", function() { return false; });
         // $("#sigma-node").mousedown(function(event) {
         //     if(3 === event.which) {
         //         alert("this is icecream");
@@ -176,5 +190,6 @@ var drawNode = function(nodeSlot) {
             sigInst.addEdge(i,nodeSlot[i].nodeId,nodeSlot[i].parentId);
         }
     }
+
     sigInst.draw();
 }

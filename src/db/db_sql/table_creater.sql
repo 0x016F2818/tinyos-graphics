@@ -1,44 +1,55 @@
-drop table if exists network_tb;
-drop table if exists sense_tb;
-drop table if exists node_tb;
-drop table if exists work_state_tb;
-drop table if exists node_status_tb;
+drop table if exists tb_network;
+drop table if exists tb_sense;
+drop table if exists tb_node;
+drop table if exists tb_work_state;
+drop table if exists tb_node_status;
+drop table if exists tb_network_segment;
 
-create table if not exists node_status_tb(
+create table if not exists tb_node_status(
     node_status     smallint     primary key auto_increment,
-    status_name     varchar(10)    unique not null
+    status_name     char(50)     unique not null
     )engine = innodb;
 
-create table if not exists work_state_tb(
+create table if not exists tb_work_state(
     work_state      smallint     primary key auto_increment,
-    state_name      varchar(10)    unique not null
-    )engine=innodb;
+    state_name      char(50)     unique not null
+    )engine = innodb;
 
-create table if not exists node_tb(
+create table if not exists tb_network_segment(
+    network_id      int             unique not null auto_increment,
+    network_name    char(50)     unique not null,
+    primary key(network_id)
+    )engine = innodb;
+
+create table if not exists tb_node(
+    network_id      int             not null,
     node_id         int             not null,
-    parent_id       int             not null,
     work_state      smallint        not null,
     node_status     smallint        not null,
     power           int             not null,
     GPS             point           not null,
     update_time     timestamp       default current_timestamp on update current_timestamp,
-    primary key(node_id),
-    foreign key(work_state) references work_state_tb(work_state),
-    foreign key(node_status) references node_status_tb(node_status)
+
+    primary key(network_id,node_id),
+    foreign key(work_state) references tb_work_state(work_state),
+    foreign key(node_status) references tb_node_status(node_status)
+    /*foreign key(network_id,node_id) references tb_network_segment(network_id)*/
     )engine = innodb;
 
-create table if not exists network_tb(
+create table if not exists tb_network(
+    network_id      int             not null,
     node_id         int             not null,
     parent_id       int             not null,
-    quality         int,
-    primary key(node_id,parent_id),
-    foreign key(node_id) references node_tb(node_id),
-    foreign key(parent_id) references node_tb(node_id)
+    quality         int             not null default 0,
+    primary key(network_id,node_id),
+    foreign key(network_id,node_id) references tb_node(network_id,node_id),
+    foreign key(network_id,parent_id) references tb_node(network_id,node_id)
     )engine = innodb;
     
-create table if not exists sense_tb(
+create table if not exists tb_sense(
     order_num       bigint          auto_increment primary key,
-    node_id         int,
+    network_id      int             not null,
+    node_id         int             not null,
     temperature     double(8,2),
     humidity        double(8,2),
     brightness      double(8,2),
@@ -53,5 +64,5 @@ create table if not exists sense_tb(
     unknow2         double(8,2),
     sense_time      datetime,
     insert_time     timestamp   default current_timestamp,
-    foreign key(node_id) references node_tb(node_id)
-    )engine =innodb;
+    foreign key(network_id,node_id) references tb_node(network_id,node_id)
+    )engine = innodb;

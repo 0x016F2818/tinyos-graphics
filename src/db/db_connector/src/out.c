@@ -1,4 +1,4 @@
-#include "sensor.h"
+#include "../include/sensor.h"
 
 int get_all_node_info(MYSQL *mysql,node_t *info){
     int ret;

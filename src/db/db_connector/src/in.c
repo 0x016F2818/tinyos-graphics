@@ -1,4 +1,4 @@
-#include "sensor.h"
+#include "../include/sensor.h"
 
 //#################################################
 int update_node_info(MYSQL *mysql,node_t info){

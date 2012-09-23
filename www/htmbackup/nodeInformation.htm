@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta charset="utf-8" />
+    <title>Wireless Sensor Network(Capture Value)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    <link href="./css/bootstrap.min.css" type="text/css" rel="stylesheet" /> 
+    <link href="./css/bootstrap-wysihtml5.css" type="text/css" rel="stylesheet" />
+    <link href="./css/bootstrap-responsive.min.css" type="text/css" rel="stylesheet" />
+    <link href="./css/prettify.css" type="text/css" rel="stylesheet" />
+    <style type="text/css">
+      body {
+      padding-top: 60px;
+      padding-bottom: 40px;
+      <!-- background-image: url("../resource/img/bg.png"); -->
+      background-color: #333;
+      }
+
+      .sidebar-nav {
+      padding: 9px 0;
+      }
+      .loader{
+      <!-- z-index: 1000;  -->
+      position: absolute;
+      text-align: center;
+      top: 40%;
+      <!-- left: 63%; -->
+      <!-- margin: -250px 0 0 -280px; -->
+      margin: autp;
+      box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+      -webkit-background-clip: padding-box;
+      }
+    </style>
+    <STYLE type="text/css">
+      /* icecream sigma.js context : */
+      .sigma-parent {
+      position: relative;
+      border-radius: 4px;
+      -moz-border-radius: 4px;
+      -webkit-border-radius: 4px;
+      background: #222;
+      height: 500px;
+      }
+      .sigma-expand {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      }
+      .buttons-container{
+      padding-bottom: 8px;
+      padding-top: 12px;
+      }
+    </STYLE>
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+        <script src="./js/html5.js"></script>
+        <![endif]-->
+
+    <script type="text/javascript" src="./lib/jquery.js"></script>
+    <script type="text/javascript" src="./lib/bootstrap.min.js"></script>
+    <SCRIPT type="text/javascript" src="./lib/sigma.min.js"></SCRIPT>
+    <script type="text/javascript" src="./lib/highcharts.js"></script>
+    <script type="text/javascript" src="./lib/exporting.js"></script>
+
+    <script type="text/javascript" src="./js/energy.js"></script>
+    <script type="text/javascript" src="./js/pageControl.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Head -->
+    <div id="header" class="navbar navbar-fixed-top" style="position:absolute">
+      <div class="navbar-inner">
+        <div class="container" style="width: auto; padding: 0 20px;">
+          <a class="brand" href="#">Wireless Sensor Network</a>
+          <ul class="nav">
+            <li class="active" data-toggle="modal"><a href="#">Home</a></li>
+            <li><a href="https://github.com/van9ogh/tinyos-web" data-toggle="modal">Github</a></li>
+            <li><a href="#about" data-toggle="modal">About</a></li>
+          </ul>
+          <form class="navbar-search pull-left" style="float:right">
+            <input type="text" class="search-query" placeholder="Search">
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- about -->
+    <div class="modal hide fade" id="about" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h3 id="myModalLabel">Node Information</h3>
+      </div>
+      <div>
+        <p>Hello, icecream</p>
+      </div>
+      <div class="modal-footer">
+        <a class="reference external" href="mailto:van9ogh%40gmail.com"><button class="btn btn-primary" >Content us</button></a>
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Close Me</button>
+      </div>
+    </div>
+
+    <!-- left container and right container -->
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <!-- <div class="span2" style="position: absolute;z-index: 1000;"> -->
+        <div class="span2">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list nav-pills nav-stacked">
+              <li class="nav-header">Wireless Sensor Network</li>
+              <li class="active"><a href="">Node Information</a></li>
+              <li><a href="#">Temperature</a></li>
+              <li><a href="#">Light</a></li>
+              <li><a href="#">Sound</a></li>
+            </ul>
+          </div>
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list nav-pills nav-stacked">
+              <li class="nav-header">System Information</li>
+              <p>Here will be show the system infromation or something that interesting. For example, Chatting</p>
+              <!-- <iframe src="http://127.0.0.1:8001" frameborder:0 height="100%" width="100%"></iframe> -->
+              <!-- <div id="sigma-node" style="width:200px;height:200px;bottom:0px;background-color:#E3E3E3"></div> -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- Here is the right -->
+        <div class="span10">
+          <!-- Real Time Temperature -->
+          <div class="accordion" id="accordionChart1">
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#collapseChart1">
+                  <i class="icon-bar-chart"></i> Real-Time Temperature <i class="icon-minus pull-right"></i>
+                </a>
+              </div>                      
+              <div id="collapseChart1" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                  <div id="temperaturespline" style="min-width: 400px; height: 400px; margin: 0 auto"> </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- A Long Time Temperature -->
+          <div class="accordion" id="accordionChart2">
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#collapseChart2">
+                  <i class="icon-bar-chart"></i> A Long Time Temperature <i class="icon-minus pull-right"></i>
+                </a>
+              </div>                      
+              <div id="collapseChart2" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                  <div id="temperaturespline" style="min-width: 400px; height: 400px; margin: 0 auto"> </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!--  -->
+          <div class="span6">
+            
+          </div>
+          
+        </div> <!-- Span10 end -->
+        
+        <a href="./index.htm"><button class="btn" style="float: right;bottom: 0px; z-index:2;">Back</button></a>
+
+  </body>
+  <!-- <script type="text/javascript" src="./js/drawNode.js" async></script> -->
+  <script type="text/javascript" src="./js/node.js"></script>
+  <script type="text/javascript" src="./js/drawNode.js"></script>
+  <script type="text/javascript" src="./js/dataDispatch.js"></script>
+  <script type="text/javascript" src="./js/ajaxfun.js"></script>
+  <script type="text/javascript" src="./js/spline.js"></script>
+
+</html>

@@ -72,6 +72,22 @@
     <script type="text/javascript" src="./js/energy.js"></script>
     <script type="text/javascript" src="./js/pageControl.js"></script>
 
+    <!-- to get the id of the node which is clicked -->
+    <script type="text/javascript">
+      var info = {},
+      key, value, KeyAndValue, i, 
+      data = location.search.substr(1).split('&&');
+      for(i = 0; i < data.length; i++) {
+         KeyAndValue = data[i].split('=');
+         key = KeyAndValue[0];
+         value = KeyAndValue[1];
+         info[key] = value;
+      }
+      var networkID = info["networkID"],
+      networkName = info["networkName"],
+      nodeID = info["nodeID"];
+    </script>
+
   </head>
 
   <body>
@@ -165,7 +181,7 @@
         <h3 id="myModalLabel">LICENCE</h3>
       </div>
       <div style="text-align: center;">
-        <iframe src="LICENCE" frameborder:0 height="410px" width="90%"></iframe>
+        <iframe src="LICENCE.txt" frameborder:0 height="410px" width="90%"></iframe>
       </div>
       <div class="modal-footer">
         <!-- <a class="reference external" ><button class="btn btn-primary" >Ok, Send</button></a> -->
@@ -226,23 +242,26 @@
         <a class="reference external" href="mailto:van9ogh%40gmail.com"><button class="btn btn-primary" >Regedit</button></a>
         <button class="btn" data-dismiss="modal" aria-hidden="true">Close Me</button>
       </div>
-    </div>
+    </div> <!-- Regedit end -->
 
     <!-- left container and right container -->
     <!-- Here is the left -->
     <div class="container-fluid">
       <div class="row-fluid">
         <!-- <div class="span2" style="position: absolute;z-index: 1000;"> -->
+        
         <div class="span2">
           <div class="well sidebar-nav">
-            <ul class="nav nav-list nav-pills nav-stacked">
+            <ul class="nav nav-list nav-pills nav-stacked" id="navigate">
               <li class="nav-header">Wireless Sensor Network</li>
-              <li><a href="./nodeinfo.htm">Node Information</a></li>
-              <li class="active"><a href="./temperature.htm">Temperature</a></li>
-              <li><a href="./light.htm">Light</a></li>
-              <li><a href="./sound.htm">Sound</a></li>
+              <li id="nodeID" style="font-size:30px"></li>
+              <!-- <li class="active"><a href="#nodeinfo">Node Information</a></li> -->
+              <!-- <li><a href="./temperature.htm?nodeID="+nodeID>Temperature</a></li> -->
+              <!-- <li><a href="#light">Light</a></li> -->
+              <!-- <li><a href="#sound">Sound</a></li> -->
             </ul>
           </div>
+
           <div class="well sidebar-nav">
             <ul class="nav nav-list nav-pills nav-stacked">
               <li class="nav-header">System Information</li>
@@ -251,19 +270,21 @@
               <!-- <div id="sigma-node" style="width:200px;height:200px;bottom:0px;background-color:#E3E3E3"></div> -->
             </ul>
           </div>
-        </div>
+        </div> <!-- span2 end -->
 
         <!-- Here is the right -->
         <div class="span10">
+          
+          <!-- temperature -->
           <!-- Real Time Temperature -->
           <div class="accordion" id="accordionChart1">
             <div class="accordion-group">
               <div class="accordion-heading">
-                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#collapseChart1">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#temperatureChart1">
                   <i class="icon-bar-chart"></i> Real-Time Temperature <i class="icon-minus pull-right"></i>
                 </a>
               </div>                      
-              <div id="collapseChart1" class="accordion-body collapse in">
+              <div id="temperatureChart1" class="accordion-body collapse in">
                 <div class="accordion-inner">
                   <div id="dynamicspline" style="min-width: 400px; height: 400px; margin: 0 auto"> </div>
                 </div>
@@ -275,11 +296,11 @@
           <div class="accordion" id="accordionChart2">
             <div class="accordion-group">
               <div class="accordion-heading">
-                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#collapseChart2">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#temperatureChart2">
                   <i class="icon-bar-chart"></i> A Long Time Temperature <i class="icon-minus pull-right"></i>
                 </a>
               </div>                      
-              <div id="collapseChart2" class="accordion-body collapse in">
+              <div id="temperatureChart2" class="accordion-body collapse in">
                 <div class="accordion-inner">
                   <div id="symbolspline" style="min-width: 400px; height: 400px; margin: 0 auto"> </div>
                 </div>
@@ -291,11 +312,11 @@
           <div class="accordion" id="accordionChart3">
             <div class="accordion-group">
               <div class="accordion-heading">
-                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#collapseChart3">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#temperatureChart3">
                   <i class="icon-bar-chart"></i> A Year Temperature Distribute <i class="icon-minus pull-right"></i>
                 </a>
               </div>                      
-              <div id="collapseChart3" class="accordion-body collapse in">
+              <div id="temperatureChart3" class="accordion-body collapse in">
                 <div class="accordion-inner">
                   <div id="rotatedcolumn" style="min-width: 400px; height: 400px; margin: 0 auto"> </div>
                 </div>
@@ -308,11 +329,11 @@
           <div class="accordion" id="accordionChart4">
             <div class="accordion-group">
               <div class="accordion-heading">
-                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#collapseChart4">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#temperatureChart4">
                   <i class="icon-bar-chart"></i> Max and Min Temperature Distribute <i class="icon-minus pull-right"></i>
                 </a>
               </div>                      
-              <div id="collapseChart4" class="accordion-body collapse in">
+              <div id="temperatureChart4" class="accordion-body collapse in">
                 <div class="accordion-inner">
                   <div id="maxandmincolumn" style="min-width: 400px; height: 400px; margin: 0 auto"> </div>
                 </div>
@@ -324,11 +345,11 @@
           <div class="accordion" id="accordionChart5">
             <div class="accordion-group">
               <div class="accordion-heading">
-                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#collapseChart5">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#temperatureChart5">
                   <i class="icon-bar-chart"></i> A Year Temperature Distribute <i class="icon-minus pull-right"></i>
                 </a>
               </div>                      
-              <div id="collapseChart5" class="accordion-body collapse in">
+              <div id="temperatureChart5" class="accordion-body collapse in">
                 <div class="accordion-inner">
                   <div id="gradientpie" style="min-width: 400px; height: 400px; margin: 0 auto"> </div>
                 </div>
@@ -338,17 +359,24 @@
 
         </div> <!-- Span10 end -->
         
-        <a href="./index.htm"><button class="btn" style="float: right;bottom: 0px; z-index:2;">Back</button></a>
+        <!-- <a href="./index.htm"><button class="btn" style="float: right;bottom: 0px; z-index:2;">Back</button></a> -->
 
   </body>
-  <!-- <script type="text/javascript" src="./js/drawNode.js" async></script> -->
-  <script type="text/javascript" src="./js/node.js"></script>
-  <script type="text/javascript" src="./js/drawNode.js"></script>
-  <script type="text/javascript" src="./js/dataDispatch.js"></script>
-  <script type="text/javascript" src="./js/ajaxfun.js"></script>
+
+  <script type="text/javascript">
+    var nodeinfo = $('<li><a href="./nodeinfo.htm?networkID=' + networkID + '&&networkName=' + networkName +'&&nodeID=' + nodeID +'">Node Information</a></li>');
+    $("#navigate").append(nodeinfo);
+    var temperature = $('<li class="active"><a href="./temperature.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID + '">temperature</a></li>');
+    $("#navigate").append(temperature);
+    var light = $('<li><a href="./light.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID +'">light</a></li>');
+    $("#navigate").append(light);
+    var sound = $('<li><a href="./sound.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID +'">sound</a></li>');
+    $("#navigate").append(sound);
+  </script>
+
+  <script type="text/javascript" src="./js/spline.js"></script>
   <script type="text/javascript" src="./js/pie.js"></script>
   <script type="text/javascript" src="./js/column.js"></script>
-  <script type="text/javascript" src="./js/spline.js"></script>
+  <script type="text/javascript" src="./js/ajaxRequest.js"></script>
   <script type="text/javascript" src="./js/temperature.js"></script>
-
 </html>

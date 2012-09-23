@@ -68,22 +68,24 @@ int TGX_MODULE_HTTP_HANDLER(tgx_module_http_t *http)
 	int flag[nNode];
 	memset(flag, 0, sizeof(flag));
 
-	int network_id, index, isNew;
+	int network_id, index, isNew, network_num = 0;
 	for (i = 0; i < nNode; i++) {
 		node = json_object_new_object();
-		printf("writing to network json format...,%d\n", i);
+		/*printf("writing to network json format...,%d\n", i);*/
 		network_id = node_inser_info[i].network_id;
-		printf("network_id = %d, node_id = %d\n", node_inser_info[i].network_id, node_inser_info[i].node_id);
+		/*printf("network_id = %d, node_id = %d\n", node_inser_info[i].network_id, node_inser_info[i].node_id);*/
 		index = get_index(flag, nNode, network_id, &isNew);
 		if (index < 0) 
 			return -1;
 		if (isNew) {
+			network_num++;
 			network_object[index] = json_object_new_object();
 			node_array[index] = json_object_new_array();
 			json_object_object_add(network_object[index], "network_id", 
 					json_object_new_int(node_inser_info[i].network_id));
 			json_object_object_add(network_object[index], "network_name", 
 					json_object_new_string(node_inser_info[i].network_name));
+			/*printf("new node: %d, %s\n", node_inser_info[i].network_id, node_inser_info[i].network_name);*/
 		}
 		json_object_object_add(node, "node_id", json_object_new_int(node_inser_info[i].node_id));
 		json_object_object_add(node, "parent_id", json_object_new_int(node_inser_info[i].parent_id));
@@ -92,26 +94,29 @@ int TGX_MODULE_HTTP_HANDLER(tgx_module_http_t *http)
 		json_object_object_add(node, "position_y", json_object_new_double(node_inser_info[i].position.y));
 		json_object_array_add(node_array[index], node);
 	}
-	for (i = 0; i < nNode; i++)
-		printf("%d ", flag[i]);
-	printf("\n");
+
 	// 将分派的结果进行组装
-	int tmp;
+	/*int tmp;*/
 
 	// 先排序， 顺便插入
-	int j;
-	for (i = 0; network_object[i] != NULL && i < nNode; i++) {
-		for (j = i; network_object[j] != NULL && j < nNode; j++) {
+	/*int j, k;
+	for (i = 0; i < len - 1; i++) {
+		for (j = i + 1; i < len; j++) {
 			if (flag[i] > flag[j]) {
 				tmp = flag[i];
 				flag[i] = flag[j];
 				flag[j] = tmp;
 			}
 		}
+	}*/
+	/*for (i = 0; i < network_num; i++)*/
+		/*printf("%d ", flag[i]);*/
+	/*printf("\n");*/
+	/*printf("network_num = %d\n", network_num);*/
+	for (i = 0; i < network_num; i++) {
 		json_object_object_add(network_object[i], "nodes", node_array[i]);
 		json_object_array_add (network, network_object[i]);
 	}
-
 	sprintf(http->resp->data, "%s\n", json_object_to_json_string(network));
 	printf("%s\n", json_object_to_json_string(network));
 

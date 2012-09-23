@@ -1,0 +1,3 @@
+request: {"nodeId":"4", "captureType":"temp"}
+
+respons:[{"time":"20010909192009", "captureValue":"30"}, {"time":"20010909192009", "captureValue":"30"}]

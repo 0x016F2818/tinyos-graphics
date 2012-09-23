@@ -27,7 +27,7 @@ void log_print(int level, int use, const char *file, int line, const char *funct
 		
 	}
 	printf("%s:%d:", file, line);
- 	va_start(ap, format);
+	 va_start(ap, format);
 	vprintf(format, ap);
 	va_end(ap);
 }

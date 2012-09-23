@@ -51,7 +51,18 @@ static int tgx_analyze_configfile(tgx_cycle_t *tcycle, char *key, char *value)
 	} 
 	
 	if (strncmp(key, "err_page 404", strlen("err_page 404")) == 0) {
-		sprintf(tcycle->err_page.e_404, ".%s", value);
+		struct stat statbuf;
+		/*if (stat(value, &statbuf) < 0 || !S_ISREG(statbuf.st_mode)) {
+			DEBUG("%s err_page not found\n", value);
+			sprintf(tcycle->err_page.e_404, "%s", tmpnam(NULL));
+		
+			FILE *fp = fopen(tcycle->err_page.e_404, "w");
+			fputs(TGX_PAGE_404_ERR, fp);
+			fclose(fp);
+		} else {*/
+			DEBUG("set err_page 404 = %s\n", value);
+			sprintf(tcycle->err_page.e_404, "%s", value);
+		/*}*/
 	} else {
 		// 对于tmpnam产生的已经是绝对路径， 因此不需要加.符号
 		sprintf(tcycle->err_page.e_404, "%s", tmpnam(NULL));
@@ -225,7 +236,7 @@ static int tgx_socket_init(tgx_cycle_t *tcycle)
 		return -1;
 	}
 
-	if (tgx_set_nonblocking(fd) < 0) {
+	/*if (tgx_set_nonblocking(fd) < 0) {
 		log_err("setNonBlocking():%s\n", strerror(errno));
 		return -1;
 	}
@@ -238,10 +249,22 @@ static int tgx_socket_init(tgx_cycle_t *tcycle)
 	if (tgx_event_schedule_register(tcycle->tevent, fd, tgx_acception_handler, NULL) < 0) {
 		log_err("tgx_event_schedule_register():%s\n", strerror(errno));
 		return -1;
-	}
+	}*/
 
 	tcycle->listen_fd = fd;
 
+	struct sockaddr in_addr;
+	socklen_t in_len = sizeof(servaddr);
+	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+	getnameinfo((struct sockaddr *)&servaddr, in_len,
+				hbuf, sizeof hbuf,
+				sbuf, sizeof sbuf,
+				NI_NUMERICHOST | NI_NUMERICSERV);
+	printf("tinyos-graphics/0.0.1\n"
+		   "Copyright (C) WSN Working Group. 2012/09\n"
+	       "http://github.com/van9ogh/tinyos-graphics\n\n"
+	       "starting running in port: %s\t\t\t\t[OK]\n", sbuf);
 	return 0;
 }
 
@@ -249,7 +272,8 @@ static void tgx_sig_handler(int signo)
 {
 	switch (signo) {
 		case SIGINT: 
-			running = 0; 
+			running = 0;
+			printf("\n");
 			log_err("System going to Shutdown or Something...\n");
 			/*exit(0);*/
 			break;
@@ -441,7 +465,9 @@ static void tgx_show_help(void)
 
 static void tgx_show_version(void)
 {
-	printf("tinyos graphics/0.0.1 (C) WSN WorkingGroup 2012/09\n");
+	printf("tinyos-graphics/0.0.1\n"
+		   "Copyright (C) WSN Working Group. 2012/09\n"
+		   "http://github.com/van9ogh/tinyos-graphics\n\n");
 }
 
 static int  tgx_parse_config_file(tgx_cycle_t *tcycle)
@@ -529,6 +555,7 @@ int main(int argc, char *argv[])
 #define TGX_DO_SHOW_HELP		TGX_BITSET(1)
 #define TGX_DO_SHOW_VERSION		TGX_BITSET(2)
 #define TGX_DO_TEST_CONFIG_FILE TGX_BITSET(3)
+#define TGX_USE_USER_PREFIX		TGX_BITSET(4)
 
 	// 先初始化为tcycle的系统默认值
 	tgx_cycle_t *tcycle = (tgx_cycle_t *)calloc(1, sizeof(tgx_cycle_t));
@@ -550,6 +577,7 @@ int main(int argc, char *argv[])
 	
 
 	// 1. 解析命令行参数
+	char prefix[1024];
 	while (1) {
 		char ch;
 		int option_index = 0;
@@ -576,7 +604,8 @@ int main(int argc, char *argv[])
 				sprintf(tconf_path, "%s", optarg);
 				break;
 			case 'p': // 服务器root目录
-				sprintf(tcycle->srv_root, "%s", optarg);
+				sprintf(prefix, "%s", optarg);
+				opt |= TGX_USE_USER_PREFIX;
 				break;
 			case 'h': // help
 				opt |= TGX_DO_SHOW_HELP;
@@ -604,8 +633,12 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	/*if (!(opt & TGX_DO_NOT_DAEMON))
-		tgx_daemonize(); */
+	if (!(opt & TGX_DO_NOT_DAEMON)) {
+		printf("* Starting web server tinyos-graphics");
+		sleep(1);
+		printf("\t\t\t\t[OK]\n");
+		tgx_daemonize(); 
+	}
 
 	if (tgx_already_running(tcycle)) {
 		log_err("tgx already running.\n");
@@ -619,11 +652,43 @@ int main(int argc, char *argv[])
 	}
 	
 	// 初始化信号处理函数
-	signal(SIGINT,  tgx_sig_handler);
-	signal(SIGPIPE, tgx_sig_handler);
-	signal(SIGHUP,  tgx_sig_handler);
-	signal(SIGTERM, tgx_sig_handler);
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGUSR1, SIG_IGN);
 	signal(SIGALRM, tgx_sig_handler);
+	signal(SIGTERM, tgx_sig_handler);
+	signal(SIGHUP,  tgx_sig_handler);
+	signal(SIGCHLD, tgx_sig_handler);
+	signal(SIGINT,  tgx_sig_handler);
+
+
+	// 初始化服务器socket
+	if (tgx_socket_init(tcycle) < 0) {
+		log_err("tgx_socket_init() error\n");
+		return -1;
+	}
+	
+	if (opt & TGX_USE_USER_PREFIX)
+		sprintf(tcycle->srv_root, "%s", prefix);
+
+	if (chdir(tcycle->srv_root) < 0) {
+		log_err("chdir():%s\n", strerror(errno));
+		return -1;
+	}
+
+	// 这里处理惊群问题采取的方法是类似与lighttpd类似的策略,
+	// 就是让event系统在fork之后初始化， 这样就会有多个epoll
+	// 而nginx处理方法是使用锁， 保证了当前只有一个在epoll_wait
+	// lighttpd的方法简单， 效果也十分不错
+	int childNum = 0;
+	pid_t pid;
+	int j;
+	for (j = 0; j < childNum; j++) {
+		if ((pid = fork()) < 0) {
+
+		} else if (pid == 0) {
+			break;
+		}
+	}
 
 	// 初始化event IO多路转换系统
 	tgx_event_t *tevent = tgx_event_init(tcycle, tcycle->maxfds);
@@ -633,18 +698,20 @@ int main(int argc, char *argv[])
 	}
 	tcycle->tevent = tevent;
 
-	// 初始化服务器socket
-	if (tgx_socket_init(tcycle) < 0) {
-		log_err("tgx_socket_init() error\n");
+	if (tgx_set_nonblocking(tcycle->listen_fd) < 0) {
+		log_err("setNonBlocking():%s\n", strerror(errno));
 		return -1;
 	}
 	
-	if (chdir(tcycle->srv_root) < 0) {
-		log_err("chdir():%s\n", strerror(errno));
+	if (tgx_event_ctl(tcycle->tevent, TGX_EVENT_CTL_ADD, tcycle->listen_fd, TGX_EVENT_IN) < 0) {
+		log_err("tgx_event_ctl():%s\n", strerror(errno));
 		return -1;
 	}
 
-	/*pid_t pid = fork();	*/
+	if (tgx_event_schedule_register(tcycle->tevent, tcycle->listen_fd, tgx_acception_handler, NULL) < 0) {
+		log_err("tgx_event_schedule_register():%s\n", strerror(errno));
+		return -1;
+	}
 
 	// 初始化任务调度器
 	/*tgx_task_schedule_t *task_sched = tgx_task_schedule_init(tcycle->numThreads);*/
@@ -679,12 +746,13 @@ int main(int argc, char *argv[])
 				log_err("tgx event handler not found. fd = %d, Context = %s, now event fd used = %d\n", fd, 
 						context == NULL?"NULL" : "Not NULL", tevent->usedfds);
 				// 发生致命错误重启event系统
-				log_err("restarting event system...\n");
-				tgx_restart_service(tcycle);
-				tevent = tcycle->tevent;
-				log_err("restarting event system done...\n");
+				/*log_err("restarting event system...\n");*/
+				/*tgx_restart_service(tcycle);*/
+				/*tevent = tcycle->tevent;*/
+				/*log_err("restarting event system done...\n");*/
 
-				break;
+				/*break;*/
+				continue;
 			}
 			
 			if (handler(tcycle, context, event) < 0) {
@@ -716,7 +784,7 @@ int main(int argc, char *argv[])
 		free(tcycle->tevent->sched_array);
 		free(tcycle->tevent);
 		tgx_task_schedule_destroy(tcycle->task_sched);
-		unlink(tcycle->err_page.e_404);
+		/*unlink(tcycle->err_page.e_404);*/
 		free(tcycle);
 	}
 

@@ -1,0 +1,7 @@
+request:{"nodeId":"4", "nodeNumber":"30", "captureTemperature":"temp"}
+
+request:{"nodeId":"4", "nodeNumber":"1", "captureTemperature":"temp"}
+
+
+respons:{"time":"20010909192009", "captureValue":"30"}
+respons:[{"time":"20010909192009", "captureValue":"30"}, {"time":"20010909192009", "captureValue":"30"}]

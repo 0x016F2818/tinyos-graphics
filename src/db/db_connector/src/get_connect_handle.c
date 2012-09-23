@@ -1,4 +1,4 @@
-#include "sensor.h"
+#include "../include/sensor.h"
 
 int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info){
     if(!mysql_init(mysql))
@@ -16,3 +16,4 @@ int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info){
         printf("connecting to mysql success...!!!\n");
     return 0;
 }
+
