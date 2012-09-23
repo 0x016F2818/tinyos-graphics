@@ -11,19 +11,16 @@ implementation {
 	components TgxC as App;
 	components MainC, LedsC;
 	components RandomMlcgC;
-	components new BigQueueC(sensor_msg_t, 20) as SerialMsgQueueC;
-	components new TimerMilliC() as SensorTimerC;
-	components new TimerMilliC() as BaseStationTimerC;
-	components new TimerMilliC() as CheckDogTimerC;
+	components new TimerMilliC() as Timer;
 
 	App.Boot -> MainC;
 	App.Leds -> LedsC;
 	App.Random -> RandomMlcgC;         // 用来产生节点坐标的随机数发生器
 	MainC.SoftwareInit -> RandomMlcgC; // 自动初始化随机数发生器
-	App.SerialMsgQueue -> SerialMsgQueueC; // 用来将发往串口的数据排队, 避免冲突
-	App.SensorReadTimer -> SensorTimerC;      // 节点维护一个采集时钟
-	App.BaseStationTimer -> BaseStationTimerC;
-	App.CheckDogTimer -> CheckDogTimerC;
+	App.SensorReadTimer -> Timer;      // 节点维护一个采集时钟
+
+
+
 
 	// ************************************************
 	// serial wiring
@@ -36,6 +33,8 @@ implementation {
 	App.SerialPacket -> SerialAMSenderC;
 	/*App.SerialReceive -> SerialAMReceiverC;*/
 	App.SerialControl -> Serial;
+
+
 
 
 	// ************************************************

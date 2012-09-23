@@ -1,0 +1,8 @@
+Error exec command: Cannot add or update a child row: a foreign key constraint fails (`tinyos`.`tb_networ
+INT `tb_network_ibfk_2` FOREIGN KEY (`network_id`, `parent_id`) REFERENCES `tb_node` (`network_id`, `node
+[node_update]: 0 products updated successfully!
+[sense_record_insert]:1 products updated successfully!
+[network_update]: 1 products updated successfully!
+[node_update]: 0 products updated successfully!
+[sense_record_insert]:1 products updated successfully!
+Error exec command: Duplicate entry '1-2' for key 'PRIMARY'

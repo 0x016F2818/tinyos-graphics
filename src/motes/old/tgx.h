@@ -1,5 +1,5 @@
-#ifndef TINYOSWEB_H
-#define TINYOSWEB_H
+#ifndef TGX_H
+#define TGX_H
 
 enum {
 	AM_CONTROL_MSG = 42,
@@ -35,9 +35,5 @@ typedef nx_struct sensor_msg {
 	node_position_t position;
 	sensor_data_t sensor;
 } sensor_msg_t;
-
-//typedef nx_struct control_msg {
-
-//}
 
 #endif

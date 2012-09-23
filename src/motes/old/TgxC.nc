@@ -1,15 +1,12 @@
 #include "printf.h"
 #include "tgx.h"
 
-module TinyosWebC {
-	uses {
+module TgxC {
+	uses { 
 		interface Boot;
 		interface Leds;
 		interface Random;
-		interface BigQueue<sensor_msg_t> as SerialMsgQueue;
 		interface Timer<TMilli> as SensorReadTimer;
-		interface Timer<TMilli> as BaseStationTimer;
-		interface Timer<TMilli> as CheckDogTimer;
 
 		interface AMSend as SerialSend;
 		interface Packet as SerialPacket;
@@ -74,34 +71,6 @@ implementation {
 		call Leds.led1On();
 		call Leds.led2On();
 	}
-
-	/* ****************************************** */
-	// Task
-	// 一共在三个地方post Task（在基站节点）
-	// 1. 节点启动串口post一次
-	// 2. CheckDogTimer 看门狗的时钟里面会post保证不中断
-	// 3. 在Serial.sendDone中
-	// 注意看门狗不是用startPeriod开启的， 而是在task sendSerialMsg
-	// 中用startOneShot开启的
-
-	task void sendSerialMsg() {
-		int sizeQueue = call SerialMsgQueue.size();
-		if (bRoot && !serialBusy && sizeQueue != 0) {
-			sensor_msg_t sensorData = call SerialMsgQueue.dequeue();
-			
-			sensor_msg_t *serialData = (sensor_msg_t *)(
-					call SerialSend.getPayload(&m_serial, sizeof(sensor_msg_t)));
-			*serialData = sensorData;
-			if (call SerialSend.send(AM_BROADCAST_ADDR, &m_serial, sizeof(*serialData)) == SUCCESS) {
-				serialBusy = TRUE;
-				reportSerialWorking();
-			}
-		}
-		// 如果退出循环那么说明队列很可能空了， 或者还不能发送， 
-		// 但是我们又不想让这个中断， 那么我们开启一个时钟避让一下
-		call CheckDogTimer.startOneShot(200);
-	}
-
 	/* ****************************************** */
 	event void Boot.booted() {
 		// 根据SENSOR_RANGE_MIN - SENSOR_RANGE_MAX, 随即生成节点的位置信息,
@@ -117,33 +86,6 @@ implementation {
 		}
 		call RadioControl.start();
 	}	
-
-	event void BaseStationTimer.fired()
-	{
-		am_addr_t parentId;
-		if (bRoot) {
-			sensor_msg_t baseStationData;
-			baseStationData.nodeId = TOS_NODE_ID;
-			call CollectionInfo.getParent(&parentId);
-			baseStationData.parentId = parentId;
-			baseStationData.position.x = positionX;
-			baseStationData.position.y = positionY;
-			baseStationData.sensor.temp  = 0;
-			baseStationData.sensor.photo = 0;
-			baseStationData.sensor.sound = 0;
-			baseStationData.sensor.x_acc = 0;
-			baseStationData.sensor.y_acc = 0;
-			baseStationData.sensor.x_mag = 0;
-			baseStationData.sensor.y_mag = 0;
-
-			call SerialMsgQueue.enqueue(baseStationData);
-		}
-	}
-
-	event void CheckDogTimer.fired()
-	{
-		post sendSerialMsg();
-	}
 
 	event void RadioControl.startDone(error_t error) {
 		if (error == SUCCESS) {
@@ -168,10 +110,7 @@ implementation {
 		call Temp.read();
 	}
 
-	event void SerialControl.startDone(error_t error) {
-		call BaseStationTimer.startPeriodic(1000);
-		post sendSerialMsg();
-	}
+	event void SerialControl.startDone(error_t error) { }
 	event void SerialControl.stopDone(error_t error) { }
 	event void RadioControl.stopDone(error_t error) { }
 
@@ -260,15 +199,15 @@ implementation {
 			 * 这就是为什么我们在event最后需要return msg的原因
 			 * 如果不换马夹， 那么一块buffer既要接收从其它节点
 			 * 来的message， 还要向串口发数据， 压力太大 */
-//			sensor_msg_t *serialData = (sensor_msg_t *)(
-//					call SerialSend.getPayload(&m_serial, sizeof(sensor_msg_t)));
+			sensor_msg_t *serialData = (sensor_msg_t *)(
+					call SerialSend.getPayload(&m_serial, sizeof(sensor_msg_t)));
 
 			// 两种写法
 			/* serialData = *((sensor_msg_t *)payload);*/
-//			*serialData = *newCollectionMsg;
-//			if (call SerialSend.send(AM_BROADCAST_ADDR, &m_serial, sizeof(*serialData)) == SUCCESS) {
-//				serialBusy = TRUE;
-//				reportSerialWorking();
+			*serialData = *newCollectionMsg;
+			if (call SerialSend.send(AM_BROADCAST_ADDR, &m_serial, sizeof(*serialData)) == SUCCESS) {
+				serialBusy = TRUE;
+				reportSerialWorking();
 
 				// printf调试信息
 				/*atomic {
@@ -279,16 +218,15 @@ implementation {
 					          sizeof(myoctopus_sensor_msg));
 					printfflush();
 				}*/
-			call SerialMsgQueue.enqueue(*newCollectionMsg);
-		} else {
-			reportFatalError();
+		 	} else {
+				reportFatalError();
+			}
 		}
 		return msg;
 	}
 	event void SerialSend.sendDone(message_t *msg, error_t error) {
 		if (msg == &m_serial) {
 			serialBusy = FALSE;
-			post sendSerialMsg();
 		}
 	}
 }

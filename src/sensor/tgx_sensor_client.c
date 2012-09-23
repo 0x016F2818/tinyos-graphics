@@ -14,6 +14,9 @@
 #include <string.h>
 #include "sfsource.h"
 
+
+static pid_t pid;
+
 int do_child(void);
 // 这里打算做一个代理服务器， 本身去连接sf, 和sensor_server
 // 然后将数据发往sensor_server, 对于sf子进程之需要exec即可
@@ -65,6 +68,10 @@ void sig_handler(int signo)
 			printf("sigchld happens\n");
 			wait(NULL);
 			break;
+		case SIGINT:
+			kill(pid, SIGKILL);
+			printf("signal kill signal to child\n");
+			exit(0);
 	}
 }
 
@@ -95,10 +102,14 @@ int to_int(const char *str, int len)
 
 int main(int argc, char *argv[])
 {
+
+	signal(SIGPIPE, sig_handler);
+	signal(SIGCHLD, sig_handler);
+	signal(SIGINT,  sig_handler);
+
 	if (argc != 3)
 		log_err("Usage: ./sensor_client [srv_host] [srv_port]\n");
 
-	pid_t pid;
 	if ((pid = fork()) < 0) { // err
 		log_err("fork\n");
 	} else if (pid == 0) { //child

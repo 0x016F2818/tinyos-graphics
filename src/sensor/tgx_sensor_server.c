@@ -104,22 +104,29 @@ void sig_handler(int errno)
 	}
 }
 
-int insert_mesg_to_db(MYSQL *mysql, char *msg, int len)
+int insert_mesg_to_db(MYSQL *mysql, char *msg, int len, char *network_name)
 {
+
+	if (!network_name || !mysql || !msg || len < 0) return -1;
 
     node_t      node_inser_info;
     sensor_t    sensor_inser_info;
     network_t   network_inser_info;
+	memset(&node_inser_info, 0, sizeof(node_inser_info));
+	memset(&sensor_inser_info, 0, sizeof(sensor_inser_info));
+	memset(&network_inser_info, 0, sizeof(network_inser_info));
 
 	tmsg_t *tmsg = new_tmsg((void *)(msg+8), len);
 
 	// 1. node info
+	strcpy(node_inser_info.network_name, network_name);
 	node_inser_info.node_id    = sensor_msg_nodeId_get(tmsg);
 	node_inser_info.parent_id  = sensor_msg_parentId_get(tmsg);
 	node_inser_info.position.x = sensor_msg_position_x_get(tmsg);
 	node_inser_info.position.y = sensor_msg_position_y_get(tmsg);
 
 	// 2. sensor info
+	strcpy(sensor_inser_info.network_name, network_name);
 	sensor_inser_info.node_id       = sensor_msg_nodeId_get(tmsg);
 	sensor_inser_info.temp  = sensor_msg_sensor_temp_get(tmsg);
 	sensor_inser_info.photo = sensor_msg_sensor_photo_get(tmsg);
@@ -130,14 +137,14 @@ int insert_mesg_to_db(MYSQL *mysql, char *msg, int len)
 	sensor_inser_info.y_mag = sensor_msg_sensor_y_mag_get(tmsg);
 
 	// 3. network info
+	strcpy(network_inser_info.network_name, network_name);
 	network_inser_info.node_id    = sensor_msg_nodeId_get(tmsg);
 	network_inser_info.parent_id  = sensor_msg_parentId_get(tmsg);
 
 	// finish
     update_node_info(mysql,node_inser_info);
     insert_sense_record(mysql,sensor_inser_info);
-	/*update_network(mysql, network_inser_info);*/
-
+	update_network(mysql, network_inser_info);
 
     return 0;
 }
@@ -257,7 +264,7 @@ int main(int argc, char *argv[])
 								strcpy(db_connect_info.host,"10.18.46.111");
 								strcpy(db_connect_info.user,"tinyos");
 								strcpy(db_connect_info.password,"tinyos");
-								strcpy(db_connect_info.db_name,"test3");
+								strcpy(db_connect_info.db_name,"tinyos");
 
 								if(get_db_handler(&mysql,db_connect_info) == -1){
 									return -1;
@@ -278,7 +285,7 @@ int main(int argc, char *argv[])
 									printf("%02x ", msg[i]);
 								putchar('\n');
 								fflush(stdout);*/
-								insert_mesg_to_db(&mysql, msg, nread);
+								insert_mesg_to_db(&mysql, msg, nread, "10.18.46.17:1234");
 							}
 							mysql_close(&mysql);
 						} else if (pid > 0) { // parent
