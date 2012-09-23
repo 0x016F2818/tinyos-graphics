@@ -28,19 +28,19 @@ create or replace view viw_sense as
     select * from tb_sense;
 
 create or replace view viw_temperature as
-    select order_num,node_id,temperature,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,temperature,sense_time,insert_time from tb_sense;
 create or replace view viw_humidity as
-    select order_num,node_id,humidity,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,humidity,sense_time,insert_time from tb_sense;
 create or replace view viw_brightness as
-    select order_num,node_id,brightness,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,brightness,sense_time,insert_time from tb_sense;
 create or replace view viw_microphone as
-    select order_num,node_id,microphone,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,microphone,sense_time,insert_time from tb_sense;
 create or replace view viw_terre_mag as
-    select order_num,node_id,terre_mag_x,terre_mag_y,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,terre_mag_x,terre_mag_y,sense_time,insert_time from tb_sense;
 create or replace view viw_pressure as
-    select order_num,node_id,pressure,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,pressure,sense_time,insert_time from tb_sense;
 create or replace view viw_accelerate as
-    select order_num,node_id,accelerate_x,accelerate_y,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,accelerate_x,accelerate_y,sense_time,insert_time from tb_sense;
 create or replace view viw_shoke as
-    select order_num,node_id,shoke,sense_time,insert_time from tb_sense;
+    select order_num,network_id,node_id,shoke,sense_time,insert_time from tb_sense;
 

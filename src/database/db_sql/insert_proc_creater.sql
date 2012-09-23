@@ -8,7 +8,7 @@ create procedure sp_update_node_info(in net_name char(50),in nod_id int,
 begin
     declare state_num smallint;
     declare status_num smallint;
-    declare network_num int;
+    declare net_id int;
     declare amount int;
 
     select count(*),work_state from tb_work_state
@@ -28,18 +28,18 @@ begin
     end if; 
 
     select count(*),network_id from tb_network_segment
-    where network_name = net_name into amount,network_num;
+    where network_name = net_name into amount,net_id;
     if amount = 0 then
         insert into tb_network_segment(network_name) values(net_name);
         select network_id from tb_network_segment
-        where network_name = net_name into network_num;
+        where network_name = net_name into net_id;
     end if; 
 
     select count(*) from tb_node
-    where node_id = nod_id and network_id = network_num into amount;
+    where node_id = nod_id and network_id = net_id into amount;
     if amount = 0 then
-        insert into tb_node(network_id,node_id,work_state,node_status,power,GPS) values(network_num,nod_id,state_num,status_num,power,GPS);
-        /*insert into tb_network(network_id,node_id,parent_id) values(network_num,nod_id,par_id);*/
+        insert into tb_node(network_id,node_id,work_state,node_status,power,GPS) values(net_id,nod_id,state_num,status_num,power,GPS);
+        /*insert into tb_network(network_id,node_id,parent_id) values(net_id,nod_id,par_id);*/
     else
         update tb_node
         set 
@@ -48,9 +48,9 @@ begin
             tb_node.power       = power,
             tb_node.GPS         = GPS
         where node_id           = nod_id
-            and network_id      = network_num;
+            and network_id      = net_id;
         /*update tb_network*/
-        /*set network_id  = network_num,*/
+        /*set network_id  = net_id,*/
         /*parent_id   = par_id*/
         /*where node_id   = nod_id;*/
     end if;
@@ -82,7 +82,7 @@ end;
 
 /*####################################################################*/
 drop procedure if exists sp_insert_sense_record;
-create procedure sp_insert_sense_record(in net_name varchar(30),
+create procedure sp_insert_sense_record(in net_name char(50),
     in nod_id           int,        in temperature  double(8,2),
     in brightness   double(8,2),in microphone   double(8,2),
     in accelerate_x double(8,2),in accelerate_y double(8,2),

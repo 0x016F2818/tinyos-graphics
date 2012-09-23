@@ -7,17 +7,17 @@ drop table if exists tb_network_segment;
 
 create table if not exists tb_node_status(
     node_status     smallint     primary key auto_increment,
-    status_name     varchar(30)     unique not null
+    status_name     char(50)     unique not null
     )engine = innodb;
 
 create table if not exists tb_work_state(
     work_state      smallint     primary key auto_increment,
-    state_name      varchar(30)     unique not null
+    state_name      char(50)     unique not null
     )engine = innodb;
 
 create table if not exists tb_network_segment(
     network_id      int             unique not null auto_increment,
-    network_name    char(30)     unique not null,
+    network_name    char(50)     unique not null,
     primary key(network_id)
     )engine = innodb;
 

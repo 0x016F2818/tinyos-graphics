@@ -8,10 +8,16 @@ int main(int argc,char *argv[])
     node_t      node_inser_info;
     sensor_t    sensor_inser_info;
     network_t   network_inser_info;
-
+    memset(&node_inser_info,0,sizeof(node_t));
+    memset(&sensor_inser_info,0,sizeof(sensor_t));
+    memset(&network_inser_info,0,sizeof(network_t));
+    
     node_t      node_info[10000];
     sensor_t    sensor_info[10000];
     network_t   network_info[10000];
+    memset(&node_info,0,sizeof(node_info));
+    memset(&sensor_info,0,sizeof(sensor_info));
+    memset(&network_info,0,sizeof(network_info));
 
         //strcpy(db_connect_info.host,"127.0.0.1");
         //strcpy(db_connect_info.user,"root");
@@ -80,20 +86,21 @@ int main(int argc,char *argv[])
     long i,j;
     //{
     //j = all_record(&mysql,sensor_info);
-    j = all_node_info(&mysql,node_info);
-    //j = get_latest_record(&mysql,sensor_info,50);
-    //j = get_absolute_record(&mysql,sensor_info,98,"20120919171908","20120919171909");
-    if(j==-1)
-        return -1;
-    else{
-        printf("get_latest_record:\n");
-        for(i = 0;i < j;i++){
-            printf("node_id:%d\t"          ,node_info[i].node_id);
-            printf("parent_id:%d\t"        ,node_info[i].parent_id);
-            printf("power:%d\t"            ,node_info[i].power);
-            printf("position_x:%6.2lf\t"   ,node_info[i].position.x);
-            printf("position_y:%6.2lf\t"   ,node_info[i].position.y);
+    //j = all_node_info(&mysql,node_info);
+    //j = get_latest_record(&mysql,sensor_info,"10.16.17.0",50,"temperature");
+    //j = get_absolute_record(&mysql,sensor_info,"10.16.17.0",0,"temperature","2012-09-23 11:21:41","2012-09-23 11:21:42");
+    //if(j==-1)
+        //return -1;
+    //else{
+        //for(i = 0;i < j;i++){
+            //printf("node_id:%d\t"          ,node_info[i].node_id);
+            //printf("parent_id:%d\t"        ,node_info[i].parent_id);
+            //printf("power:%d\t"            ,node_info[i].power);
+            //printf("position_x:%6.2lf\t"   ,node_info[i].position.x);
+            //printf("position_y:%6.2lf\t"   ,node_info[i].position.y);
 
+            //printf("network_id:%d\t"       ,sensor_info[i].network_id);
+            //printf("network_name:%s\t"     ,sensor_info[i].network_name);
             //printf("node_id:%d\t"          ,sensor_info[i].node_id);
             //printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
             //printf("photo:%6.2lf\t"        ,sensor_info[i].photo);
@@ -104,24 +111,23 @@ int main(int argc,char *argv[])
             //printf("y_mag:%6.2lf\t"        ,sensor_info[i].y_mag);
 
             //printf("insert_time:%s\t"      ,sensor_info[i].time);
-            printf("\n");
-        }
-    }
-    //}
-    //j = get_absolute_record(&mysql,sensor_info,98,"20120919171908","20120919171909");
-    //j = get_relative_record(&mysql,sensor_info,89,"temperature","20120919171826",0);
-    //if(j==-1)
-        //return -1;
-    //else{
-        ////printf("get_absolute_record:\n");
-        //printf("get_relative_record:\n");
-        //for(i = 0;i < j;i++){
-            //printf("node_id:%d\t"          ,sensor_info[i].node_id);
-            //printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
-            //printf("insert_time:%s\t"      ,sensor_info[i].time);
             //printf("\n");
         //}
     //}
+    //}
+    j = get_relative_record(&mysql,sensor_info,"10.16.17.0",89,"microphone","20120919171826",-2);
+    if(j==-1)
+        return -1;
+    else{
+        //printf("get_absolute_record:\n");
+        printf("get_relative_record:\n");
+        for(i = 0;i < j;i++){
+            printf("node_id:%d\t"          ,sensor_info[i].node_id);
+            printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
+            printf("insert_time:%s\t"      ,sensor_info[i].time);
+            printf("\n");
+        }
+    }
     mysql_close(&mysql);
     return 0;
 }

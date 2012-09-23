@@ -117,7 +117,7 @@ int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_latest_record(%d,'%s')",nod_id,sense);
+    sprintf(command,"call sp_get_latest_record('%s',%d,'%s')",net_name,nod_id,sense);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
@@ -159,13 +159,13 @@ int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char
 //
 //RETURNS:the line number of the records
 //#################################################
-int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int id,char sense[50],char * start_time,char *end_time){
+int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char sense[50],char * start_time,char *end_time){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_absolute_record(%d,'%s',%s,%s)",id,sense,start_time,end_time);
+    sprintf(command,"call sp_get_absolute_record('%s',%d,'%s','%s','%s')",net_name,nod_id,sense,start_time,end_time);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
@@ -207,13 +207,13 @@ int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int id,char s
 //
 //RETURNS:the line number of the records
 //#################################################
-long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int id,char *sensor,char *start_time,long record_num){
+long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sensor,char *start_time,long record_num){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_relative_record(%d,'%s',%s,%ld)",id,sensor,start_time,record_num);
+    sprintf(command,"call sp_get_relative_record('%s',%d,'%s',%s,%ld)",net_name,nod_id,sensor,start_time,record_num);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
