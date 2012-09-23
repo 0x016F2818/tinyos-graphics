@@ -1,6 +1,6 @@
 #include "../include/sensor.h"
 
-int all_node_info(MYSQL *mysql,node_t *info){
+int get_all_node_info(MYSQL *mysql,node_t *info){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
     MYSQL_ROW record;
@@ -23,9 +23,9 @@ int all_node_info(MYSQL *mysql,node_t *info){
             info[i].network_id   = atoi(record[0]);
             info[i].node_id      = atoi(record[2]);
             info[i].parent_id    = atoi(record[3]);
-            info[i].power       = atoi(record[6]);
-            info[i].position.x  = strtod(record[7],NULL);
-            info[i].position.y  = strtod(record[8],NULL);
+            info[i].power        = atoi(record[6]);
+            info[i].position.x   = strtod(record[7],NULL);
+            info[i].position.y   = strtod(record[8],NULL);
             strcpy(info[i].network_name,record[1]);
             strcpy(info[i].work_state,record[4]);
             strcpy(info[i].node_status,record[5]);
@@ -52,10 +52,55 @@ int all_node_info(MYSQL *mysql,node_t *info){
 }
 
 //#################################################
-//
-//RETURNS:the line number of the records
+int get_network_info(MYSQL *mysql,network_t *info){
+    int ret;
+    char command[DB_COMMAND_LENGTH] = "\0";
+    MYSQL_ROW record;
+    MYSQL_RES *results;
+
+    sprintf(command,"call sp_get_network_info()");
+    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    if (ret){
+        printf("Error exec command: %s\n",mysql_error(mysql));
+        return -1;
+    }
+    else{
+        printf("[node_get_info]: %ld products updated successfully!\n",(long) mysql_affected_rows(mysql));
+    }
+
+    long i = 0;
+    results = mysql_store_result(mysql);
+    if (results) {
+        while((record = mysql_fetch_row(results))){
+            info[i].network_id   = atoi(record[0]);
+            info[i].node_id      = atoi(record[2]);
+            info[i].parent_id    = atoi(record[3]);
+            info[i].quality      = atoi(record[4]);
+            strcpy(info[i].network_name,record[1]);
+            i++;
+        } 
+        mysql_free_result(results);
+    }
+    else{
+        if (mysql_field_count(mysql) == 0) {
+            printf("%lld rows affected\n",
+                    mysql_affected_rows(mysql));
+        }
+        else{
+            printf("Could not retrieve result set\n");
+            return -1;
+        }
+    }
+    do {
+        if ((ret = mysql_next_result(mysql)) > 0)
+            printf("Could not execute statement\n");
+    } while (ret == 0);    
+
+    return i;
+}
+
 //#################################################
-long all_record(MYSQL *mysql,sensor_t *info){
+long get_all_record(MYSQL *mysql,sensor_t *info){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
     MYSQL_ROW record;
@@ -85,6 +130,7 @@ long all_record(MYSQL *mysql,sensor_t *info){
             info[i].x_mag = strtod(record[8],NULL);
             info[i].y_mag = strtod(record[9],NULL);
             strcpy(info[i].network_name,record[1]);
+            strcpy(info[i].time,record[14]);
             i++;
         }
         mysql_free_result(results);
@@ -179,7 +225,7 @@ int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,ch
     results = mysql_store_result(mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
-            info[i].temp  = strtod(record[0],NULL);
+            info[i].temp = strtod(record[0],NULL);
             strcpy(info[i].time,record[1]);
             i++;
         }
@@ -227,7 +273,7 @@ long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,c
     results = mysql_store_result(mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
-            info[i].temp  = strtod(record[0],NULL);
+            info[i].temp = strtod(record[0],NULL);
             strcpy(info[i].time,record[1]);
             i++;
         }

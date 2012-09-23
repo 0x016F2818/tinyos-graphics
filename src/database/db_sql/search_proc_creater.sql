@@ -44,7 +44,9 @@ end;
 drop procedure if exists sp_get_network_info;
 create procedure sp_get_network_info()
 begin
-    select * from viw_network;
+    select viw_network.network_id,viw_network_segment.network_name, 
+        node_id,parent_id,quality from viw_network,viw_network_segment
+    where viw_network.network_id = viw_network_segment.network_id;
 end;
 
 /*##########################################################################*/
@@ -54,7 +56,7 @@ begin
     select viw_sense.network_id,network_name,node_id,
     temperature,brightness,microphone,
     accelerate_x,accelerate_y, terre_mag_x,terre_mag_y,
-    humidity,pressure,shoke,sense_time from viw_sense,viw_network_segment
+    humidity,pressure,shoke,sense_time,insert_time from viw_sense,viw_network_segment
     where viw_sense.network_id = viw_network_segment.network_id;
 end;
 

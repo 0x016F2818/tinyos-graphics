@@ -61,7 +61,7 @@ typedef struct {
     char        network_name[50];
     int         node_id;
     int         parent_id;
-    double      quality;
+    int         quality;
 } network_t;
 
 /*typedef struct {*/
@@ -107,8 +107,9 @@ int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info);
 int insert_sense_record(MYSQL *mysql,sensor_t info);
 int update_network(MYSQL *mysql,network_t info);
 int update_node_info(MYSQL *mysql,node_t info);
-int all_node_info(MYSQL *mysql,node_t *info);
-long all_record(MYSQL *mysql,sensor_t *info);
+int get_all_node_info(MYSQL *mysql,node_t *info);
+int get_network_info(MYSQL *mysql,network_t *info);
+long get_all_record(MYSQL *mysql,sensor_t *info);
 int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense);
 int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,char *end_time);
 long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,long record_num);

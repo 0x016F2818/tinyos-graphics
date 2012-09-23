@@ -84,20 +84,28 @@ int main(int argc,char *argv[])
         //insert_sense_record(&mysql,sensor_inser_info);
     //}
     long i,j;
-    //{
-    //j = all_record(&mysql,sensor_info);
-    //j = all_node_info(&mysql,node_info);
+    
+    //j = get_all_record(&mysql,sensor_info);
+    j = get_network_info(&mysql,network_info);
+    //j = get_all_node_info(&mysql,node_info);
     //j = get_latest_record(&mysql,sensor_info,"10.16.17.0",50,"temperature");
     //j = get_absolute_record(&mysql,sensor_info,"10.16.17.0",0,"temperature","2012-09-23 11:21:41","2012-09-23 11:21:42");
-    //if(j==-1)
-        //return -1;
-    //else{
-        //for(i = 0;i < j;i++){
+    //j = get_relative_record(&mysql,sensor_info,"10.16.17.0",89,"microphone","20120919171826",-2);
+    if(j==-1)
+        return -1;
+    else{
+        for(i = 0;i < j;i++){
             //printf("node_id:%d\t"          ,node_info[i].node_id);
             //printf("parent_id:%d\t"        ,node_info[i].parent_id);
             //printf("power:%d\t"            ,node_info[i].power);
             //printf("position_x:%6.2lf\t"   ,node_info[i].position.x);
             //printf("position_y:%6.2lf\t"   ,node_info[i].position.y);
+
+            printf("network_id:%d \t"        ,network_info[i].network_id);
+            printf("network_name:%s \t"      ,network_info[i].network_name);
+            printf("node_id:%d \t"           ,network_info[i].node_id);
+            printf("parent_id:%d \t"         ,network_info[i].parent_id);
+            printf("quality:%d \t"           ,network_info[i].quality);
 
             //printf("network_id:%d\t"       ,sensor_info[i].network_id);
             //printf("network_name:%s\t"     ,sensor_info[i].network_name);
@@ -109,22 +117,7 @@ int main(int argc,char *argv[])
             //printf("y_acc:%6.2lf\t"        ,sensor_info[i].y_acc);
             //printf("x_mag:%6.2lf\t"        ,sensor_info[i].x_mag);
             //printf("y_mag:%6.2lf\t"        ,sensor_info[i].y_mag);
-
             //printf("insert_time:%s\t"      ,sensor_info[i].time);
-            //printf("\n");
-        //}
-    //}
-    //}
-    j = get_relative_record(&mysql,sensor_info,"10.16.17.0",89,"microphone","20120919171826",-2);
-    if(j==-1)
-        return -1;
-    else{
-        //printf("get_absolute_record:\n");
-        printf("get_relative_record:\n");
-        for(i = 0;i < j;i++){
-            printf("node_id:%d\t"          ,sensor_info[i].node_id);
-            printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
-            printf("insert_time:%s\t"      ,sensor_info[i].time);
             printf("\n");
         }
     }

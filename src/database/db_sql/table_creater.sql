@@ -40,7 +40,7 @@ create table if not exists tb_network(
     network_id      int             not null,
     node_id         int             not null,
     parent_id       int             not null,
-    quality         int,
+    quality         int             not null default 0,
     primary key(network_id,node_id),
     foreign key(network_id,node_id) references tb_node(network_id,node_id),
     foreign key(network_id,parent_id) references tb_node(network_id,node_id)
