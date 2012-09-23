@@ -68,8 +68,8 @@ parameter:
     mysql           : the handler of database
     info            : the buffer to store the sensed information
     net_name        : the network segment that the node is in
-    nod_id          : the node to search
-    sense           : the type of information to search
+    nod_id          : the node to search 如果为负值，去所有节点的选项，否则为指定的节点项
+    sense           : the type of information to search 如果为NULL，取所有传感器采集的信息，否则为指定的传感器采集的信息
 return value:
     -1 if failed or return the lines of record that this function.
 
@@ -78,8 +78,8 @@ int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,ch
     mysql           : the handler of database
     info            : the buffer to store the sensed information
     net_name        : the network segment that the node is in
-    nod_id          : the node to search
-    sense           : the type of information to search
+    nod_id          : the node to search 如果为负值，去所有节点的选项，否则为指定的节点项
+    sense           : the type of information to search 如果为NULL，取所有传感器采集的信息，否则为指定的传感器采集的信息
     start_time      : the start time of the time range 
     end_time        : the end time of the range
 return value:
@@ -93,9 +93,9 @@ parameter:
     mysql           : the handler of database
     info            : the buffer to store the sensed information           
     net_name        : the network segment that the node is in
-    nod_id          : the node to search     
-    sense           : the type of information to search                    
+    nod_id          : the node to search  如果为负值，去所有节点的选项，否则为指定的节点项   
+    sense           : the type of information to search 如果为NULL，取所有传感器采集的信息，否则为指定的传感器采集的信息                   
     start_time      : the start time of the time range       
-    record_num      : the number of records to search 
+    record_num      : the number of records to search 如果为负，则查询start_time之前的record_num条记录，否则为查询start_time之后的record_num条记录 
 return value:
     -1 if failed or return the lines of record that this function.
