@@ -1,0 +1,101 @@
+FUNCTION:
+int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info)
+description:
+    This function is to connecte the database;
+parameter: 
+    mysql           : the handler of database
+    db_connect_info : the necessary info to connect db
+return value:
+    0 if success or -1 if failed.
+
+FUNCTION:
+int update_node_info(MYSQL *mysql,node_t info)
+description:
+    This function is to insert node infomation if not exist in table or update it.
+    This will change the tb_node table if success.
+parameter:
+    mysql           : the handler of database
+    info            : node information to insert or update
+return value:
+    0 if success or -1 if failed.
+
+FUNCTION:
+int update_network(MYSQL *mysql,network_t info)
+description:
+    This function is to insert network infomation if not exist in table or update it.
+    This will change the tb_network table if success.
+parameter:
+    mysql           : the handler of database
+    info            : network information to insert or update 
+return value:
+    0 if success or -1 if failed.
+
+FUNCTION:
+int insert_sense_record(MYSQL *mysql,sensor_t info)
+description:
+    This function is to insert the info captured
+    This will change the tb_sense table.
+parameter:
+    mysql           : the handler of database
+    info            : datas captured by nodes  
+return value:
+    0 if success or -1 if failed.
+
+FUNCTION:
+int all_node_info(MYSQL *mysql,node_t *info)
+description:
+    This function is to fetch all nodes' information from database and store them in info
+parameter:
+    mysql           : the handler of database
+    info            : the buffer to store the nodes' information
+return value:
+    -1 if failed or return the lines of record that this function gets.
+FUNCTION:
+long all_record(MYSQL *mysql,sensor_t *info)
+description:
+    This function is to fetch all sensed information from database and store them in info
+parameter:
+    mysql           : the handler of database
+    info            : the buffer to store the sensed information
+return value:
+    -1 if failed or return the lines of record that this function gets.
+    
+FUNCTION:
+int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense)
+description:
+    This function is to search the latest sense record inserted in database,and store it into the buffer pointed by info with the limitation of net_name,nod_id and sense.
+parameter:
+    mysql           : the handler of database
+    info            : the buffer to store the sensed information
+    net_name        : the network segment that the node is in
+    nod_id          : the node to search
+    sense           : the type of information to search
+return value:
+    -1 if failed or return the lines of record that this function.
+
+FUNCTION:
+int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,char *end_time)
+    mysql           : the handler of database
+    info            : the buffer to store the sensed information
+    net_name        : the network segment that the node is in
+    nod_id          : the node to search
+    sense           : the type of information to search
+    start_time      : the start time of the time range 
+    end_time        : the end time of the range
+return value:
+    -1 if failed or return the lines of record that this function.
+
+FUNCTION:
+long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,long record_num)
+description:
+    This function is to get record_num sense record earlier or later than the given time start_time and store it into the buffer pointed by info with the limitation of net_name,nod_id,sense,start_time,record_num.
+parameter:
+    mysql           : the handler of database
+    info            : the buffer to store the sensed information           
+    net_name        : the network segment that the node is in
+    nod_id          : the node to search     
+    sense           : the type of information to search                    
+    start_time      : the start time of the time range       
+    record_num      : the number of records to search 
+return value:
+    -1 if failed or return the lines of record that this function.
