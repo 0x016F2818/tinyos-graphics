@@ -430,3 +430,17 @@ top:begin
         leave top;
     end case;
 end;
+
+/*##########################################################################*/
+drop procedure if exists sp_get_absolute_record_num;
+create procedure sp_get_absolute_record_num(in net_name char(50),in nod_id int,in start_time timestamp,in end_time timestamp)
+top:begin
+    select count(*) from viw_sense,viw_network_segment 
+    where viw_network_segment.network_name = net_name 
+        and viw_sense.network_id = viw_network_segment.network_id 
+        and node_id = nod_id 
+        and insert_time >= start_time 
+        and insert_time <= end_time;           
+end
+
+

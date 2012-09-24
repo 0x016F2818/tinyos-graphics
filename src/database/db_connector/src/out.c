@@ -260,6 +260,7 @@ long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,c
     MYSQL_RES *results;
 
     sprintf(command,"call sp_get_relative_record('%s',%d,'%s',%s,%ld)",net_name,nod_id,sensor,start_time,record_num);
+
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
@@ -295,4 +296,79 @@ long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,c
     } while (ret == 0);    
 
     return i;
+}
+
+//#################################################
+int get_all_node_num(MYSQL *mysql,int *node_num){
+    int ret;
+    char command[DB_COMMAND_LENGTH] = "\0";
+    MYSQL_ROW record;
+    MYSQL_RES *results;
+
+    sprintf(command,"select count(*) from viw_node");
+    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    if (ret){
+        printf("Error exec command: %s\n",mysql_error(mysql));
+        return -1;
+    }
+    else{
+        printf("[node_get_num]: %ld products updated successfully!\n",(long) mysql_affected_rows(mysql));
+    }
+
+    results = mysql_store_result(mysql);
+    if (results) {
+        while((record = mysql_fetch_row(results))) {
+            *node_num = atoi(record[0]);
+        }
+        mysql_free_result(results);
+    }
+    else{
+        if (mysql_field_count(mysql) == 0) {
+            printf("%lld rows affected\n",
+                    mysql_affected_rows(mysql));
+        }
+        else{ 
+            printf("Could not retrieve result set\n");
+            return -1;
+        }
+    }
+    do {
+        if ((ret = mysql_next_result(mysql)) > 0)
+            printf("Could not execute statement\n");
+    } while (ret == 0);    
+
+    return 0;
+}
+
+//#################################################
+int get_absolute_record_num(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char * start_time,char *end_time,long *record_num){
+    int ret;
+    char command[DB_COMMAND_LENGTH] = "\0";
+    MYSQL_ROW record;
+    MYSQL_RES *results;
+
+    sprintf(command,"call sp_get_absolute_record_num('%s',%d,'%s','%s')",net_name,nod_id,start_time,end_time);
+
+    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    if (ret){
+        printf("Error exec command: %s\n",mysql_error(mysql));
+        return -1;
+    }
+    else{
+        printf("[node_get_num]: %ld products updated successfully!\n",(long) mysql_affected_rows(mysql));
+    }
+
+    results = mysql_store_result(mysql);
+    if (results) {
+        while((record = mysql_fetch_row(results))) {
+            *record_num = atoi(record[0]);
+        }
+        mysql_free_result(results);
+    }
+    do {
+        if ((ret = mysql_next_result(mysql)) > 0)
+            printf("Could not execute statement\n");
+    } while (ret == 0);    
+
+    return 0;
 }

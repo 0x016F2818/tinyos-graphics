@@ -86,32 +86,34 @@ int main(int argc,char *argv[])
     long i,j;
     
     //j = get_all_record(&mysql,sensor_info);
-    j = get_network_info(&mysql,network_info);
+    //j = get_network_info(&mysql,network_info);
     //j = get_all_node_info(&mysql,node_info);
     //j = get_latest_record(&mysql,sensor_info,"10.16.17.0",50,"temperature");
     //j = get_absolute_record(&mysql,sensor_info,"10.16.17.0",0,"temperature","2012-09-23 11:21:41","2012-09-23 11:21:42");
-    //j = get_relative_record(&mysql,sensor_info,"10.16.17.0",89,"microphone","20120919171826",-2);
+    j = get_relative_record(&mysql,sensor_info,"10.16.17.0",89,"microphone","Sep232012112142",9);
     if(j==-1)
         return -1;
     else{
         for(i = 0;i < j;i++){
+            //printf("network_id:%d \t"      ,node_info[i].network_id);
+            //printf("network_name:%s \t"    ,node_info[i].network_name);
             //printf("node_id:%d\t"          ,node_info[i].node_id);
             //printf("parent_id:%d\t"        ,node_info[i].parent_id);
             //printf("power:%d\t"            ,node_info[i].power);
             //printf("position_x:%6.2lf\t"   ,node_info[i].position.x);
             //printf("position_y:%6.2lf\t"   ,node_info[i].position.y);
 
-            printf("network_id:%d \t"        ,network_info[i].network_id);
-            printf("network_name:%s \t"      ,network_info[i].network_name);
-            printf("node_id:%d \t"           ,network_info[i].node_id);
-            printf("parent_id:%d \t"         ,network_info[i].parent_id);
-            printf("quality:%d \t"           ,network_info[i].quality);
+            //printf("network_id:%d \t"        ,network_info[i].network_id);
+            //printf("network_name:%s \t"      ,network_info[i].network_name);
+            //printf("node_id:%d \t"           ,network_info[i].node_id);
+            //printf("parent_id:%d \t"         ,network_info[i].parent_id);
+            //printf("quality:%d \t"           ,network_info[i].quality);
 
-            //printf("network_id:%d\t"       ,sensor_info[i].network_id);
-            //printf("network_name:%s\t"     ,sensor_info[i].network_name);
-            //printf("node_id:%d\t"          ,sensor_info[i].node_id);
-            //printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
-            //printf("photo:%6.2lf\t"        ,sensor_info[i].photo);
+            printf("network_id:%d\t"       ,sensor_info[i].network_id);
+            printf("network_name:%s\t"     ,sensor_info[i].network_name);
+            printf("node_id:%d\t"          ,sensor_info[i].node_id);
+            printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
+            printf("photo:%6.2lf\t"        ,sensor_info[i].photo);
             //printf("sound:%6.2lf\t"        ,sensor_info[i].sound);
             //printf("x_acc:%6.2lf\t"        ,sensor_info[i].x_acc);
             //printf("y_acc:%6.2lf\t"        ,sensor_info[i].y_acc);
