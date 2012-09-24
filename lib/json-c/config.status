@@ -449,7 +449,7 @@ Copyright (C) 2010 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/van9ogh/Projects/Git/C/UnixProgramming/socket/concurrency_test/epoll/lib/json-c'
+ac_pwd='/home/arnold/Documents/Git/tinyos-graphics/lib/json-c'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 MKDIR_P='/bin/mkdir -p'
@@ -584,7 +584,7 @@ FGREP='/bin/grep -F'
 LD='/usr/bin/ld'
 NM='/usr/bin/nm -B'
 LN_S='ln -s'
-max_cmd_len='805306365'
+max_cmd_len='1572864'
 ac_objext='o'
 exeext=''
 lt_unset='unset'
@@ -687,7 +687,7 @@ finish_cmds='PATH="\$PATH:/sbin" ldconfig -n $libdir'
 finish_eval=''
 hardcode_into_libs='yes'
 sys_lib_search_path_spec='/usr/lib/gcc/i686-linux-gnu/4.6 /usr/lib/i386-linux-gnu /usr/lib /lib/i386-linux-gnu /lib '
-sys_lib_dlsearch_path_spec='/lib /usr/lib /usr/lib/i386-linux-gnu/mesa /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib '
+sys_lib_dlsearch_path_spec='/lib /usr/lib /usr/lib/i386-linux-gnu/mesa /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib /lib64 /usr/lib64 '
 hardcode_action='immediate'
 enable_dlopen='unknown'
 enable_dlopen_self='unknown'
@@ -887,12 +887,12 @@ S["mkdir_p"]="/bin/mkdir -p"
 S["MKDIR_P"]="/bin/mkdir -p"
 S["INSTALL_STRIP_PROGRAM"]="$(install_sh) -c -s"
 S["STRIP"]="strip"
-S["install_sh"]="${SHELL} /home/van9ogh/Projects/Git/C/UnixProgramming/socket/concurrency_test/epoll/lib/json-c/install-sh"
-S["MAKEINFO"]="${SHELL} /home/van9ogh/Projects/Git/C/UnixProgramming/socket/concurrency_test/epoll/lib/json-c/missing --run makeinfo"
-S["AUTOHEADER"]="${SHELL} /home/van9ogh/Projects/Git/C/UnixProgramming/socket/concurrency_test/epoll/lib/json-c/missing --run autoheader"
-S["AUTOMAKE"]="${SHELL} /home/van9ogh/Projects/Git/C/UnixProgramming/socket/concurrency_test/epoll/lib/json-c/missing --run automake-1.11"
-S["AUTOCONF"]="${SHELL} /home/van9ogh/Projects/Git/C/UnixProgramming/socket/concurrency_test/epoll/lib/json-c/missing --run autoconf"
-S["ACLOCAL"]="${SHELL} /home/van9ogh/Projects/Git/C/UnixProgramming/socket/concurrency_test/epoll/lib/json-c/missing --run aclocal-1.11"
+S["install_sh"]="${SHELL} /home/arnold/Documents/Git/tinyos-graphics/lib/json-c/install-sh"
+S["MAKEINFO"]="${SHELL} /home/arnold/Documents/Git/tinyos-graphics/lib/json-c/missing --run makeinfo"
+S["AUTOHEADER"]="${SHELL} /home/arnold/Documents/Git/tinyos-graphics/lib/json-c/missing --run autoheader"
+S["AUTOMAKE"]="${SHELL} /home/arnold/Documents/Git/tinyos-graphics/lib/json-c/missing --run automake-1.11"
+S["AUTOCONF"]="${SHELL} /home/arnold/Documents/Git/tinyos-graphics/lib/json-c/missing --run autoconf"
+S["ACLOCAL"]="${SHELL} /home/arnold/Documents/Git/tinyos-graphics/lib/json-c/missing --run aclocal-1.11"
 S["VERSION"]="0.10"
 S["PACKAGE"]="json-c"
 S["CYGPATH_W"]="echo"

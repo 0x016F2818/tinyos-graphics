@@ -54,7 +54,7 @@ typedef SSIZE_T ssize_t;
 /* Compile with -DHTTP_PARSER_DEBUG=1 to add extra debugging information to
  * the error reporting facility.
  */
-#define HTTP_PARSER_DEBUG 1
+/*#define HTTP_PARSER_DEBUG 1*/
 #ifndef HTTP_PARSER_DEBUG
 # define HTTP_PARSER_DEBUG 0
 #endif
