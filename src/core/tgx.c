@@ -264,7 +264,9 @@ static int tgx_socket_init(tgx_cycle_t *tcycle)
 	printf("tinyos-graphics/0.0.1\n"
 		   "Copyright (C) WSN Working Group. 2012/09\n"
 	       "http://github.com/van9ogh/tinyos-graphics\n\n"
-	       "starting running in port: %s\t\t\t\t[OK]\n", sbuf);
+	       "starting running in port: %s\t\t\t\t", sbuf);
+	sleep(1);
+	printf("[OK]\n");
 	return 0;
 }
 
@@ -576,6 +578,12 @@ int main(int argc, char *argv[])
 	strcpy(tconf_path, TGX_CONFIG_FILE);
 	
 
+	// 取消行缓冲
+	{
+		setbuf(stdout, NULL);
+	}
+
+
 	// 1. 解析命令行参数
 	char prefix[1024];
 	while (1) {
@@ -675,11 +683,12 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	// 这里处理惊群问题采取的方法是类似与lighttpd类似的策略,
-	// 就是让event系统在fork之后初始化， 这样就会有多个epoll
-	// 而nginx处理方法是使用锁， 保证了当前只有一个在epoll_wait
-	// lighttpd的方法简单， 效果也十分不错
-	int childNum = 0;
+	// 1. 这里处理惊群问题采取的方法是类似与lighttpd类似的策略,
+	//    就是让event系统在fork之后初始化， 这样就会有多个epoll
+	//    而nginx处理方法是使用锁， 保证了当前只有一个在epoll_wait
+	//    lighttpd的方法简单， 效果也十分不错
+	// 2. 
+	/*int childNum = 0;
 	pid_t pid;
 	int j;
 	for (j = 0; j < childNum; j++) {
@@ -688,7 +697,51 @@ int main(int argc, char *argv[])
 		} else if (pid == 0) {
 			break;
 		}
+	}*/
+
+	// 一个父进程， 多个子进程， 子进程崩溃， 由父进程来回收子进程
+	// 并且开启新的子进程， 保证程序无法崩溃....
+	{
+		// TODO：这里有个问题是没有关闭父进程的socket， 但是貌似
+		// 父进程根本就没有调用accept函数的可能性， 因此不会对子进程
+		// 构成影响
+		pid_t pid;
+		int isChild = 0;
+		int numChild = 0;
+
+		while (!isChild && running) {
+
+			// 如果子进程数还小于指定的最大子进程个数
+			// 那么将fork出一个子进程， 子进程将跳出
+			// 循环， 开始真正的程序逻辑
+			if (numChild < MAX_CHILD_NUM) {
+				if ((pid = fork()) < 0) {
+					// fork err
+				} else if (pid == 0) { // child
+					printf("Now fork new Child...\n");
+					isChild = 1;
+					break;
+				}
+			}
+
+			numChild++;
+
+			// 一旦numChild等于MAX_CHILD_NUM, 那么
+			// 将不再fork出新的进程， 转而等待子进程
+			// 是否"崩溃"， 一旦回收一个子进程， 将跳出
+			// while， 继续fork新的子进程， 转而继续等待
+			// 如此循环往复， 这样就保证了父进程只有少
+			// 量的程序逻辑, 一旦子进程崩溃， 那么父进程
+			// 可以让子进程"满血", 虽然还做不到原地复活
+			while (numChild >= MAX_CHILD_NUM) {
+				wait(NULL);
+				numChild--;
+				break;
+			}
+		}
 	}
+
+	// 子进程START
 
 	// 初始化event IO多路转换系统
 	tgx_event_t *tevent = tgx_event_init(tcycle, tcycle->maxfds);

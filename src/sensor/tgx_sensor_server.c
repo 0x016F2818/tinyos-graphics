@@ -23,6 +23,7 @@
 #define MAX_BUFF_LENGTH 1024
 #endif
 
+static int running = 1;
 void log_err(const char *format, ...);
 
 static pid_vector_t pv;
@@ -95,6 +96,7 @@ void sig_handler(int errno)
 {
 	switch (errno) {
 		case SIGINT:
+			running = 0;
 			break;
 		case SIGCHLD:
 			wait(NULL);
@@ -106,9 +108,11 @@ void sig_handler(int errno)
 
 int insert_mesg_to_db(MYSQL *mysql, char *msg, int len, char *network_name)
 {
-
 	if (!network_name || !mysql || !msg || len < 0) return -1;
+	printf("network_name:\n%s\n", network_name);
+	printf("strlen(network_name) = %d\n", strlen(network_name));
 
+	int isRoot = 0;
     node_t      node_inser_info;
     sensor_t    sensor_inser_info;
     network_t   network_inser_info;
@@ -121,6 +125,7 @@ int insert_mesg_to_db(MYSQL *mysql, char *msg, int len, char *network_name)
 	// 1. node info
 	strcpy(node_inser_info.network_name, network_name);
 	node_inser_info.node_id    = sensor_msg_nodeId_get(tmsg);
+	if (node_inser_info.node_id == 0) isRoot = 1;
 	node_inser_info.parent_id  = sensor_msg_parentId_get(tmsg);
 	node_inser_info.position.x = sensor_msg_position_x_get(tmsg);
 	node_inser_info.position.y = sensor_msg_position_y_get(tmsg);
@@ -141,9 +146,11 @@ int insert_mesg_to_db(MYSQL *mysql, char *msg, int len, char *network_name)
 	network_inser_info.node_id    = sensor_msg_nodeId_get(tmsg);
 	network_inser_info.parent_id  = sensor_msg_parentId_get(tmsg);
 
+	printf("netname = %s, node_id = %d\n", network_inser_info.network_name, sensor_inser_info.node_id);
+
 	// finish
     update_node_info(mysql,node_inser_info);
-    insert_sense_record(mysql,sensor_inser_info);
+    if (!isRoot) insert_sense_record(mysql,sensor_inser_info);
 	update_network(mysql, network_inser_info);
 
     return 0;
@@ -271,9 +278,27 @@ int main(int argc, char *argv[])
 								}
 							}
 
+							/*char hbuf2[NI_MAXHOST], sbuf2[NI_MAXSERV];
+							memset(hbuf2, 0, sizeof(hbuf2));
+							memset(sbuf2, 0, sizeof(sbuf2));*/
+							char netname[1024];
+							/*struct sockaddr in_addr2;
+							socklen_t alenp2;
+
+							sleep(1);
+							if (getsockname(sensor_socket, &in_addr2, 
+									&alenp2) < 0) printf("getsockname return -1\n");
+							if (getnameinfo(&in_addr2, alenp2,
+							hbuf2, sizeof hbuf2,
+							sbuf2, sizeof sbuf2,
+							NI_NUMERICHOST | NI_NUMERICSERV) < 0)
+								printf("getnameinfo return -1\n");
+
+							sprintf(netname, "%s:%s", hbuf2, sbuf2);+|*/
+
 										
 							int nread;
-							while (1) {
+							while (running) {
 								nread = read(in_fd, msg, MAX_BUFF_LENGTH);
 								if (nread == -1) {
 									if (errno == EINTR) continue;
@@ -285,7 +310,8 @@ int main(int argc, char *argv[])
 									printf("%02x ", msg[i]);
 								putchar('\n');
 								fflush(stdout);*/
-								insert_mesg_to_db(&mysql, msg, nread, "10.18.46.17:1234");
+							
+								insert_mesg_to_db(&mysql, msg, nread, "10.18.46.188:1234");
 							}
 							mysql_close(&mysql);
 						} else if (pid > 0) { // parent

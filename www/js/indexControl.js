@@ -15,7 +15,7 @@ $(function() {
     networkSlot = new Array(),
     i,
     xmlhttp = createxmlhttp();
-    go(xmlhttp, "POST", "nodeInfo.wsn", "null");
+    go(xmlhttp, "POST", "nodeInfo.wsn", "false", "null");
     // put the node information into the array nodeSlot
     getNodeBasicInformation(networkSlot);
     

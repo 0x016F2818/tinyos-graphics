@@ -39,17 +39,17 @@ static int _string_check_boundry(tgx_string_t *str, int boundry)
 			log_err("calloc():%s\n", strerror(errno));
 			return -1;
 		}
-	}
+	} 
 
 	if (boundry > str->size - BUFFER_NEARLY_BOUNDRY && str->size < MAX_BUFFER_SIZE) {
-			str->size += INCR_FACTOR * INCR_LENGTH * sizeof(char);
-			char *p = NULL;
-			p = realloc(str->data, str->size);
-			if (!p) {
-				log_err("realloc():%s\n", strerror(errno));
-				return -1;
-			}
-			str->data = p;
+		str->size += INCR_FACTOR * INCR_LENGTH * sizeof(char);
+		char *p = NULL;
+		p = realloc(str->data, str->size);
+		if (!p) {
+			log_err("realloc():%s\n", strerror(errno));
+			return -1;
+		}
+		str->data = p;
 	}
 
 	return 0;
@@ -58,7 +58,7 @@ static int _string_check_boundry(tgx_string_t *str, int boundry)
 /*****************************************************************
  处理http分为两种
  1. handler, 处理IO, 它们和IO多路转换紧密的结合在一起
- 2. task, 每一个task对应一个do， on_complete, 处理CPU密集型计算, 
+ 2. task, 每一个task对应一个on_post, do， on_complete, 处理CPU密集型计算, 
     它们和任务调度器紧密的结合在一起
  这样就将epoll和线程池的优势都发挥出来了, 竭力避免阻塞， 是最高的宗旨
 
@@ -196,7 +196,11 @@ int tgx_connection_handler_read             (tgx_cycle_t *tcycle, void *context,
 
 	int nRead;
 	do {
-		_string_check_boundry(tconn->httpReqBuf, tconn->rw_pos);
+		if (_string_check_boundry(tconn->httpReqBuf, tconn->rw_pos) < 0) {
+			log_err("_string_check_boundry() error\n");
+			tgx_close_connection(tcycle, tconn);
+			return -1;
+		}
 
 		nRead = read(tconn->fd, tconn->httpReqBuf->data + tconn->rw_pos, 
 				tconn->httpReqBuf->size - tconn->rw_pos);
@@ -248,7 +252,7 @@ int tgx_connection_handler_read             (tgx_cycle_t *tcycle, void *context,
 
 				int header_len = 0;
 
-				char num[16];
+				char num[128];
 				char *start = strstr(tconn->httpReqBuf->data, "Content-Length:");
 				char *end, *p;
 				if (!start) {
@@ -267,6 +271,12 @@ int tgx_connection_handler_read             (tgx_cycle_t *tcycle, void *context,
 				num[i] = '\0';
 				
 				p = strstr(tconn->httpReqBuf->data, "\r\n\r\n");
+				if (!p) {
+					log_err("null pointer\n");
+					tgx_close_connection(tcycle, tconn);
+					return -1;
+				}
+
 				header_len = p - tconn->httpReqBuf->data + 4;
 				
 				// 如果Content-Length大于目前读取的长度那么继续
@@ -287,6 +297,10 @@ int tgx_connection_handler_read             (tgx_cycle_t *tcycle, void *context,
 					return 0;
 				}
 			}
+		} else {
+			log_err("unsupported http request method!\n");
+			tgx_close_connection(tcycle, tconn);
+			return -1;
 		}
 	}
 	
@@ -447,6 +461,7 @@ int tgx_connection_handler_post_method_write_buffer  (tgx_cycle_t *tcycle, void 
 	return 0;
 }
 
+
 static int _post_task(tgx_cycle_t *tcycle, tgx_connection_t *tconn,
 		int (*on_post)(void *context),
 		int (*task_handler)(void *context),
@@ -480,6 +495,8 @@ static int _post_task(tgx_cycle_t *tcycle, tgx_connection_t *tconn,
 
 	// 理论上task_context是可以释放的
 	/*free(task_context);*/
+	// 由于这里的释放有问题， 因此采用了在所有需要的
+	// 地方free(wrapper_context)， 读者可以查看一下
 	return 0;
 }
 
@@ -574,6 +591,7 @@ static int _task_http_parser_on_complete        (void *context, int err)
 	if (err < 0) {
 		log_err("http_parser error\n");
 		tgx_close_connection(wrapper_context->tcycle, wrapper_context->tconn);
+		free(wrapper_context);
 		return -1;
 	}
 
@@ -590,6 +608,7 @@ static int _task_http_parser_on_complete        (void *context, int err)
 		if (ret < 0) {
 			log_err("http_parser error\n");
 			tgx_close_connection(wrapper_context->tcycle, wrapper_context->tconn);
+			free(wrapper_context);
 			return -1;
 		}
 		return 0;
@@ -603,12 +622,14 @@ static int _task_http_parser_on_complete        (void *context, int err)
 		if (ret < 0) {
 			log_err("http_parser error\n");
 			tgx_close_connection(wrapper_context->tcycle, wrapper_context->tconn);
+			free(wrapper_context);
 			return -1;
 		}
 		return 0;
 	} else {
 		log_err("http method not supported!\n");
 		tgx_close_connection(wrapper_context->tcycle, wrapper_context->tconn);
+		free(wrapper_context);
 		return -1;
 	}
 	return 0;
@@ -645,12 +666,16 @@ static int _task_get_prepare_write_do           (void *context)
 	int buff_pos = 0;
 
 	// memset buff
-	if (tconn->httpRespHeader->size > 0)
+	if (tconn->httpRespHeader->size)
 		memset(tconn->httpRespHeader->data, 0, sizeof(tconn->httpRespHeader->data));
 
 #undef COPY
 #define COPY(...) \
-	_string_check_boundry(tconn->httpRespHeader, buff_pos); \
+	if (_string_check_boundry(tconn->httpRespHeader, buff_pos) < 0) {\
+			log_err("_string_check_boundry() error\n");\
+			tgx_close_connection(tcycle, tconn);\
+			return -1;\
+	}\
 	buff_pos += sprintf(tconn->httpRespHeader->data + buff_pos, __VA_ARGS__)
 
 	COPY("%s\r\n", tgx_http_status_string[tconn->http_parser->http_status]);
@@ -698,7 +723,7 @@ static int _task_get_prepare_write_do           (void *context)
 
 		// 写入文件修改时间
 		tm = gmtime_r(&statbuf.st_mtime, &tm_t);
-		strftime(tempstring, sizeof(tempstring), RFC1123_DATE_FMT, tm);
+		if (strftime(tempstring, sizeof(tempstring), RFC1123_DATE_FMT, tm) < 0) return -1;
 		COPY("Last-modified: ");
 		COPY("%s\r\n", tempstring);
 	}
@@ -743,7 +768,7 @@ static int _task_post_prepare_module_on_post    (void *context)
 
 	user_handler = (int (*)(tgx_module_http_t *))
 		dlsym(wrapper_context->tconn->dlopen_handle, "TGX_MODULE_HTTP_HANDLER");
-	if ((error = dlerror()) != NULL) {
+	if ((error = dlerror()) != NULL || !user_handler) {
 		log_err("dlopen()%s\n", error);
 		return -1;
 	}
@@ -771,16 +796,17 @@ static int _task_post_prepare_module_do         (void *context)
 	tgx_module_http_t *http = calloc(1, sizeof(tgx_module_http_t));
 	if (!http) return -1;
 
-	http->req  = wrapper_context->tconn->httpReqBuf;
+	http->req  = wrapper_context->tconn->httpReqBody;
 	http->resp = wrapper_context->tconn->httpRespBody; 
 
 	// 转化成函数指针， 执行
 	int ret;
 	DEBUG("\n");
-	ret = ((int (*)(tgx_module_http_t *))wrapper_context->context)(http);
+	if (wrapper_context->context)
+		ret = ((int (*)(tgx_module_http_t *))wrapper_context->context)(http);
 	DEBUG("\n");
 
-	/*free(http);*/
+	free(http);
 	return ret;
 }
 
@@ -796,6 +822,7 @@ static int _task_post_prepare_module_on_complete(void *context, int err)
 	if (err < 0) {
 		log_err("calling user module error\n");
 		tgx_close_connection(wrapper_context->tcycle, wrapper_context->tconn);
+		free(wrapper_context);
 		return -1;
 	}
 
@@ -808,6 +835,7 @@ static int _task_post_prepare_module_on_complete(void *context, int err)
 	if (ret < 0) {
 		log_err("post task: prepare write wrror\n");
 		tgx_close_connection(wrapper_context->tcycle, wrapper_context->tconn);
+		free(wrapper_context);
 		return -1;
 	}
 	return 0;
@@ -844,7 +872,11 @@ static int _task_post_prepare_write_do          (void *context)
 
 #undef COPY
 #define COPY(...) \
-	_string_check_boundry(tconn->httpRespHeader, buff_pos); \
+	if (_string_check_boundry(tconn->httpRespHeader, buff_pos) < 0) {\
+			log_err("_string_check_boundry() error\n");\
+			tgx_close_connection(tcycle, tconn);\
+			return -1;\
+	}\
 	buff_pos += sprintf(tconn->httpRespHeader->data + buff_pos, __VA_ARGS__)
 
 	COPY("%s\r\n", tgx_http_status_string[tconn->http_parser->http_status]);

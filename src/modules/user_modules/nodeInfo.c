@@ -119,6 +119,7 @@ int TGX_MODULE_HTTP_HANDLER(tgx_module_http_t *http)
 	}
 	sprintf(http->resp->data, "%s\n", json_object_to_json_string(network));
 	printf("%s\n", json_object_to_json_string(network));
+	mysql_close(&mysql);
 
 	return 0;
 }

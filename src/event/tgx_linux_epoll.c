@@ -51,7 +51,9 @@ static int tgx_linux_epoll_ctl(tgx_event_t *te, int op, int fd, int event_flag)
 	event.data.fd = fd;
 	if (event_flag & TGX_EVENT_IN)  event.events |= EPOLLIN;
 	if (event_flag & TGX_EVENT_OUT) event.events |= EPOLLOUT;
-	/*event.events |= EPOLLET | EPOLLRDHUP; // 使用边沿触发, 并且监视客户端关闭事件*/
+#ifdef USE_EPOLL_ET_MODE
+	event.events |= EPOLLET;
+#endif
 
 	if (epoll_ctl(te->epoll_fd, local_op, fd, &event) < 0) {
 		log_err("epoll_ctl():%s\n", strerror(errno));

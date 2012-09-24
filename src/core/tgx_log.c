@@ -4,6 +4,7 @@ void no_op() { }
 
 void log_print(int level, int use, const char *file, int line, const char *function, const char *format, ...)
 {
+#ifdef LOG_PRINT
 	va_list ap;
 
 	if (level < 0 || !use)
@@ -30,4 +31,5 @@ void log_print(int level, int use, const char *file, int line, const char *funct
 	 va_start(ap, format);
 	vprintf(format, ap);
 	va_end(ap);
+#endif
 }

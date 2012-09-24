@@ -1,7 +1,7 @@
 var createxmlhttp = function() {
     var xmlhttp, 
     alerted; 
-    /*@cc_on
+    /*@cc_on 
       @if (@_jscript_version >= 5)
       try {
           xmlhttp = new ActiveXObject("Msxml2.XMLHTTP")
@@ -26,7 +26,7 @@ var createxmlhttp = function() {
     }
     return xmlhttp;
 },
-go = function(xmlhttp, requestType, module, request) {
+go = function(xmlhttp, requestType, module, bool, request) {
     if(!requestType)
         requestType = "GET";
     if(!module)
@@ -34,14 +34,20 @@ go = function(xmlhttp, requestType, module, request) {
     if(!request)
         request = null;
     if (xmlhttp) {
-        xmlhttp.open(requestType, module, false);
+        if(bool === 'false')               // bool is false do it
+            xmlhttp.open(requestType, module, false);
+        else                    // if bool not false do it
+            xmlhttp.open(requestType, module, true);
         xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");  
         // console.log(request);
+        // alert(request);
         xmlhttp.send(request); 
+        // alert(xmlhttp);
         xmlhttp.onreadystatechange = RSchange(xmlhttp);
     }
 },
 RSchange = function (xmlhttp) {
+    // alert(xmlhttp.readyState);
     if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
         // var type = xmlhttp.getResponseHeader("Content-Type");
         // alert(type);
@@ -50,6 +56,7 @@ RSchange = function (xmlhttp) {
         // if(jsondata !== undefined && type === "application/json") {
         if(jsondata !== undefined) {
             var data = JSON.parse(xmlhttp.responseText);
+            // alert(data);
             dataHandle(data);
         } 
     }

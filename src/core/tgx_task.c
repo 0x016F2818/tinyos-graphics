@@ -133,6 +133,7 @@ void tgx_task_schedule_destroy(tgx_task_schedule_t *t_task_sched)
 	t_task_sched->keep_alive = 0;
 
 	// 假装增加n_threads个task给队列， 这样可以唤醒n_threads个线程
+	// 这样就可以销毁了
 	for (i = 0; i < t_task_sched->n_threads; i++) {
 		ret = tgx_task_queue_signal(t_task_sched->task_queue);
 		if (ret < 0) {
@@ -272,7 +273,7 @@ void tgx_task_queue_empty(tgx_task_queue_t *t_task_queue)
 
 	if (!t_task_queue) return;
 
-	// 不断从队列取出元素， 然后释放内存， 并且让资源 -= -1
+	// 不断从队列取出元素， 然后释放内存
 	while ((task = tgx_task_queue_pop_front(t_task_queue))) {
 		ret = sem_trywait(t_task_queue->resource);
 		if (ret < 0) {

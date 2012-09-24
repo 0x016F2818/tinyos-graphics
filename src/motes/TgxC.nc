@@ -1,7 +1,7 @@
 #include "printf.h"
 #include "tgx.h"
 
-module TinyosWebC {
+module TgxC {
 	uses {
 		interface Boot;
 		interface Leds;

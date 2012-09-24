@@ -11,7 +11,8 @@ typedef struct tgx_task_queue_s				tgx_task_queue_t;
 // 用户需要自己填写下面的字段， 不需要的字段填写NULL即可
 // 有两个回调函数， 一个在post到queue之前执行, 这样可以在
 // 调度器内部检查此次task是否合法， 还有一个回调函数在task
-// 执行完产生， 这样用户就可以继续调用状态机继续程序逻辑
+// 执行完产生， 这样用户就可以继续POST构造链条， 或者执行
+// 别的
 
 
 struct tgx_task_s {
@@ -68,4 +69,3 @@ int tgx_task_queue_push_back(tgx_task_queue_t *t_task_queue, __tgx_task_internal
 tgx_task_t* tgx_task_queue_pop_front(tgx_task_queue_t *t_task_queue);
 int tgx_task_queue_signal(tgx_task_queue_t *t_task_queue);
 int tgx_task_queue_wait(tgx_task_queue_t *t_task_queue);
-
