@@ -18,10 +18,10 @@
 //#define USE_TCP_CORK
 
 // 设置是否打印DEBUG信息
-//#define DEBUG_PRINT
+#define DEBUG_PRINT
 
 // 设置是否设置log_print函数的实现为空
-//#define LOG_PRINT
+#define LOG_PRINT
 
 // 定义工作进程数
 #define MAX_CHILD_NUM 4
