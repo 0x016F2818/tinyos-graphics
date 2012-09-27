@@ -15,6 +15,7 @@
 #include "sfsource.h"
 
 
+static volatile sig_atomic_t running = 1;
 static pid_t pid;
 
 int do_child(void);
@@ -69,6 +70,7 @@ void sig_handler(int signo)
 			wait(NULL);
 			break;
 		case SIGINT:
+			running = 0;
 			kill(pid, SIGKILL);
 			printf("signal kill signal to child\n");
 			exit(0);
@@ -128,7 +130,7 @@ int main(int argc, char *argv[])
 	FD_ZERO(&readfds);
 	FD_SET (sf_source,   &readfds);
 	maxfd = sf_source + 1;
-	while (1) {
+	while (running) {
 		int nread;
 
 		testfds = readfds;
@@ -192,7 +194,7 @@ int main(int argc, char *argv[])
 								printf("%3d ", to_int(packet+i, 2));;
 							}
 						} else {
-							printf("%02x ", packet[i]);
+							/*printf("%02x ", packet[i]);*/
 						}
 						if (i >= 7 && i < nwrite-1) {
 							if (i == 7) printf("( ");

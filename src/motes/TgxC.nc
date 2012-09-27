@@ -280,6 +280,8 @@ implementation {
 					printfflush();
 				}*/
 			call SerialMsgQueue.enqueue(*newCollectionMsg);
+//			printf("tempeature = %d\n", newCollectionMsg->sensor.temp);
+//			printfflush();
 		} else {
 			reportFatalError();
 		}

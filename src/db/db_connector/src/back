@@ -39,33 +39,59 @@ int main(int argc,char *argv[])
     }
     int num = 0;
     
+    node_inser_info.node_id           = num; 
+    node_inser_info.power             = num;
+    node_inser_info.position.x        = 50 + num % 10;
+    node_inser_info.position.y        = 40 + num % 10;
+    strcpy(node_inser_info.network_name,"10.16.17.0");
+    strcpy(node_inser_info.work_state,"work");
+    strcpy(node_inser_info.node_status,"normal");
+
+    update_node_info(&mysql,node_inser_info);
+
+    network_inser_info.node_id      = num;
+    network_inser_info.parent_id    = num;
+    strcpy(network_inser_info.network_name,"10.16.17.0");
+
+    update_network(&mysql,network_inser_info);
+    for(num = 1;num <= 100;num++){
+        node_inser_info.node_id           = num; 
+        node_inser_info.power             = 90 + num % 10;
+        node_inser_info.position.x        = 50 + num % 10;
+        node_inser_info.position.y        = 40 + num % 10;
+        strcpy(node_inser_info.network_name,"10.16.17.0");
+        strcpy(node_inser_info.work_state,"work");
+        strcpy(node_inser_info.node_status,"normal");
+
+        update_node_info(&mysql,node_inser_info);
+
+        network_inser_info.node_id      = num;
+        network_inser_info.parent_id    = num - 1;
+        strcpy(network_inser_info.network_name,"10.16.17.0");
+
+        update_network(&mysql,network_inser_info);
+
+        strcpy(sensor_inser_info.network_name,"10.16.17.0");
+        sensor_inser_info.node_id         = num % 300;
+        sensor_inser_info.temp            = 26 + num % 10;
+        sensor_inser_info.photo           = 98 + num % 10;
+        sensor_inser_info.sound           = 21 + num % 10;
+        sensor_inser_info.x_acc           = 34 + num % 10;
+        sensor_inser_info.y_acc           = 0  + num % 10;
+        sensor_inser_info.x_mag           = 22 + num % 10;
+        sensor_inser_info.y_mag           = 33 + num % 10;
+
+        insert_sense_record(&mysql,sensor_inser_info);
+    }
     long i,j;
     
     //j = get_all_record(&mysql,sensor_info);
     //j = get_network_info(&mysql,network_info);
     //j = get_all_node_info(&mysql,node_info);
     //j = get_latest_record(&mysql,sensor_info,"10.18.46.188:1234",2,"temperature");
-    //j = get_absolute_record(&mysql,sensor_info,"10.16.17.0",99,"temp","2012-09-23 11:21:41","2012-09-23 11:21:42");
-    while(1){
-    j = get_relative_record(&mysql,sensor_info,"10.16.17.0",99,"sound","20120925082929",-30);
-    printf("j = %ld\n",j);
-    if(j==-1){
-        mysql_close(&mysql);
-        return -1;
-    }
-    else{
-        for(i = 0;i < j;i++){
-
-            printf("network_id:%d\t"       ,sensor_info[i].network_id);
-            printf("network_name:%s\t"     ,sensor_info[i].network_name);
-            printf("node_id:%d\t"          ,sensor_info[i].node_id);
-            printf("temp:%6.2lf\t"         ,sensor_info[i].temp);
-            printf("photo:%6.2lf\t"        ,sensor_info[i].photo);
-            printf("insert_time:%s\t"      ,sensor_info[i].time);
-            printf("\n");
-        }
-    }
     j = get_latest_record(&mysql,sensor_info,"10.16.17.0",99,"temp");
+    //j = get_absolute_record(&mysql,sensor_info,"10.16.17.0",0,"temperature","2012-09-23 11:21:41","2012-09-23 11:21:42");
+    //j = get_relative_record(&mysql,sensor_info,"10.16.17.",99,"microphone","20120923112142",9);
     if(j==-1){
         mysql_close(&mysql);
         return -1;
@@ -99,8 +125,6 @@ int main(int argc,char *argv[])
             printf("insert_time:%s\t"      ,sensor_info[i].time);
             printf("\n");
         }
-    }
-    sleep(1);
     }
     mysql_close(&mysql);
     return 0;
