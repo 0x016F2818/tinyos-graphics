@@ -54,8 +54,8 @@ drop procedure if exists sp_get_all_record;
 create procedure sp_get_all_record()
 begin
     select viw_sense.network_id,network_name,node_id,
-    temperature,brightness,microphone,
-    accelerate_x,accelerate_y, terre_mag_x,terre_mag_y,
+    temp,photo,sound,
+    x_acc,y_acc, x_mag,y_mag,
     humidity,pressure,shoke,sense_time,insert_time from viw_sense,viw_network_segment
     where viw_sense.network_id = viw_network_segment.network_id;
 end;
@@ -72,8 +72,8 @@ top:begin
         leave top;
     end if;
 
-    select temperature,humidity,brightness,microphone,
-    terre_mag_x,terre_mag_y,accelerate_x,accelerate_y,
+    select temp,humidity,photo,sound,
+    x_mag,y_mag,x_acc,y_acc,
     pressure,shoke,sense_time from viw_sense
     where network_id = net_id and node_id = nod_id;
 end;
@@ -91,26 +91,26 @@ top:begin
     end if;
 
     case sense
-    when 'temperature' then
-        select temperature,insert_time from viw_temperature
+    when 'temp' then
+        select temp,insert_time from viw_temp
         where network_id = net_id and node_id = nod_id;
     when 'humidity' then
         select humidity,insert_time from viw_humidity
         where network_id = net_id and node_id = nod_id;
-    when 'brightness' then
-        select brightness,insert_time from viw_brightness
+    when 'photo' then
+        select photo,insert_time from viw_photo
         where network_id = net_id and node_id = nod_id;
-    when 'microphone' then
-        select microphone,insert_time from viw_microphone
+    when 'sound' then
+        select sound,insert_time from viw_sound
         where network_id = net_id and node_id = nod_id;
-    when 'terrestrial_magnetism' then
-        select terre_mag_x,terre_mag_y,insert_time from viw_terre_mag
+    when 'magn' then
+        select x_mag,y_mag,insert_time from viw_terre_mag
         where network_id = net_id and node_id = nod_id;
     when 'pressure' then
         select pressure,insert_time from viw_pressure
         where network_id = net_id and node_id = nod_id;
-    when 'accelerate' then 
-        select accelerate_x,accelerate_y,insert_time from viw_accelerate
+    when 'acce' then 
+        select x_acc,y_acc,insert_time from viw_acce
         where network_id = net_id and node_id = nod_id;
     when 'shoke' then
         select shoke,insert_time from viw_shoke
@@ -126,18 +126,18 @@ drop procedure if exists sp_get_max_record;
 create procedure sp_get_max_record(in sense char(50))
 top:begin
     case sense 
-    when 'temperature' then
-        select min(temperature) from viw_temperature;
-    when 'brightness' then
-        select max(brightness) from viw_brightness;
-    when 'microphone' then
-        select max(microphone) from viw_microphone;
-    when 'terrestrial_magnetism' then
-        select terre_mag_x,terre_mag_y from viw_terre_mag
-        having terre_mag_x * terre_mag_x + terre_mag_y * terre_mag_y = max(terre_mag_x * terre_mag_x + terre_mag_y * terre_mag_y);
-    when 'accelerate' then 
-        select accelerate_x,accelerate_y from viw_accelerate
-        having accelerate_x * accelerate_x + accelerate_y * accelerate_y = min(accelerate_x * accelerate_x + accelerate_y * accelerate_y);
+    when 'temp' then
+        select min(temp) from viw_temp;
+    when 'photo' then
+        select max(photo) from viw_photo;
+    when 'sound' then
+        select max(sound) from viw_sound;
+    when 'magn' then
+        select x_mag,y_mag from viw_terre_mag
+        having x_mag * x_mag + y_mag * y_mag = max(x_mag * x_mag + y_mag * y_mag);
+    when 'acce' then 
+        select x_acc,y_acc from viw_acce
+        having x_acc * x_acc + y_acc * y_acc = min(x_acc * x_acc + y_acc * y_acc);
     when 'pressure' then
         select pressure from viw_pressure;
     when 'humidity' then
@@ -155,18 +155,18 @@ drop procedure if exists sp_get_min_record;
 create procedure sp_get_min_record(in sense char(50))
 top:begin
     case sense 
-    when 'temperature' then
-        select min(temperature) from viw_temperature;
-    when 'brightness' then
-        select min(brightness) from viw_brightness;
-    when 'microphone' then
-        select min(microphone) from viw_microphone;
-    when 'terrestrial_magnetism' then
-        select terre_mag_x,terre_mag_y from viw_terre_mag
-        having terre_mag_x * terre_mag_x + terre_mag_y * terre_mag_y = min(terre_mag_x * terre_mag_x + terre_mag_y * terre_mag_y);
-    when 'accelerate' then 
-        select accelerate_x,accelerate_y from viw_accelerate
-        having accelerate_x * accelerate_x + accelerate_y * accelerate_y = min(accelerate_x * accelerate_x + accelerate_y * accelerate_y);
+    when 'temp' then
+        select min(temp) from viw_temp;
+    when 'photo' then
+        select min(photo) from viw_photo;
+    when 'sound' then
+        select min(sound) from viw_sound;
+    when 'magn' then
+        select x_mag,y_mag from viw_terre_mag
+        having x_mag * x_mag + y_mag * y_mag = min(x_mag * x_mag + y_mag * y_mag);
+    when 'acce' then 
+        select x_acc,y_acc from viw_acce
+        having x_acc * x_acc + y_acc * y_acc = min(x_acc * x_acc + y_acc * y_acc);
     when 'pressure' then
         select pressure from viw_pressure;
     when 'humidity' then
@@ -189,81 +189,30 @@ top:begin
         leave top;
     end if;
 
-    if nod_id < 0 and sense is null then
-        select temperature,humidity,brightness,microphone,terre_mag_x,terre_mag_y,
-        pressure,accelerate_x,accelerate_y,shoke,sense_time,insert_time from viw_sense
-        order by order_num desc
-        limit 1;
-
-    elseif nod_id > 0 and sense is null then
-        select temperature,humidity,brightness,microphone,terre_mag_x,terre_mag_y,
-        pressure,accelerate_x,accelerate_y,shoke,sense_time,insert_time from viw_sense
-        where node_id = nod_id and network_id = net_id
-        order by order_num desc
-        limit 1;
-
-    elseif nod_id < 0 and sense is not null then
+    if nod_id >= 0 and sense is not null then
         case sense    
-        when "temperature" then
-            select temperature,insert_time from viw_temperature
-            order by order_num desc
-            limit 1;
-        when 'brightness' then
-            select brightness,insert_time from viw_brightness
-            order by order_num desc
-            limit 1;
-        when 'microphone' then
-            select microphone ,insert_time from viw_microphone
-            order by order_num desc
-            limit 1;
-        when 'terrestrial_magnetism' then
-            select terre_mag_x,terre_mag_y,insert_time from viw_terre_mag
-            order by order_num desc
-            limit 1;
-        when 'accelerate' then 
-            select accelerate_x,accelerate_y,insert_time from viw_accelerate
-            order by order_num desc
-            limit 1;
-        when 'pressure' then
-            select pressure,insert_time from viw_pressure
-            order by order_num desc
-            limit 1;
-        when 'humidity' then
-            select humidity,insert_time from viw_humidity
-            order by order_num desc
-            limit 1;
-        when 'shoke' then
-            select shoke,insert_time from viw_shoke
-            order by order_num desc
-            limit 1;
-        else 
-            leave top;
-        end case;
-
-    elseif nod_id > 0 and sense is not null then
-        case sense    
-        when 'temperature' then
-            select temperature,insert_time from viw_temperature
+        when 'temp' then
+            select temp,insert_time from viw_temp
             where network_id = net_id and node_id = nod_id
             order by order_num desc
             limit 1;
-        when 'brightness' then
-            select brightness,insert_time from viw_brightness
+        when 'photo' then
+            select photo,insert_time from viw_photo
             where node_id = nod_id and network_id = net_id
             order by order_num desc
             limit 1;
-        when 'microphone' then
-            select microphone,insert_time from viw_microphone
+        when 'sound' then
+            select sound,insert_time from viw_sound
             where node_id = nod_id and network_id = net_id
             order by order_num desc
             limit 1;
-        when 'accelerate' then 
-            select accelerate_x,accelerate_y,insert_time from viw_accelerate
+        when 'acce' then 
+            select x_acc,y_acc,insert_time from viw_acce
             where node_id = nod_id and network_id = net_id
             order by order_num desc
             limit 1;
-        when 'terrestrial_magnetism' then
-            select terre_mag_x,terre_mag_y,insert_time from viw_terre_mag
+        when 'magn' then
+            select x_mag,y_mag,insert_time from viw_terre_mag
             where node_id = nod_id and network_id = net_id
             order by order_num desc
             limit 1;
@@ -285,9 +234,10 @@ top:begin
         else
             leave top;
         end case;
+    else
+        leave top;
     end if;
 end;
-
 /*##########################################################################*/
 drop procedure if exists sp_get_absolute_record;
 create procedure sp_get_absolute_record(in net_name char(50),in nod_id int,in sense char(50),in start_time timestamp,in end_time timestamp)
@@ -297,66 +247,25 @@ top:begin
     select count(*),network_id from viw_network_segment
     where network_name = net_name into amount,net_id;
     if amount = 0 then 
-        select net_id;
         leave top;
     end if;
 
-    if nod_id < 0 and sense is null then
-        select temperature,humidity,brightness,microphone,terre_mag_x,terre_mag_y,
-                pressure,accelerate_x,accelerate_y,shoke,insert_time from viw_sense
-        where viw_sense.insert_time >= start_time and viw_sense.insert_time <= end_time;
-
-    elseif nod_id > 0 and sense is null then
-        select temperature,humidity,brightness,microphone,terre_mag_x,terre_mag_y,
-                pressure,accelerate_x,accelerate_y,shoke,insert_time from viw_sense
-        where network_id = net_id and node_id = nod_id and viw_sense.insert_time >= start_time and viw_sense.insert_time <= end_time;
-
-    elseif nod_id < 0 and sense is not null then
-        case sense
-        when 'temperature' then
-            select temperature ,insert_time from viw_temperature
-            where insert_time >= start_time and insert_time <= end_time;
-        when 'brightness' then
-            select brightness ,insert_time from viw_brightness
-            where insert_time >= start_time and insert_time <= end_time;
-        when 'microphone' then
-            select microphone ,insert_time from viw_microphone
-            where insert_time >= start_time and insert_time <= end_time;
-        when 'terrestrial_magnetism' then
-            select terre_mag_x,terre_mag_y ,insert_time from viw_terre_mag
-            where insert_time >= start_time and insert_time <= end_time;
-        when 'accelerate' then 
-            select accelerate_x,accelerate_y ,insert_time from viw_accelerate
-            where insert_time >= start_time and insert_time <= end_time;
-        when 'humidity' then
-            select humidity ,insert_time from viw_humidity
-            where insert_time >= start_time and insert_time <= end_time;
-        when 'pressure' then
-            select pressure ,insert_time from viw_pressure
-            where insert_time >= start_time and insert_time <= end_time;
-        when 'shoke' then
-            select shoke ,insert_time from viw_shoke
-            where insert_time >= start_time and insert_time <= end_time;
-        else
-            leave top;
-        end case;
-
-    elseif nod_id > 0 and sense is not null then
+    if nod_id >= 0 and sense is not null then
 	    case sense    
-        when 'temperature' then
-            select temperature ,insert_time from viw_temperature
+        when 'temp' then
+            select temp ,insert_time from viw_temp
             where net_id = network_id and node_id = nod_id and insert_time >= start_time and insert_time <= end_time;
-        when 'brightness' then
-            select brightness ,insert_time from viw_brightness
+        when 'photo' then
+            select photo ,insert_time from viw_photo
             where net_id = network_id and node_id = nod_id and insert_time >= start_time and insert_time <= end_time;
-        when 'microphone' then
-            select microphone ,insert_time from viw_microphone
+        when 'sound' then
+            select sound ,insert_time from viw_sound
             where net_id = network_id and node_id = nod_id and insert_time >= start_time and insert_time <= end_time;
-        when 'terrestrial_magnetism' then
-            select terre_mag_x,terre_mag_y ,insert_time from viw_terre_mag
+        when 'magn' then
+            select x_mag,y_mag ,insert_time from viw_terre_mag
             where net_id = network_id and node_id = nod_id and insert_time >= start_time and insert_time <= end_time;
-        when 'accelerate' then 
-            select accelerate_x,accelerate_y ,insert_time from viw_accelerate
+        when 'acce' then 
+            select x_acc,y_acc ,insert_time from viw_acce
             where net_id = network_id and node_id = nod_id and insert_time >= start_time and insert_time <= end_time;
         when 'humidity' then
             select humidity ,insert_time from viw_humidity
@@ -370,6 +279,8 @@ top:begin
         else 
             leave top;
         end case;
+    else 
+        leave top;
     end if;
 end;
 
@@ -392,35 +303,35 @@ top:begin
     set @numbers        = numbers;
     set @neg_numbers    = -numbers;
 
-    prepare a1 from 'select temperature,insert_time from viw_temperature where network_id = ? and node_id = ? and insert_time >= ? limit ?';
-    prepare a2 from 'select temperature,insert_time from viw_temperature where network_id = ? and node_id = ? and insert_time <= ? limit ?';
-    prepare a3 from 'select temperature,insert_time from viw_temperature where insert_time >= ? limit ?';
-    prepare a4 from 'select temperature,insert_time from viw_temperature where insert_time <= ? limit ?';
+    prepare a1 from 'select temp,insert_time from viw_temp where network_id = ? and node_id = ? and insert_time >= ? order by order_num limit ?';
+    prepare a2 from 'select temp,insert_time from viw_temp where network_id = ? and node_id = ? and insert_time <= ? order by order_num desc limit ?';
+    prepare a3 from 'select temp,insert_time from viw_temp where insert_time >= ? limit ?';
+    prepare a4 from 'select temp,insert_time from viw_temp where insert_time <= ? limit ?';
 
-    prepare b1 from 'select brightness,insert_time from viw_brightness where network_id = ? and node_id = ? and insert_time >= ? limit ?';
-    prepare b2 from 'select brightness,insert_time from viw_brightness where network_id = ? and node_id = ? and insert_time <= ? limit ?';
-    prepare b3 from 'select brightness,insert_time from viw_brightness where insert_time >= ? limit ?';
-    prepare b4 from 'select brightness,insert_time from viw_brightness where insert_time <= ? limit ?';
+    prepare b1 from 'select photo,insert_time from viw_photo where network_id = ? and node_id = ? and insert_time >= ? order by order_num limit ?';
+    prepare b2 from 'select photo,insert_time from viw_photo where network_id = ? and node_id = ? and insert_time <= ? order by order_num desc limit ?';
+    prepare b3 from 'select photo,insert_time from viw_photo where insert_time >= ? limit ?';
+    prepare b4 from 'select photo,insert_time from viw_photo where insert_time <= ? limit ?';
 
-    prepare c1 from 'select microphone,insert_time from viw_microphone where network_id = ? and node_id = ? and insert_time >= ? limit ?';
-    prepare c2 from 'select microphone,insert_time from viw_microphone where network_id = ? and node_id = ? and insert_time <= ? limit ?';
-    prepare c3 from 'select microphone,insert_time from viw_microphone where insert_time >= ? limit ?';
-    prepare c4 from 'select microphone,insert_time from viw_microphone where insert_time <= ? limit ?';
+    prepare c1 from 'select sound,insert_time from viw_sound where network_id = ? and node_id = ? and insert_time >= ? order by order_num limit ?';
+    prepare c2 from 'select sound,insert_time from viw_sound where network_id = ? and node_id = ? and insert_time <= ? order by order_num desc limit ?';
+    prepare c3 from 'select sound,insert_time from viw_sound where insert_time >= ? limit ?';
+    prepare c4 from 'select sound,insert_time from viw_sound where insert_time <= ? limit ?';
 
     case sense
-    when "temperature" then
+    when "temp" then
         if(numbers >= 0) then
             execute a1 using @net_id,@nod_id,@start_time,@numbers;
         else
             execute a2 using @net_id,@nod_id,@start_time,@neg_numbers;
         end if;
-    when "brightness" then
+    when "photo" then
         if(numbers >= 0) then
             execute b1 using @net_id,@nod_id,@start_time,@numbers;
         else
             execute b2 using @net_id,@nod_id,@start_time,@neg_numbers;
         end if;
-    when "microphone" then
+    when "sound" then
         if(numbers >= 0) then
             execute c1 using @net_id,@nod_id,@start_time,@numbers;
         else
@@ -442,4 +353,5 @@ top:begin
         and insert_time >= start_time 
         and insert_time <= end_time;           
 end
+
 

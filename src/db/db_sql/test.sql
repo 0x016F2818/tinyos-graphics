@@ -1,44 +1,61 @@
 delimiter ;;
-drop   procedure sp_update_node_info;
-create procedure sp_update_node_info(in id int,in parent_id int,
-        in state varchar(10),in status varchar(10),
-        in power int,in GPS point)
-begin
-    declare state_num smallint;
-    declare status_num smallint;
-    declare amount int;
-
-    select count(*) from tb_work_state
-    where state_name = state into amount;
-    if amount = 0 then
-        insert into tb_work_state(state_name) values(state);
-        select work_state from tb_work_state
-        where state_name = state into state_num;
-    else
-        select work_state from tb_work_state
-        where state_name = state into state_num;
+drop procedure if exists sp_get_latest_record;
+create procedure sp_get_latest_record(in net_name char(50),in nod_id int,in sense char(50))
+top:begin
+    declare net_id  int;
+    declare amount  int;
+    select count(*),network_id from viw_network_segment
+    where network_name = net_name into amount,net_id;
+    if amount = 0 then 
+        leave top;
     end if;
-    select count(*) from tb_node_status
-    where status_name = status into amount;
-    if amount = 0 then
-        insert into tb_node_status(status_name) values(status);
-        select node_status from tb_node_status
-        where status_name = status into status_num;
+
+    if nod_id >= 0 and sense is not null then
+        case sense    
+        when 'temperature' then
+            select temperature,insert_time from viw_temperature
+            where network_id = net_id and node_id = nod_id
+            order by order_num desc
+            limit 1;
+        when 'brightness' then
+            select brightness,insert_time from viw_brightness
+            where node_id = nod_id and network_id = net_id
+            order by order_num desc
+            limit 1;
+        when 'microphone' then
+            select microphone,insert_time from viw_microphone
+            where node_id = nod_id and network_id = net_id
+            order by order_num desc
+            limit 1;
+        when 'accelerate' then 
+            select accelerate_x,accelerate_y,insert_time from viw_accelerate
+            where node_id = nod_id and network_id = net_id
+            order by order_num desc
+            limit 1;
+        when 'terrestrial_magnetism' then
+            select terre_mag_x,terre_mag_y,insert_time from viw_terre_mag
+            where node_id = nod_id and network_id = net_id
+            order by order_num desc
+            limit 1;
+        when 'pressure' then
+            select pressure,insert_time from viw_pressure
+            where node_id = nod_id and network_id = net_id
+            order by order_num desc
+            limit 1;
+        when 'humidity' then
+            select humidity,insert_time from viw_humidity
+            where node_id = nod_id and network_id = net_id
+            order by order_num desc
+            limit 1;
+        when 'shoke' then
+            select shoke,insert_time from viw_shoke
+            where node_id = nod_id and network_id = net_id
+            order by order_num desc
+            limit 1;
+        else
+            leave top;
+        end case;
     else
-        select node_status from tb_node_status
-        where status_name = status into status_num;
-    end if; 
-    select count(*) from tb_node
-    where node_id = id into amount;
-    if amount = 0 then
-        insert into tb_node(node_id,parent_id,work_state,node_status,power,GPS) values(id,parent_id,state_num,status_num,power,GPS);
-    else
-        update tb_node
-        set work_state = state_num,
-            node_status = status_num,
-            tb_node.parent_id = parent_id,
-            tb_node.power = power,
-            tb_node.GPS = GPS
-        where node_id = id;
+        leave top;
     end if;
 end;

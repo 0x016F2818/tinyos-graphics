@@ -5,13 +5,13 @@ drop view if exists viw_node_status;
 drop view if exists viw_network_segment;
 
 drop view if exists viw_sense;
-drop view if exists viw_temperature;
+drop view if exists viw_temp;
 drop view if exists viw_humidity;
-drop view if exists viw_brightness;
-drop view if exists viw_microphone;
-drop view if exists viw_terre_mag;
+drop view if exists viw_photo;
+drop view if exists viw_sound;
+drop view if exists viw_magn;
 drop view if exists viw_pressure;
-drop view if exists viw_accelerate;
+drop view if exists viw_acce;
 drop view if exists viw_shoke;
 
 create or replace view viw_node as
@@ -27,20 +27,20 @@ create or replace view viw_network_segment as
 create or replace view viw_sense as
     select * from tb_sense;
 
-create or replace view viw_temperature as
-    select order_num,network_id,node_id,temperature,sense_time,insert_time from tb_sense;
+create or replace view viw_temp as
+    select order_num,network_id,node_id,temp,sense_time,insert_time from tb_sense;
 create or replace view viw_humidity as
     select order_num,network_id,node_id,humidity,sense_time,insert_time from tb_sense;
-create or replace view viw_brightness as
-    select order_num,network_id,node_id,brightness,sense_time,insert_time from tb_sense;
-create or replace view viw_microphone as
-    select order_num,network_id,node_id,microphone,sense_time,insert_time from tb_sense;
-create or replace view viw_terre_mag as
-    select order_num,network_id,node_id,terre_mag_x,terre_mag_y,sense_time,insert_time from tb_sense;
+create or replace view viw_photo as
+    select order_num,network_id,node_id,photo,sense_time,insert_time from tb_sense;
+create or replace view viw_sound as
+    select order_num,network_id,node_id,sound,sense_time,insert_time from tb_sense;
+create or replace view viw_magn as
+    select order_num,network_id,node_id,x_mag,y_mag,sense_time,insert_time from tb_sense;
 create or replace view viw_pressure as
     select order_num,network_id,node_id,pressure,sense_time,insert_time from tb_sense;
-create or replace view viw_accelerate as
-    select order_num,network_id,node_id,accelerate_x,accelerate_y,sense_time,insert_time from tb_sense;
+create or replace view viw_acce as
+    select order_num,network_id,node_id,x_acc,y_acc,sense_time,insert_time from tb_sense;
 create or replace view viw_shoke as
     select order_num,network_id,node_id,shoke,sense_time,insert_time from tb_sense;
 

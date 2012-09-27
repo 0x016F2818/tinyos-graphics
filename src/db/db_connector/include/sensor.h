@@ -53,7 +53,7 @@ typedef struct {
 	double      y_acc;
 	double      x_mag;
 	double      y_mag;
-	char        time[50]; // ctime()è¿åçæéæ¯ä¸ä¸ªæåéæåºçæé, å æ­¤è¿éæ²¡æåéç©ºé´
+	char        time[50]; // ctime()返回的指针是一个指向静态区的指针, 因此这里没有分配空间
 } sensor_t;
 
 typedef struct {
