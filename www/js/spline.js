@@ -1,20 +1,38 @@
-var time = [], 
+var captureTime = [], 
 value = [],
 i,
 dataHandle = function(data) {
     for( i = 0; i < data.length; i++ ) {
-        // time.push(data[i]["time"]);
+        // captureTime.push(data[i]["time"].slice(-8));
+        captureTime.push(data[i]["time"]+'000');
         value.push(data[i]["value"]);
     }
-    // alert(value[0]);
+    // alert(value.length);
+    // alert(captureTime[0]);
 };
 
 function drawDynamicSpline(networkName, nodeID, sense) {
     // alert(networkName+nodeID+sense);
-    var firstFlag = true; 
+    var firstFlag = true;
     // var value =  [0,0,0,0,0,0,0,121,11,11,11,11,1,1,113,141,15,116,117,20,1,23,4,3,2,1,5,4,3,44,3,2,1,3,3,4,54,4,3,3,2,3,,4,5,4,6,7,8,23,9,123,34,32,1,2,32,14,5,32,123,34,253,2,123,14,523,234,123,32,123,123,324,5,34,2342,34,213,123,23,52,25,132];
-    var name = "temperaturespline";
-    
+    var name, unit;
+    switch(sense){
+        case "temp":
+        name = "Tmperature spline";
+        unit = '°C';
+        break;
+        case "photo":
+        name = "Light spline";
+        unit = 'lux';
+        break;
+        case "sound":
+        name = "Sound spline";
+        unit = 'Hz';
+        break;
+        default:
+        break;
+    }
+
     if(name) {
         var drawContent = name.slice(0, 1);
         // alert(drawContent);
@@ -30,14 +48,15 @@ function drawDynamicSpline(networkName, nodeID, sense) {
         spline = new Highcharts.Chart({
             chart: {
                 renderTo: 'dynamicspline',//container is a vector
-                type: 'spline',
+                // type: 'spline',
                 marginRight: 10,
                 zoomType: 'x',
                 events: {
                     load: function() {
                         // set up the updating of the chart each second
                         var series = this.series[0],
-                        i = 0, j=30,
+                        i = 0,
+                        lastTime = parseInt(captureTime[0]);
                         json_obj = {
                             net_name: networkName,
                             nodeId: nodeID,
@@ -46,20 +65,21 @@ function drawDynamicSpline(networkName, nodeID, sense) {
                         },
                         json_text = JSON.stringify(json_obj, null, 2),
                         xmlhttp = createxmlhttp();
-                        // alert(json_text);
-
+                        
                         setInterval(function() {
                             var time = (new Date()).getTime(); // current time
                             if(!firstFlag) {
                                 go(xmlhttp, "POST", "realTime.wsn", "false", json_text);
                             }
-                            if(value[j]!==undefined || value[j]!==null) {
-                                // var t = time[i].slice(-8);
-                                // alert(value[i]);
-                                x = time + i * 60000;
-                                y = value[j];
-                                j++, i++;
-                                series.addPoint([x, y], true, true);
+                            // here 30 is represent the start of the "second"
+                            // (request 1 record)
+                            if(value[30+i]!==undefined || value[30+i]!==null){ 
+                                x = parseInt(captureTime[30+i]);
+                                y = value[30+i];
+                                i++;
+                                if(x !== parseInt(captureTime[28+i])) // Make the draw stop!!!! Because of i has add 1(i++), so is 28+i and not 30+i-1(29+i)
+
+                                    series.addPoint([x, y], true, true);
                             }
                         }, 1000);
                     }
@@ -70,7 +90,7 @@ function drawDynamicSpline(networkName, nodeID, sense) {
             },
             xAxis: {
                 type: 'datetime',
-                tickPixelInterval: 40,
+                tickPixelInterval: 44,
                 // plotBands: [{
                 //     id: 'mask-before',
                 //     from: Date.UTC(2006, 0, 1),
@@ -92,14 +112,14 @@ function drawDynamicSpline(networkName, nodeID, sense) {
             yAxis: {
                 labels: {
                     formatter: function() {
-                        return this.value +'°C';
+                        return this.value + unit;
                     },
                     style: {
                         color: '#89A54E'
                     }
                 },
                 title: {
-                    text: 'Temperature',
+                    text: name,
                     style: {
                         color: '#89A54E'
                     }
@@ -131,25 +151,22 @@ function drawDynamicSpline(networkName, nodeID, sense) {
                     },
                     json_text = JSON.stringify(json_obj, null, 2),
                     xmlhttp = createxmlhttp();
-                    // alert(json_text);
-                    if(firstFlag) {
-                        go(xmlhttp, "POST", "realTime.wsn", "false", json_text);
-                        firstFlag = false;
-                    }
+                    go(xmlhttp, "POST", "realTime.wsn", "false", json_text);
+                    firstFlag = false;
                     time = (new Date()).getTime(),
-                    i, j = 0;
-                    // alert(t);
+                    i, j = 0, k = 29; // k = 29 because of i request 30 records
+
                     for (i = -29; i <= 0; i++) {
-                        if(value[j] !== undefined || value[j] !== null) {
-                            // var t = time[j].slice(-8);
-                            // alert(t.toString());
+                        if(value[k] !== undefined || value[k] !== null) {
                             data.push({
-                                x: time + i * 60000,
-                                y: value[j]
+                                x: captureTime[k],
+                                y: value[k]
                             });
+                            k--;
                             j++;
                         }
                     }
+                    // captureTime.length = 0; // array set 0 because of i will use it in event:load
                     return data;
                 })()
             }]

@@ -1,4 +1,14 @@
 function setNextVisible() {
+
+    if($.browser.chrome) {
+        $("#clockIEFF").addClass("hide");
+        $("#clockSVG").ready(updateTime);
+    } else {
+        $("#clockSVG").addClass("hide");
+        $("#clockIEFF").removeClass("hide");
+        $("#clockIEFF").load(displayTime);
+    }
+
     var blocks = document.getElementsByTagName('p');
     for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];

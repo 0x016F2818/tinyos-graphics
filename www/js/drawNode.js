@@ -12,7 +12,7 @@ var drawNode = function(networkID, networkName, nodeSlot) {
         // defaultLabelSize:
         // defaultLabelBGColor:
         // defaultLabelHoverColor:
-        // defaultEdgeType:'curve',
+        defaultEdgeType:'curve',
         labelThreshold: 6
     }).graphProperties({
         minNodeSize: 0.5,
@@ -118,9 +118,10 @@ var drawNode = function(networkID, networkName, nodeSlot) {
                     document.cookie = "requestNode" + "=" + encodeURIComponent(nodeID);
 
                 // localStorage
-                // var name = "requestNode"+nodeID;
-                // localStorage.setItem(name, nodeID);
-                window.location = "./nodeinfo.htm?networkID="+networkID+"&&networkName="+networkName+"&&nodeID="+nodeID;
+                var name = "nodeNum";
+                localStorage.setItem(name, nodeSlot.length);
+                // window.location = "./nodeinfo.htm?networkID="+networkID+"&&networkName="+networkName+"&&nodeID="+nodeID;
+                window.location = "./temperature.htm?networkID="+networkID+"&&networkName="+networkName+"&&nodeID="+nodeID;
                 overNode = false;
             }
         }

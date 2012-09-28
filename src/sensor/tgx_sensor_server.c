@@ -278,23 +278,16 @@ int main(int argc, char *argv[])
 								}
 							}
 
-							/*char hbuf2[NI_MAXHOST], sbuf2[NI_MAXSERV];
-							memset(hbuf2, 0, sizeof(hbuf2));
-							memset(sbuf2, 0, sizeof(sbuf2));*/
+							struct sockaddr_in sa;
+							socklen_t sa_len;
+							sa_len = sizeof(sa);
+							if (getsockname(in_fd, (struct sockaddr*)&sa, &sa_len) == -1) {
+							  log_err("getsockname() failed");
+							  return -1;
+							}
+
 							char netname[1024];
-							/*struct sockaddr in_addr2;
-							socklen_t alenp2;
-
-							sleep(1);
-							if (getsockname(sensor_socket, &in_addr2, 
-									&alenp2) < 0) printf("getsockname return -1\n");
-							if (getnameinfo(&in_addr2, alenp2,
-							hbuf2, sizeof hbuf2,
-							sbuf2, sizeof sbuf2,
-							NI_NUMERICHOST | NI_NUMERICSERV) < 0)
-								printf("getnameinfo return -1\n");
-
-							sprintf(netname, "%s:%s", hbuf2, sbuf2);+|*/
+							sprintf(netname, "%s:%d", inet_ntoa(sa.sin_addr), (int)ntohs(sa.sin_port));
 
 										
 							int nread;
@@ -311,7 +304,8 @@ int main(int argc, char *argv[])
 								putchar('\n');
 								fflush(stdout);*/
 							
-								insert_mesg_to_db(&mysql, msg, nread, "10.18.46.188:1234");
+								insert_mesg_to_db(&mysql, msg, nread, netname);
+
 							}
 							mysql_close(&mysql);
 						} else if (pid > 0) { // parent
@@ -362,9 +356,7 @@ int main(int argc, char *argv[])
 							char ch;
 							int option_index = 0;
 							static struct option long_options[] = {
-								{"ip",          required_argument,  0, 0},
-								{"port",	    required_argument,  0, 0},
-								{"id",	        required_argument,  0, 0},
+								{"netname",	    required_argument,  0, 0},
 								{"periodic",    required_argument,  0, 0},
 								{"sysinfo",     no_argument,        0, 0},
 								{0, 0, 0, 0}
@@ -377,7 +369,7 @@ int main(int argc, char *argv[])
 
 							switch (ch) {
 								case 0:
-									if (strstr(long_options[option_index].name, "ip") != NULL) {
+									if (strstr(long_options[option_index].name, "netname") != NULL) {
 										snprintf(ip, 128, "%s", optarg);
 										flag += 8;
 									} else if (strstr(long_options[option_index].name, "port") != NULL) {

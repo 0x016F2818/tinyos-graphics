@@ -65,33 +65,47 @@
 
     <script type="text/javascript" src="./lib/jquery.js"></script>
     <script type="text/javascript" src="./lib/bootstrap.min.js"></script>
-    <SCRIPT type="text/javascript" src="./lib/sigma.min.js"></SCRIPT>
-    <script type="text/javascript" src="./lib/highcharts.js"></script>
-    <script type="text/javascript" src="./lib/exporting.js"></script>
+    <!-- <SCRIPT type="text/javascript" src="./lib/sigma.min.js"></SCRIPT> -->
+    <!-- <script type="text/javascript" src="./lib/highcharts.js"></script> -->
+    <!-- <script type="text/javascript" src="./lib/exporting.js"></script> -->
 
     <script type="text/javascript" src="./js/energy.js"></script>
     <script type="text/javascript" src="./js/pageControl.js"></script>
+    <script type="text/javascript" src="./js/get_info_from_url.js"></script>
 
     <!-- to get the id of the node which is clicked -->
-    <script type="text/javascript">
-      var cookie = document.cookie;
-      <!-- var nodeID = localStorage.getItem("requestNode"); -->
-      <!-- if(url.indexOf("?")!=-1) { -->
-      var info = {},
-      key, value, KeyAndValue, i, 
-      data = location.search.substr(1).split('&&');
-      for(i = 0; i < data.length; i++) {
-          KeyAndValue = data[i].split('=');
-          key = KeyAndValue[0];
-          value = KeyAndValue[1];
-          info[key] = value;
-      }
-      var networkID = info["networkID"],
-      networkName = info["networkName"],
-      nodeID = info["nodeID"];
-      <!-- } -->
-      <!-- alert(nodeID); -->
-    </script>
+    <!-- <script type="text/javascript"> -->
+    <!--   var cookie = document.cookie; -->
+    <!--   <\!-- var nodeID = localStorage.getItem("requestNode"); -\-> -->
+    <!--   <\!-- if(url.indexOf("?")!=-1) { -\-> -->
+    <!--   var info = {}, -->
+    <!--   key, value, KeyAndValue, i,  -->
+    <!--   data = location.search.substr(1).split('&&'); -->
+    <!--   for(i = 0; i < data.length; i++) { -->
+    <!--       KeyAndValue = data[i].split('='); -->
+    <!--       key = KeyAndValue[0]; -->
+    <!--       value = KeyAndValue[1]; -->
+    <!--       info[key] = value; -->
+    <!--   } -->
+    <!--   var networkID = info["networkID"]; -->
+    <!--   if(isNaN(networkID)) { -->
+    <!--       delete(networkID); -->
+    <!--       window.location = "404.htm" -->
+
+    <!--   } -->
+    <!--   var nodeID = info["nodeID"]; -->
+    <!--       if(isNaN(nodeID)) { -->
+    <!--          delete(nodeID); -->
+    <!--          window.location = "404.htm"; -->
+    <!--       }  -->
+    <!--       var networkName = info["networkName"]; -->
+    <!--       var temp = networkName.splite(":"); -->
+    <!--       var ip = temp[0], port = temp[1], -->
+    <!--       ipadd = ip.split("."); -->
+      
+    <!--   <\!-- } -\-> -->
+    <!--   <\!-- alert(nodeID); -\-> -->
+    <!-- </script> -->
 
   </head>
 
@@ -259,13 +273,13 @@
           <div class="well sidebar-nav">
             <ul class="nav nav-list nav-pills nav-stacked" id="navigate">
               <li class="nav-header">Wireless Sensor Network</li>
-              <li id="nodeID" style="font-size:30px"></li>
             </ul>
           </div>
 
           <div class="well sidebar-nav">
             <ul class="nav nav-list nav-pills nav-stacked">
               <li class="nav-header">System Information</li>
+              <li id="nodeID" style="font-size:30px"></li>
               <p>Here will be show the system infromation or something that interesting. For example, Chatting</p>
               <!-- <iframe src="http://127.0.0.1:8001" frameborder:0 height="100%" width="100%"></iframe> -->
               <!-- <div id="sigma-node" style="width:200px;height:200px;bottom:0px;background-color:#E3E3E3"></div> -->
@@ -312,8 +326,8 @@
     var sound = $('<li><a href="./sound.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID +'">sound</a></li>');
     $("#navigate").append(sound);
   </script>
-  <script type="text/javascript" src="./js/spline.js"></script>
-  <script type="text/javascript" src="./js/pie.js"></script>
-  <script type="text/javascript" src="./js/column.js"></script>
+  <!-- <script type="text/javascript" src="./js/spline.js"></script> -->
+  <!-- <script type="text/javascript" src="./js/pie.js"></script> -->
+  <!-- <script type="text/javascript" src="./js/column.js"></script> -->
   <script type="text/javascript" src="./js/nodeinfoControl.js"></script>
 </html>

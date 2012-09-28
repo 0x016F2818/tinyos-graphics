@@ -1,30 +1,19 @@
 var createxmlhttp = function() {
+
     var xmlhttp, 
-    alerted; 
-    /*@cc_on 
-      @if (@_jscript_version >= 5)
-      try {
-          xmlhttp = new ActiveXObject("Msxml2.XMLHTTP")
-      } catch (e) {
-          try {
-              xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-          } catch (E) {
-              alert ("You browser is ???");
-          } 
-      }
-      @else
-          alert("Your javascript is ???");
-      xmlhttp = false;
-      alerted = true;
-      @end @*/
-    if (!xmlhttp && !alerted) {
-        try {
-            xmlhttp = new XMLHttpRequest();
-        } catch (e) {
-            alert ("Your browser is not support XMLHttpRequest");
-        }
+    xmlhttp = new XMLHttpRequest();
+
+    if(!xmlhttp){
+        xmlhttp = new ActiveXObject("Msxml2.XMLHTTP")
+    } else if(!xmlhttp) {
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
     }
+    // } else if(!xmlhttp) {
+    //     new throw Error("XMLHttpRequest Error!");
+    // }
+
     return xmlhttp;
+
 },
 go = function(xmlhttp, requestType, module, bool, request) {
     if(!requestType)
@@ -56,7 +45,6 @@ RSchange = function (xmlhttp) {
         // if(jsondata !== undefined && type === "application/json") {
         if(jsondata !== undefined) {
             var data = JSON.parse(xmlhttp.responseText);
-            // alert(data);
             dataHandle(data);
         } 
     }

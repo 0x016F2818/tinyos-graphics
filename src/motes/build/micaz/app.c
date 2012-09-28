@@ -6250,7 +6250,7 @@ static inline void TgxC__CollectionSend__sendDone(message_t *msg, error_t error)
 
 
 static message_t *TgxC__CollectionReceive__receive(message_t *msg, void *payload, uint8_t len);
-#line 288
+#line 290
 static inline void TgxC__SerialSend__sendDone(message_t *msg, error_t error);
 # 62 "/home/van9ogh/t2_base/t2_cur/tinyos-2.x/tos/interfaces/Init.nc"
 static error_t PlatformP__MoteInit__init(void );
@@ -32186,9 +32186,9 @@ inline static error_t TgxC__sendSerialMsg__postTask(void ){
 #line 67
 }
 #line 67
-# 288 "TgxC.nc"
+# 290 "TgxC.nc"
 static inline void TgxC__SerialSend__sendDone(message_t *msg, error_t error)
-#line 288
+#line 290
 {
   if (msg == &TgxC__m_serial) {
       TgxC__serialBusy = FALSE;
@@ -40907,7 +40907,6 @@ static message_t *TgxC__CollectionReceive__receive(message_t *msg, void *payload
       TgxC__SerialMsgQueue__enqueue(*newCollectionMsg);
     }
   else 
-#line 283
     {
       TgxC__reportFatalError();
     }

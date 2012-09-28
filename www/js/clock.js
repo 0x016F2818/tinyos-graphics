@@ -32,7 +32,7 @@ var displayTime = function() {
     elt.innerHTML = now.toLocaleTimeString();    // Make elt display it
     setTimeout(displayTime, 1000);               // Run again in 1 second
 }
-window.onload = displayTime;  // Start displaying the time when document loads.
+// window.onload = displayTime;  // Start displaying the time when document loads.
 
 clock = function () {
     

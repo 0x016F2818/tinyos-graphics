@@ -1,11 +1,11 @@
 <tos_image>
   <ident>
-    <uidhash>C58FFFF2L</uidhash>
+    <uidhash>5EF41F1BL</uidhash>
     <hostname>WSN</hostname>
     <username>van9ogh</username>
     <appname>TgxAppC</appname>
     <userhash>935A7CE6L</userhash>
-    <timestamp>5061053BL</timestamp>
+    <timestamp>5061B84DL</timestamp>
     <deluge_support>no</deluge_support>
     <platform>micaz</platform>
   </ident>
