@@ -39,7 +39,6 @@ begin
     where node_id = nod_id and network_id = net_id into amount;
     if amount = 0 then
         insert into tb_node(network_id,node_id,work_state,node_status,power,GPS) values(net_id,nod_id,state_num,status_num,power,GPS);
-        /*insert into tb_network(network_id,node_id,parent_id) values(net_id,nod_id,par_id);*/
     else
         update tb_node
         set 
@@ -75,8 +74,8 @@ top:begin
         insert into tb_network(network_id,node_id,parent_id) values(net_id,nod_id,par_id);
     else 
         update tb_network
-        set
-            parent_id = par_id;
+        set parent_id = par_id
+        where network_id = net_id and node_id = nod_id;
     end if;
 end;
 

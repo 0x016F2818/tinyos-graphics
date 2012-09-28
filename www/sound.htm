@@ -71,22 +71,8 @@
 
     <script type="text/javascript" src="./js/energy.js"></script>
     <script type="text/javascript" src="./js/pageControl.js"></script>
+    <script type="text/javascript" src="./js/get_info_from_url.js"></script>
 
-    <!-- to get the id of the node which is clicked -->
-    <script type="text/javascript">
-      var info = {},
-      key, value, KeyAndValue, i, 
-      data = location.search.substr(1).split('&&');
-      for(i = 0; i < data.length; i++) {
-          KeyAndValue = data[i].split('=');
-          key = KeyAndValue[0];
-          value = KeyAndValue[1];
-          info[key] = value;
-      }
-      var networkID = info["networkID"],
-      networkName = info["networkName"],
-      nodeID = info["nodeID"];
-    </script>
   </head>
 
   <body>
@@ -252,8 +238,7 @@
         <div class="span2">
           <div class="well sidebar-nav">
             <ul class="nav nav-list nav-pills nav-stacked" id="navigate">
-              <li class="nav-header">Wireless Sensor Network</li>
-              <li id="nodeID" style="font-size:30px"></li>
+              <li class="nav-header">Sensor</li>
               <!-- <li class="active"><a href="#nodeinfo">Node Information</a></li> -->
               <!-- <li><a href="./temperature.htm?nodeID="+nodeID>Temperature</a></li> -->
               <!-- <li><a href="#light">Light</a></li> -->
@@ -264,6 +249,7 @@
           <div class="well sidebar-nav">
             <ul class="nav nav-list nav-pills nav-stacked">
               <li class="nav-header">System Information</li>
+              <li id="nodeID" style="font-size:30px"></li>
               <p>Here will be show the system infromation or something that interesting. For example, Chatting</p>
               <!-- <iframe src="http://127.0.0.1:8001" frameborder:0 height="100%" width="100%"></iframe> -->
               <!-- <div id="sigma-node" style="width:200px;height:200px;bottom:0px;background-color:#E3E3E3"></div> -->
@@ -364,8 +350,8 @@
 
   </body>
   <script type="text/javascript">
-    var nodeinfo = $('<li><a href="./nodeinfo.htm?networkID=' + networkID + '&&networkName=' + networkName +'&&nodeID=' + nodeID +'">Node Information</a></li>');
-    $("#navigate").append(nodeinfo);
+    <!-- var nodeinfo = $('<li><a href="./nodeinfo.htm?networkID=' + networkID + '&&networkName=' + networkName +'&&nodeID=' + nodeID +'">Node Information</a></li>'); -->
+    <!-- $("#navigate").append(nodeinfo); -->
     var temperature = $('<li><a href="./temperature.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID + '">temperature</a></li>');
     $("#navigate").append(temperature);
     var light = $('<li><a href="./light.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID +'">light</a></li>');

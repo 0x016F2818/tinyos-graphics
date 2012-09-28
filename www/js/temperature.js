@@ -26,7 +26,7 @@ $(document).ready(function() {
     $("#nodeID").html("node ID:"+nodeID);
     $("em#nodeID").html("node ID:"+nodeID);
 
-    var sense = "temperature";
+     var sense = "temp";
     // alert(networkName+nodeID+sense);
     drawDynamicSpline(networkName, nodeID, sense);
     drawSymbolsSpline();

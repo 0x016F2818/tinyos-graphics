@@ -303,18 +303,18 @@ top:begin
     set @numbers        = numbers;
     set @neg_numbers    = -numbers;
 
-    prepare a1 from 'select temp,insert_time from viw_temp where network_id = ? and node_id = ? and insert_time >= ? limit ?';
-    prepare a2 from 'select temp,insert_time from viw_temp where network_id = ? and node_id = ? and insert_time <= ? limit ?';
+    prepare a1 from 'select temp,insert_time from viw_temp where network_id = ? and node_id = ? and insert_time >= ? order by order_num limit ?';
+    prepare a2 from 'select temp,insert_time from viw_temp where network_id = ? and node_id = ? and insert_time <= ? order by order_num desc limit ?';
     prepare a3 from 'select temp,insert_time from viw_temp where insert_time >= ? limit ?';
     prepare a4 from 'select temp,insert_time from viw_temp where insert_time <= ? limit ?';
 
-    prepare b1 from 'select photo,insert_time from viw_photo where network_id = ? and node_id = ? and insert_time >= ? limit ?';
-    prepare b2 from 'select photo,insert_time from viw_photo where network_id = ? and node_id = ? and insert_time <= ? limit ?';
+    prepare b1 from 'select photo,insert_time from viw_photo where network_id = ? and node_id = ? and insert_time >= ? order by order_num limit ?';
+    prepare b2 from 'select photo,insert_time from viw_photo where network_id = ? and node_id = ? and insert_time <= ? order by order_num desc limit ?';
     prepare b3 from 'select photo,insert_time from viw_photo where insert_time >= ? limit ?';
     prepare b4 from 'select photo,insert_time from viw_photo where insert_time <= ? limit ?';
 
-    prepare c1 from 'select sound,insert_time from viw_sound where network_id = ? and node_id = ? and insert_time >= ? limit ?';
-    prepare c2 from 'select sound,insert_time from viw_sound where network_id = ? and node_id = ? and insert_time <= ? limit ?';
+    prepare c1 from 'select sound,insert_time from viw_sound where network_id = ? and node_id = ? and insert_time >= ? order by order_num limit ?';
+    prepare c2 from 'select sound,insert_time from viw_sound where network_id = ? and node_id = ? and insert_time <= ? order by order_num desc limit ?';
     prepare c3 from 'select sound,insert_time from viw_sound where insert_time >= ? limit ?';
     prepare c4 from 'select sound,insert_time from viw_sound where insert_time <= ? limit ?';
 
