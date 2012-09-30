@@ -15,6 +15,6 @@ all:
 		-Isrc/modules \
 		-lpthread -lmote -ljson -ldl\
 		-o bin/tinyos-graphics
-	
+	mv ./lib/sf/libmote.so ./bin/
 clean:
 	rm -rf bin/tinyos_graphics
