@@ -49,7 +49,7 @@ function drawDynamicSpline(networkName, nodeID, sense) {
             chart: {
                 renderTo: 'dynamicspline',//container is a vector
                 // type: 'spline',
-                marginRight: 10,
+                // marginRight: 10,
                 zoomType: 'x',
                 events: {
                     load: function() {

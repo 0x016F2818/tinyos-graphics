@@ -1,5 +1,5 @@
 all:
-	gcc *.c --shared -o libmote.so
+	gcc *.c -fPIC --shared -o libmote.so
 clean:
 	rm -rf *.[aoiS]
 	rm -rf a.out

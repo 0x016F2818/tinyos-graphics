@@ -60,10 +60,16 @@ int TGX_MODULE_HTTP_HANDLER(tgx_module_http_t *http)
           db_connect_info_t db_connect_info;
           int ret, i;
 
-          strcpy(db_connect_info.host,"10.18.46.111");
-          strcpy(db_connect_info.user,"tinyos");
-          strcpy(db_connect_info.password,"tinyos");
+          /* strcpy(db_connect_info.host,"10.18.46.111"); */
+          /* strcpy(db_connect_info.user,"tinyos"); */
+          /* strcpy(db_connect_info.password,"tinyos"); */
+          /* strcpy(db_connect_info.db_name,"tinyos"); */
+
+          strcpy(db_connect_info.host,"127.0.0.1");
+          strcpy(db_connect_info.user,"root");
+          strcpy(db_connect_info.password,"njjizyj0826");
           strcpy(db_connect_info.db_name,"tinyos");
+
 
           if(get_db_handler(&mysql,db_connect_info) == -1){
                goto err;
