@@ -39,7 +39,6 @@ begin
     where node_id = nod_id and network_id = net_id into amount;
     if amount = 0 then
         insert into tb_node(network_id,node_id,work_state,node_status,power,GPS) values(net_id,nod_id,state_num,status_num,power,GPS);
-        /*insert into tb_network(network_id,node_id,parent_id) values(net_id,nod_id,par_id);*/
     else
         update tb_node
         set 
@@ -75,22 +74,22 @@ top:begin
         insert into tb_network(network_id,node_id,parent_id) values(net_id,nod_id,par_id);
     else 
         update tb_network
-        set
-            parent_id = par_id;
+        set parent_id = par_id
+        where network_id = net_id and node_id = nod_id;
     end if;
 end;
 
 /*####################################################################*/
 drop procedure if exists sp_insert_sense_record;
 create procedure sp_insert_sense_record(in net_name char(50),
-    in nod_id           int,        in temperature  double(8,2),
-    in brightness   double(8,2),in microphone   double(8,2),
-    in accelerate_x double(8,2),in accelerate_y double(8,2),
-    in terre_mag_x  double(8,2),in terre_mag_y  double(8,2),
+    in nod_id        int,in temp  double(8,2),
+    in photo double(8,2),in sound double(8,2),
+    in x_acc double(8,2),in y_acc double(8,2),
+    in x_mag double(8,2),in y_mag double(8,2),
     in pressure     double(8,2),in humidity     double(8,2),
     in shoke        double(8,2),in sense_time datetime)
 top:begin
-    declare amount  int;
+    declare amount int;
     declare net_id int;
 
     select count(*),network_id from tb_network_segment
@@ -99,11 +98,12 @@ top:begin
         leave top;
     end if;
 
-    insert into tb_sense(network_id,node_id,temperature,humidity,
-        brightness,microphone,accelerate_x,accelerate_y,
-        pressure,shoke,terre_mag_x,terre_mag_y,sense_time) 
-    values(net_id,nod_id,temperature,humidity,brightness,microphone,
-        accelerate_x,accelerate_y,pressure,shoke,terre_mag_x,terre_mag_y,sense_time);
+    insert into tb_sense(network_id,node_id,temp,
+        photo,sound,x_acc,y_acc,x_mag,y_mag,
+        pressure,shoke,humidity,sense_time) 
+    values(net_id,nod_id,temp,photo,sound,
+            x_acc,y_acc,x_mag,y_mag,pressure,
+            shoke,humidity,sense_time);
 end;
 
 /*####################################################################*/
