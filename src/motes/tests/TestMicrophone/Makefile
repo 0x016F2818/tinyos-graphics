@@ -1,0 +1,4 @@
+COMPONENT=TestMicrophoneAppC
+PFLAGS += -DATM128_I2C_EXTERNAL_PULLDOWN=1
+CFLAGS += -I./radioprintf
+include $(MAKERULES)
