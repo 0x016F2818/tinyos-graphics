@@ -13,19 +13,40 @@ $(function() {
     // send post request and put the node object into array(nodeSlot)
     var nodeSlot = new Array(), 
     networkSlot = new Array(),
-    i;
+    i, j;
+
+    xmlhttp = createxmlhttp();
+    // go(xmlhttp, "GET", "text.txt", "false", "null");
+    go(xmlhttp, "POST", "nodeInfo.wsn", "false", "null");
+    // put the node information into the array nodeSlot
+    getNodeBasicInformation(networkSlot);
+
+    for(i = 0; i < networkSlot.length; i++) {
+        // draw the node distribute
+        drawNetworkChart(networkSlot[i]["networkId"], networkSlot[i]["networkName"]);
+        drawNode(networkSlot[i]["networkId"], networkSlot[i]["networkName"], networkSlot[i].nodeSlot);
+    }
+
 
     // setInterval(function() {
-        xmlhttp = createxmlhttp();
-    // go(xmlhttp, "GET", "text.txt", "false", "null");
-        go(xmlhttp, "POST", "nodeInfo.wsn", "false", "null");
-        // put the node information into the array nodeSlot
-        getNodeBasicInformation(networkSlot);
+    //     xmlhttp = createxmlhttp();
+    // // go(xmlhttp, "GET", "text.txt", "false", "null");
+    //     go(xmlhttp, "POST", "nodeInfo.wsn", "false", "null");
+    //     // put the node information into the array nodeSlot
+    //     getNodeBasicInformation(networkSlot);
 
-        for(i = 0; i < networkSlot.length; i++) {
-            // draw the node distribute
-            drawNetworkChart(networkSlot[i]["networkId"], networkSlot[i]["networkName"]);
-            drawNode(networkSlot[i]["networkId"], networkSlot[i]["networkName"], networkSlot[i].nodeSlot);
-        }
+
+    //     for(i = 0; i < networkSlot.length; i++) {
+    //         // draw the node distribute
+    //         drawNetworkChart(networkSlot[i]["networkId"], networkSlot[i]["networkName"]);
+    //         drawNode(networkSlot[i]["networkId"], networkSlot[i]["networkName"], networkSlot[i].nodeSlot);
+    //     }
+
+    //     if(drawNext) {
+    //         for(i = 0; i < networkSlot.length; i++) {
+    //             deleteNode(networkSlot[i].nodeSlot);
+    //         }
+    //     }
+        
     // }, 5000);
 })

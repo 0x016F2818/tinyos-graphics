@@ -3,7 +3,7 @@ $(document).ready(function() {
     $("em#nodeID").html("node ID:"+nodeID);
 
     var sense = "photo";
-    drawDynamicSpline(networkName, nodeID, sense);
+    drawDynamicSpline(networkName, nodeID, sense, "dynamicspline");
     drawSymbolsSpline();
     drawRotatedColumn();
     drawMaxandMinColumn();

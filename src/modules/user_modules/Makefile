@@ -1,10 +1,10 @@
 CC = gcc
 
-MODULE_SRC = nodeInfo.c
-MODULE_OBJ = nodeInfo.wsn
+#MODULE_SRC = nodeInfo.c
+#MODULE_OBJ = nodeInfo.wsn
 
-#MODULE_SRC = realTime.c
-#MODULE_OBJ = realTime.wsn
+MODULE_SRC = realTime.c
+MODULE_OBJ = realTime.wsn
 
 #MODULE_SRC = abso_time_record.c
 #MODULE_OBJ = abso_time_record.wsn

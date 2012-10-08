@@ -358,8 +358,18 @@
     $("#navigate").append(light);
     var sound = $('<li class="active"><a href="./sound.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID +'">sound</a></li>');
     $("#navigate").append(sound);
+
+    var acceleration = $('<li><a href="./acceleration.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID +'">acceleration</a></li>');
+    $("#navigate").append(acceleration);
+
+
+    var geomagnetic = $('<li><a href="./acceleration.htm?networkID=' + networkID + '&&networkName=' + networkName + '&&nodeID=' + nodeID +'">geomagnetic</a></li>');
+    $("#navigate").append(geomagnetic);
+
+
+
   </script>
-  </script>
+
   <script type="text/javascript" src="./js/spline.js"></script>
   <script type="text/javascript" src="./js/pie.js"></script>
   <script type="text/javascript" src="./js/column.js"></script>

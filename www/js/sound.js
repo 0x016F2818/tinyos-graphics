@@ -3,7 +3,7 @@ $(document).ready(function() {
     $("em#nodeID").html("node ID:"+nodeID);
 
     var sense = "sound";
-    drawDynamicSpline(networkName, nodeID, sense);
+    drawDynamicSpline(networkName, nodeID, sense, "dynamicspline");
     drawSymbolsSpline();
     drawRotatedColumn();
     drawMaxandMinColumn();

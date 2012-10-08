@@ -102,6 +102,17 @@ int to_int(const char *str, int len)
 	return sum;
 }
 
+double Celsius(double ADC)
+{
+#define ADC_FS 1023
+#define R1     10000
+#define A 0.00130705
+#define	B 0.000214381
+#define C 0.000000093
+	double Rthr = R1 * (ADC_FS-ADC)/ADC;
+	return (1 / (A + B * log(Rthr) + C * pow(log(Rthr), 3))) - 273.15;
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -166,10 +177,12 @@ int main(int argc, char *argv[])
 					/*printf("write len = %d\n", len);*/
 					nwrite = safewrite(srv_source, packet, len);
 					for (i = 0; i < nwrite; i++) {
+						int isTemp = 0;
 						if (i > 7) {
 							if (i % 2 == 0) {
 								switch (i) {
 									case 16: 
+										isTemp = 1;
 										printf("T:  ");
 										break;
 									case 18:
@@ -191,7 +204,11 @@ int main(int argc, char *argv[])
 										printf("My: ");
 										break;
 								}
-								printf("%3d ", to_int(packet+i, 2));;
+								if (isTemp)
+									printf("%3.0f ", Celsius(to_int(packet+i, 2)));
+								else
+									printf("%3d ", to_int(packet+i, 2));
+									
 							}
 						} else {
 							/*printf("%02x ", packet[i]);*/

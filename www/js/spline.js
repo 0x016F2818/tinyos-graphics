@@ -11,25 +11,49 @@ dataHandle = function(data) {
     // alert(captureTime[0]);
 };
 
-function drawDynamicSpline(networkName, nodeID, sense) {
+function drawDynamicSpline(networkName, nodeID, sense, divId) {
     // alert(networkName+nodeID+sense);
     var firstFlag = true;
     // var value =  [0,0,0,0,0,0,0,121,11,11,11,11,1,1,113,141,15,116,117,20,1,23,4,3,2,1,5,4,3,44,3,2,1,3,3,4,54,4,3,3,2,3,,4,5,4,6,7,8,23,9,123,34,32,1,2,32,14,5,32,123,34,253,2,123,14,523,234,123,32,123,123,324,5,34,2342,34,213,123,23,52,25,132];
     var name, unit;
     switch(sense){
-        case "temp":
+
+    case "temp":
         name = "Tmperature spline";
         unit = '°C';
         break;
-        case "photo":
+
+    case "photo":
         name = "Light spline";
         unit = 'lux';
         break;
-        case "sound":
+
+    case "sound":
         name = "Sound spline";
         unit = 'Hz';
         break;
-        default:
+
+    case "x_acc":
+        name = "Acc spline";
+        unit = 'Hz';
+        break;
+
+    case "y_acc":
+        name = "Acc spline";
+        unit = 'Hz';
+        break;
+
+    case "x_mag":
+        name = "Mag spline";
+        unit = 'Hz';
+        break;
+
+    case "y_mag":
+        name = "Mag spline";
+        unit = 'Hz';
+        break;
+
+    default:
         break;
     }
 
@@ -47,9 +71,9 @@ function drawDynamicSpline(networkName, nodeID, sense) {
         var spline;
         spline = new Highcharts.Chart({
             chart: {
-                renderTo: 'dynamicspline',//container is a vector
+                renderTo: divId,//container is a vector
                 // type: 'spline',
-                marginRight: 10,
+                // marginRight: 10,
                 zoomType: 'x',
                 events: {
                     load: function() {
@@ -115,13 +139,13 @@ function drawDynamicSpline(networkName, nodeID, sense) {
                         return this.value + unit;
                     },
                     style: {
-                        color: '#89A54E'
+                        color: '#F00'
                     }
                 },
                 title: {
                     text: name,
                     style: {
-                        color: '#89A54E'
+                        color: '#F00'
                     }
                 }
             },
@@ -151,7 +175,9 @@ function drawDynamicSpline(networkName, nodeID, sense) {
                     },
                     json_text = JSON.stringify(json_obj, null, 2),
                     xmlhttp = createxmlhttp();
+
                     go(xmlhttp, "POST", "realTime.wsn", "false", json_text);
+
                     firstFlag = false;
                     time = (new Date()).getTime(),
                     i, j = 0, k = 29; // k = 29 because of i request 30 records

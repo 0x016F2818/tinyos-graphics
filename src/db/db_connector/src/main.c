@@ -24,8 +24,8 @@ int main(int argc,char *argv[])
     //strcpy(db_connect_info.password,"tinyos");
     //strcpy(db_connect_info.db_name,"tinyos");
 
-    strcpy(db_connect_info.host,"10.18.46.163");
-    strcpy(db_connect_info.user,"tinyos");
+    strcpy(db_connect_info.host,"10.18.46.1");
+    strcpy(db_connect_info.user,"test3");
     strcpy(db_connect_info.password,"njjizyj0826");
     strcpy(db_connect_info.db_name,"tinyos");
 

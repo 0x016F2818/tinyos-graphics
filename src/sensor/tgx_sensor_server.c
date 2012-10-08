@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <mysql.h>
 #include <getopt.h>
+#include <math.h>
 
 #include "sfsource.h"
 #include "sensor.h"
@@ -33,6 +34,39 @@ static int id;
 // 主进程维护UDP控制套接字和TCP Sensor Listen套接字, 每当有一个sensor_client
 // 需要连接时就fork一个进程, 每当有UDP有响应时， 就执行相应的命令， 命令既可以
 // 是查询服务器本身的状态， 也可以用来和对应的节点进行通信
+
+/*typedef short uint16_t;*/
+
+double Celsius(double ADC)
+{
+#define ADC_FS 1023
+#define R1     10000
+#define A 0.00130705
+#define	B 0.000214381
+#define C 0.000000093
+	double Rthr = R1 * (ADC_FS-ADC)/ADC;
+	return (1 / (A + B * log(Rthr) + C * pow(log(Rthr), 3))) - 273.15;
+}
+
+/*double Celsius( double temp )
+{
+	 int R1 = 10000, ADC_FS = 1023;
+	 double ADC, a = 0.00130705, b = 0.000214381, 
+		  c = 0.000000093, Temp, Rthr, lnRthr;
+	 ADC = temp;
+
+	 |+printf( "++++++++++++++++++++\n" );+|
+	 |+printf( "temp = %lf\n", temp );+|
+	 Rthr = (double)(R1*( ADC_FS - ADC ) / ADC);
+	 |+printf( "Rthr = %lf\n", Rthr );+|
+	 lnRthr = (double)(log( Rthr ));
+	 |+printf( "lnRthr = %lf\n", lnRthr );+|
+	 Temp = (double)(1 / ( a + b * lnRthr + c * pow( lnRthr, 3 ) ) - 273.15);
+	 |+printf( "Temp = %lf\n", Temp );+|
+	 |+printf( "++++++++++++++++++++\n" );+|
+
+	 return Temp;
+}*/
 
 int open_sensor_tcp_socket(int port)
 { 
@@ -133,7 +167,7 @@ int insert_mesg_to_db(MYSQL *mysql, char *msg, int len, char *network_name)
 	// 2. sensor info
 	strcpy(sensor_inser_info.network_name, network_name);
 	sensor_inser_info.node_id       = sensor_msg_nodeId_get(tmsg);
-	sensor_inser_info.temp  = sensor_msg_sensor_temp_get(tmsg);
+	sensor_inser_info.temp  = Celsius(sensor_msg_sensor_temp_get(tmsg));
 	sensor_inser_info.photo = sensor_msg_sensor_photo_get(tmsg);
 	sensor_inser_info.sound = sensor_msg_sensor_sound_get(tmsg);
 	sensor_inser_info.x_acc = sensor_msg_sensor_x_acc_get(tmsg);
@@ -268,10 +302,10 @@ int main(int argc, char *argv[])
 							MYSQL mysql;
 							db_connect_info_t db_connect_info;
 							{
-								strcpy(db_connect_info.host,"10.18.46.111");
+								strcpy(db_connect_info.host,"10.18.46.169");
 								strcpy(db_connect_info.user,"tinyos");
-								strcpy(db_connect_info.password,"tinyos");
-								strcpy(db_connect_info.db_name,"tinyos");
+								strcpy(db_connect_info.password,"njjizyj0826");
+								strcpy(db_connect_info.db_name,"test3");
 
 								if(get_db_handler(&mysql,db_connect_info) == -1){
 									return -1;

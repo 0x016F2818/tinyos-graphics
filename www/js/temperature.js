@@ -28,7 +28,7 @@ $(document).ready(function() {
 
      var sense = "temp";
     // alert(networkName+nodeID+sense);
-    drawDynamicSpline(networkName, nodeID, sense);
+    drawDynamicSpline(networkName, nodeID, sense, "dynamicspline");
     drawSymbolsSpline();
     drawRotatedColumn();
     drawMaxandMinColumn();
