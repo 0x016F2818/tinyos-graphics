@@ -31,6 +31,7 @@ module TgxC {
 		interface Read<uint16_t> as Temp;
 		interface Read<uint16_t> as Light;
 		interface Read<uint16_t> as Microphone;
+		interface SplitControl as MicControl;
 		interface Read<uint16_t> as AccelX;
 		interface Read<uint16_t> as AccelY;
 		interface Read<uint16_t> as MagX;
@@ -75,6 +76,7 @@ implementation {
 		call Leds.led2On();
 	}
 
+
 	/* ****************************************** */
 	// Task
 	// 一共在三个地方post Task（在基站节点）
@@ -103,6 +105,17 @@ implementation {
 	}
 
 	/* ****************************************** */
+	event void MicControl.startDone(error_t error) {
+		if (!bRoot) {
+				/*call Temp.read();*/
+				call SensorReadTimer.startOneShot(100);
+		}
+	}
+
+	event void MicControl.stopDone(error_t error) {
+
+	}
+
 	event void Boot.booted() {
 		// 根据SENSOR_RANGE_MIN - SENSOR_RANGE_MAX, 随即生成节点的位置信息,
 		// 后期我们会根据GPRS信息， 进行定位, 得到真实的节点位置信息
@@ -114,12 +127,14 @@ implementation {
 		if (TOS_NODE_ID == 0) {
 			bRoot = TRUE;
 			call SerialControl.start();
+		} else {
+			call MicControl.start();
 		}
+
 		call RadioControl.start();
 	}	
 
-	event void BaseStationTimer.fired()
-	{
+	event void BaseStationTimer.fired() {
 		am_addr_t parentId;
 		if (bRoot) {
 			sensor_msg_t baseStationData;
@@ -156,7 +171,7 @@ implementation {
 			/*call DisseminationControl.start();*/
 			if (!bRoot) {
 				/*call Temp.read();*/
-				call SensorReadTimer.startOneShot(100);
+				/*call SensorReadTimer.startOneShot(100);*/
 			}
 		} else {
 			call RadioControl.start();
@@ -177,27 +192,45 @@ implementation {
 
 	// 采集按照链式方法， 保证了数据采集完后发送
 	event void Temp.readDone(error_t error, uint16_t val) {
-		Temp_data = val;
+		if (error == SUCCESS)
+			Temp_data = val;
+		else
+			Temp_data = 0;
 		call Light.read();
 	}
 	event void Light.readDone(error_t error, uint16_t val) {
-		Light_data = val;
+		if (error == SUCCESS)
+			Light_data = val;
+		else
+			Light_data = 0;
 		call Microphone.read();
 	}
 	event void Microphone.readDone(error_t error, uint16_t val) {
-		Microphone_data = val;
+		if (error == SUCCESS)
+			Microphone_data = val;
+		else
+			Microphone_data = 0;
 		call AccelX.read();
 	}
 	event void AccelX.readDone(error_t error, uint16_t val) {
-		AccelX_data = val;
+		if (error == SUCCESS)
+			AccelX_data = val;
+		else
+			AccelX_data = 0;
 		call AccelY.read();
 	}
 	event void AccelY.readDone(error_t error, uint16_t val) {
-		AccelY_data = val;
+		if (error == SUCCESS)
+			AccelY_data = val;
+		else
+			AccelY_data = 0;
 		call MagX.read();
 	}
 	event void MagX.readDone(error_t error, uint16_t val) {
-		MagX_data = val;
+		if (error == SUCCESS)
+			MagX_data = val;
+		else
+			MagX_data = 0;
 		call MagY.read();
 	}
 
@@ -211,6 +244,9 @@ implementation {
 
 		/** 将采集到的数据以及一些节点的本身信息填写到sensorData上面 */
 		/** ******************************************************* */
+		if (error != SUCCESS)
+			val = 0;
+
 		sensorData->nodeId = TOS_NODE_ID;
 		call CollectionInfo.getParent(&parentId);
 		sensorData->parentId = parentId;

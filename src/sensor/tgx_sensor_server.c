@@ -44,6 +44,7 @@ double Celsius(double ADC)
 #define A 0.00130705
 #define	B 0.000214381
 #define C 0.000000093
+	if (abs(ADC - 0) < 1e-6) return 0.0;
 	double Rthr = R1 * (ADC_FS-ADC)/ADC;
 	return (1 / (A + B * log(Rthr) + C * pow(log(Rthr), 3))) - 273.15;
 }

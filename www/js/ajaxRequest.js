@@ -13,7 +13,6 @@ var createxmlhttp = function() {
     // }
 
     return xmlhttp;
-
 },
 go = function(xmlhttp, requestType, module, bool, request) {
     if(!requestType)

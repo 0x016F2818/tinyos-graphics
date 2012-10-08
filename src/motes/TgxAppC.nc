@@ -76,6 +76,7 @@ implementation {
 	App.Temp -> Sensor.Temp;
 	App.Light -> Sensor.Light;
 	App.Microphone -> Sensor.Microphone;
+	App.MicControl -> Sensor.MicControl;
 	App.AccelX -> Sensor.AccelX;
 	App.AccelY -> Sensor.AccelY;
 	App.MagX -> Sensor.MagX;

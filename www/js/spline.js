@@ -34,22 +34,22 @@ function drawDynamicSpline(networkName, nodeID, sense, divId) {
         break;
 
     case "x_acc":
-        name = "Acc spline";
+        name = "X_Acc spline";
         unit = 'Hz';
         break;
 
     case "y_acc":
-        name = "Acc spline";
+        name = "Y_Acc spline";
         unit = 'Hz';
         break;
 
     case "x_mag":
-        name = "Mag spline";
+        name = "X_Mag spline";
         unit = 'Hz';
         break;
 
     case "y_mag":
-        name = "Mag spline";
+        name = "Y_Mag spline";
         unit = 'Hz';
         break;
 
@@ -88,7 +88,7 @@ function drawDynamicSpline(networkName, nodeID, sense, divId) {
                             requestNum: "1"
                         },
                         json_text = JSON.stringify(json_obj, null, 2),
-                        xmlhttp = createxmlhttp();
+                        xmlhttp = new createxmlhttp();
                         
                         setInterval(function() {
                             var time = (new Date()).getTime(); // current time
@@ -174,9 +174,200 @@ function drawDynamicSpline(networkName, nodeID, sense, divId) {
                         requestNum: "30"
                     },
                     json_text = JSON.stringify(json_obj, null, 2),
-                    xmlhttp = createxmlhttp();
+                    xmlhttp = new createxmlhttp();
 
                     go(xmlhttp, "POST", "realTime.wsn", "false", json_text);
+
+                    firstFlag = false;
+                    time = (new Date()).getTime(),
+                    i, j = 0, k = 29; // k = 29 because of i request 30 records
+
+                    for (i = -29; i <= 0; i++) {
+                        if(value[k] !== undefined || value[k] !== null) {
+                            data.push({
+                                x: captureTime[k],
+                                y: value[k]
+                            });
+                            k--;
+                            j++;
+                        }
+                    }
+                    // captureTime.length = 0; // array set 0 because of i will use it in event:load
+                    return data;
+                })()
+            }]
+        });
+    }
+}
+
+
+
+function drawDynamicSpline2(networkName, nodeID, sense, divId) {
+    // alert(networkName+nodeID+sense);
+    var firstFlag = true;
+    // var value =  [0,0,0,0,0,0,0,121,11,11,11,11,1,1,113,141,15,116,117,20,1,23,4,3,2,1,5,4,3,44,3,2,1,3,3,4,54,4,3,3,2,3,,4,5,4,6,7,8,23,9,123,34,32,1,2,32,14,5,32,123,34,253,2,123,14,523,234,123,32,123,123,324,5,34,2342,34,213,123,23,52,25,132];
+    var name, unit;
+    switch(sense){
+
+    case "temp":
+        name = "Tmperature spline";
+        unit = '°C';
+        break;
+
+    case "photo":
+        name = "Light spline";
+        unit = 'lux';
+        break;
+
+    case "sound":
+        name = "Sound spline";
+        unit = 'Hz';
+        break;
+
+    case "x_acc":
+        name = "X_Acc spline";
+        unit = 'Hz';
+        break;
+
+    case "y_acc":
+        name = "Y_Acc spline";
+        unit = 'Hz';
+        break;
+
+    case "x_mag":
+        name = "X_Mag spline";
+        unit = 'Hz';
+        break;
+
+    case "y_mag":
+        name = "Y_Mag spline";
+        unit = 'Hz';
+        break;
+
+    default:
+        break;
+    }
+
+    if(name) {
+        var drawContent = name.slice(0, 1);
+        // alert(drawContent);
+        // if ( drawContent == 'tempe' )
+        //     drawContent = drawContent.slice(0, 4);
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
+        var spline;
+        spline = new Highcharts.Chart({
+            chart: {
+                renderTo: divId,//container is a vector
+                // type: 'spline',
+                // marginRight: 10,
+                zoomType: 'x',
+                events: {
+                    load: function() {
+                        // set up the updating of the chart each second
+                        var series = this.series[0],
+                        i = 0,
+                        lastTime = parseInt(captureTime[0]);
+                        json_obj = {
+                            net_name: networkName,
+                            nodeId: nodeID,
+                            sense: sense,
+                            requestNum: "1"
+                        },
+                        json_text = JSON.stringify(json_obj, null, 2),
+                        xmlhttp = new createxmlhttp();
+                        
+                        setInterval(function() {
+                            var time = (new Date()).getTime(); // current time
+                            if(!firstFlag) {
+                                go(xmlhttp, "POST", "realTime.wsn", "true", json_text);
+                            }
+                            // here 30 is represent the start of the "second"
+                            // (request 1 record)
+                            if(value[30+i]!==undefined || value[30+i]!==null){ 
+                                x = parseInt(captureTime[30+i]);
+                                y = value[30+i];
+                                i++;
+                                if(x !== parseInt(captureTime[28+i])) // Make the draw stop!!!! Because of i has add 1(i++), so is 28+i and not 30+i-1(29+i)
+
+                                    series.addPoint([x, y], true, true);
+                            }
+                        }, 1000);
+                    }
+                }
+            },
+            title: {
+                text: name
+            },
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 44,
+                // plotBands: [{
+                //     id: 'mask-before',
+                //     from: Date.UTC(2006, 0, 1),
+                //     to: Date.UTC(2008, 7, 1),
+                //     color: 'rgba(0, 0, 0, 0.2)'
+                // }],
+                labels: {
+                    rotation: -45,
+                    align: 'right',
+                    style: {
+                        fontSize: '10px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                },
+                title: {
+                    text: null
+                }
+            },
+            yAxis: {
+                labels: {
+                    formatter: function() {
+                        return this.value + unit;
+                    },
+                    style: {
+                        color: '#F00'
+                    }
+                },
+                title: {
+                    text: name,
+                    style: {
+                        color: '#F00'
+                    }
+                }
+            },
+            tooltip: {
+                formatter: function() {
+                    return '<b>'+ this.series.name +'</b><br/>'+
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +'<br/>'+
+                        Highcharts.numberFormat(this.y, 2);
+                }
+            },
+            legend: {
+                enabled: true
+            },
+            exporting: {
+                enabled: true
+            },
+            series: [{
+                name: name,
+                data: (function() {
+                    // generate an array of random data
+                    var data = [],
+                    json_obj = {
+                        net_name: networkName,
+                        nodeId: nodeID,
+                        sense: sense,
+                        requestNum: "30"
+                    },
+                    json_text = JSON.stringify(json_obj, null, 2),
+                    xmlhttp = new createxmlhttp();
+
+                    go(xmlhttp, "POST", "realTime.wsn", "true", json_text);
 
                     firstFlag = false;
                     time = (new Date()).getTime(),

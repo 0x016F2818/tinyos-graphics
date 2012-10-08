@@ -104,6 +104,6 @@ top:begin
     values(net_id,nod_id,temp,photo,sound,
             x_acc,y_acc,x_mag,y_mag,pressure,
             shoke,humidity,sense_time);
-end;
+end;;
 
 /*####################################################################*/
