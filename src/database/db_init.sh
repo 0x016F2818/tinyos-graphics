@@ -1,10 +1,8 @@
 #!/bin/bash
 # Program:
-# Create a database suitable for this project quickly!
+# Create a database suitable for this project in one step!
 # History:
 # 2012/10/08    Arnold  First release
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
-export PATH
 
 host=127.0.0.1
 user=root
