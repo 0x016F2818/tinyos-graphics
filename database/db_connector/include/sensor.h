@@ -4,7 +4,8 @@
 #include<string.h>
 #include"mysql/mysql.h"
 
-#define DB_COMMAND_LENGTH            200
+#define DB_COMMAND_LENGTH           200
+#define NETWORK_FLUSH_TIMEOUT       5
 
 #define DB_QUERY                    -1001
 #define DB_NO_QUERY                 -1002

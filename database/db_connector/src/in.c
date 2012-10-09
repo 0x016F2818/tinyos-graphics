@@ -29,7 +29,7 @@ int update_network(MYSQL *mysql,network_t info){
     int result;
     char command[DB_COMMAND_LENGTH] = "\0";
 
-    sprintf(command,"call sp_update_network('%s',%d,%d)",info.network_name,info.node_id,info.parent_id);
+    sprintf(command,"call sp_update_network('%s',%d,%d,%d)",info.network_name,info.node_id,info.parent_id,info.quality);
 
     result = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (result){

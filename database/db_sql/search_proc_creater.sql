@@ -1,72 +1,74 @@
 delimiter ;;
 /*##########################################################################*/
-drop procedure if exists sp_get_sgl_node_info;
+drop procedure if exists sp_get_sgl_node_info;;
 create procedure sp_get_sgl_node_info(in net_name char(50),in nod_id int)
 begin
-    select viw_network_segment.network_id,
-            viw_network_segment.network_name,
-            viw_node.node_id,viw_network.parent_id,
-            viw_work_state.state_name as work_state,
-            viw_node_status.status_name as node_status,
+    select tb_network_segment.network_id,
+            tb_network_segment.network_name,
+            tb_node.node_id,tb_network.parent_id,
+            tb_work_state.state_name as work_state,
+            tb_node_status.status_name as node_status,
             power, x(GPS),y(GPS)
-    from viw_node,viw_work_state,viw_node_status,viw_network,viw_network_segment
-            where viw_node.node_id      = nod_id
-            and viw_node.node_id        = viw_network.node_id
-            and viw_node.network_id     = viw_network.network_id
-            and viw_node.work_state     = viw_work_state.work_state
-            and viw_node.node_status    = viw_node_status.node_status
-            and viw_node.network_id     = viw_network_segment.network_id
-            and viw_node.work_state     = viw_work_state.work_state
-            and viw_node.node_status    = viw_node_status.node_status
-            and viw_node.network_id     = viw_network_segment.network_id;
-end;
+    from tb_node,tb_work_state,tb_node_status,tb_network,tb_network_segment
+            where tb_node.node_id      = nod_id
+            and tb_node.node_id        = tb_network.node_id
+            and tb_node.network_id     = tb_network.network_id
+            and tb_node.work_state     = tb_work_state.work_state
+            and tb_node.node_status    = tb_node_status.node_status
+            and tb_node.network_id     = tb_network_segment.network_id
+            and tb_node.work_state     = tb_work_state.work_state
+            and tb_node.node_status    = tb_node_status.node_status
+            and tb_node.network_id     = tb_network_segment.network_id;
+end;;
 
 /*##########################################################################*/
-drop procedure if exists sp_get_all_node_info;
-create procedure  sp_get_all_node_info()
+drop procedure if exists sp_get_all_node_info;;
+create procedure  sp_get_all_node_info(in sec int)
 begin
-    select viw_network_segment.network_id,
-            viw_network_segment.network_name,
-            viw_node.node_id,viw_network.parent_id,
-            viw_work_state.state_name as work_state,
-            viw_node_status.status_name as node_status,
+    call sp_flush_network(sec);
+    select tb_network_segment.network_id,
+            tb_network_segment.network_name,
+            tb_node.node_id,tb_network.parent_id,
+            tb_work_state.state_name as work_state,
+            tb_node_status.status_name as node_status,
             power, x(GPS),y(GPS)
-    from viw_node,viw_work_state,viw_node_status,viw_network,viw_network_segment
-            where viw_node.node_id      = viw_network.node_id 
-            and viw_node.network_id     = viw_network.network_id
-            and viw_node.work_state     = viw_work_state.work_state
-            and viw_node.node_status    = viw_node_status.node_status
-            and viw_node.network_id     = viw_network_segment.network_id
-            order by viw_node.node_id;
-end;
+    from tb_node,tb_work_state,tb_node_status,tb_network,tb_network_segment
+            where tb_node.node_id      = tb_network.node_id 
+            and tb_node.network_id     = tb_network.network_id
+            and tb_node.work_state     = tb_work_state.work_state
+            and tb_node.node_status    = tb_node_status.node_status
+            and tb_node.network_id     = tb_network_segment.network_id
+            order by tb_node.network_id,tb_node.node_id;
+end;;
 
 /*##########################################################################*/
-drop procedure if exists sp_get_network_info;
-create procedure sp_get_network_info()
+drop procedure if exists sp_get_network_info;;
+create procedure sp_get_network_info(in sec int)
 begin
-    select viw_network.network_id,viw_network_segment.network_name, 
-        node_id,parent_id,quality from viw_network,viw_network_segment
-    where viw_network.network_id = viw_network_segment.network_id;
-end;
+    call sp_flush_network(sec);
+    select tb_network.network_id,tb_network_segment.network_name, 
+        node_id,parent_id,quality from tb_network,tb_network_segment
+    where tb_network.network_id = tb_network_segment.network_id;
+end;;
 
 /*##########################################################################*/
 drop procedure if exists sp_get_all_record;
 create procedure sp_get_all_record()
 begin
-    select viw_sense.network_id,network_name,node_id,
+    select tb_sense.network_id,network_name,node_id,
     temp,photo,sound,
     x_acc,y_acc, x_mag,y_mag,
-    humidity,pressure,shoke,sense_time,insert_time from viw_sense,viw_network_segment
-    where viw_sense.network_id = viw_network_segment.network_id;
-end;
+    humidity,pressure,shoke,sense_time,insert_time from tb_sense,tb_network_segment
+    where tb_sense.network_id = tb_network_segment.network_id;
+end;;
 
 /*##########################################################################*/
-drop procedure if exists sp_get_sgl_node_all_sense;
+drop procedure if exists sp_get_sgl_node_all_sense;;
 create procedure sp_get_sgl_node_all_sense(in net_name char(50),in nod_id int)
 top:begin
     declare net_id int;
     declare amount int;
-    select count(*),network_id from viw_network_segment
+    select count(*),network_id from tb_network_segment
     where network_name = net_name into amount,net_id;
     if amount = 0 then 
         leave top;
@@ -74,17 +76,17 @@ top:begin
 
     select temp,humidity,photo,sound,
     x_mag,y_mag,x_acc,y_acc,
-    pressure,shoke,sense_time from viw_sense
+    pressure,shoke,sense_time from tb_sense
     where network_id = net_id and node_id = nod_id;
-end;
+end;;
 
 /*##########################################################################*/
-drop procedure if exists sp_get_sgl_node_sgl_sense;
+drop procedure if exists sp_get_sgl_node_sgl_sense;;
 create procedure sp_get_sgl_node_sgl_sense(in net_name char(50),in nod_id int,in sense char(50))
 top:begin
     declare net_id int;
     declare amount int;
-    select count(*),network_id from viw_network_segment
+    select count(*),network_id from tb_network_segment
     where network_name = net_name into amount,net_id;
     if amount = 0 then 
         leave top;
@@ -118,11 +120,11 @@ top:begin
     else 
         leave top;
     end case;
-end;
+end;;
 
 /*##########################################################################*/
 /*TODO:improve*/
-drop procedure if exists sp_get_max_record;
+drop procedure if exists sp_get_max_record;;
 create procedure sp_get_max_record(in sense char(50))
 top:begin
     case sense 
@@ -147,11 +149,11 @@ top:begin
     else 
         leave top;
     end case;
-end; 
+end;;
 
 /*##########################################################################*/
 /*TODO:improve*/
-drop procedure if exists sp_get_min_record;
+drop procedure if exists sp_get_min_record;;
 create procedure sp_get_min_record(in sense char(50))
 top:begin
     case sense 
@@ -176,14 +178,14 @@ top:begin
     else 
         leave top;
     end case;
-end; 
+end;;
 /*##########################################################################*/
-drop procedure if exists sp_get_latest_record;
+drop procedure if exists sp_get_latest_record;;
 create procedure sp_get_latest_record(in net_name char(50),in nod_id int,in sense char(50))
 top:begin
     declare net_id  int;
     declare amount  int;
-    select count(*),network_id from viw_network_segment
+    select count(*),network_id from tb_network_segment
     where network_name = net_name into amount,net_id;
     if amount = 0 then 
         leave top;
@@ -237,14 +239,14 @@ top:begin
     else
         leave top;
     end if;
-end;
+end;;
 /*##########################################################################*/
-drop procedure if exists sp_get_absolute_record;
+drop procedure if exists sp_get_absolute_record;;
 create procedure sp_get_absolute_record(in net_name char(50),in nod_id int,in sense char(50),in start_time timestamp,in end_time timestamp)
 top:begin 
     declare net_id  int;
     declare amount  int;
-    select count(*),network_id from viw_network_segment
+    select count(*),network_id from tb_network_segment
     where network_name = net_name into amount,net_id;
     if amount = 0 then 
         leave top;
@@ -282,15 +284,15 @@ top:begin
     else 
         leave top;
     end if;
-end;
+end;;
 
 /*##########################################################################*/
-drop procedure if exists sp_get_relative_record;
+drop procedure if exists sp_get_relative_record;;
 create procedure sp_get_relative_record(in net_name char(50),in nod_id int,in sense char(50),in start_time timestamp,in numbers bigint)
 top:begin
     declare net_id int;
     declare amount int;
-    select count(*),network_id from viw_network_segment
+    select count(*),network_id from tb_network_segment
     where network_name = net_name into amount,net_id;
     if amount = 0 then 
         leave top;
@@ -370,18 +372,16 @@ top:begin
     else 
         leave top;
     end case;
-end;
+end;;
 
 /*##########################################################################*/
-drop procedure if exists sp_get_absolute_record_num;
+drop procedure if exists sp_get_absolute_record_num;;
 create procedure sp_get_absolute_record_num(in net_name char(50),in nod_id int,in start_time timestamp,in end_time timestamp)
 top:begin
-    select count(*) from viw_sense,viw_network_segment 
-    where viw_network_segment.network_name = net_name 
-        and viw_sense.network_id = viw_network_segment.network_id 
+    select count(*) from tb_sense,tb_network_segment 
+    where tb_network_segment.network_name = net_name 
+        and tb_sense.network_id = tb_network_segment.network_id 
         and node_id = nod_id 
         and insert_time >= start_time 
         and insert_time <= end_time;           
-end
-
-
+end;;
