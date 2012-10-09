@@ -17,7 +17,7 @@ TGX_WEB=$TGX_ROOT/bin
 
 if [ -f "$TGX_DB/db_init.sh" ]; then
 	cd $TGX_DB
-	./db_init.sh
+	./db_init.sh || exit 0
 	echo "db initialized success.\n"
 else
 	echo "db can not initialized..\n"
@@ -30,4 +30,4 @@ cd $TGX_SENSOR
 echo "tinyos-graphics sensor server start done.\n"
 
 cd $TGX_WEB
-./tinyos-graphics
+./tinyos-graphics --no-daemon

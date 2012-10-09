@@ -14,6 +14,7 @@ module TestMicrophoneC {
 }
 implementation {
 	uint32_t counter = 0;
+	uint16_t reading[5];
 	void reportMicWorking() {
 		call Leds.led1Toggle();
 	}
@@ -27,6 +28,9 @@ implementation {
 	event void Boot.booted() {
 		call RadioControl.start();
 		call Microphone.start();
+		atomic {
+			counter = 0;
+		}
 	}
 
 	event void RadioControl.startDone(error_t error) {
@@ -46,10 +50,24 @@ implementation {
 	}
 
 	async event void Atm128AdcSingle.dataReady(uint16_t data, bool precise) {
+	  int i, sum, actualCount;
 	  reportMicWorking();
 	  atomic {
 		counter++;
-		printf("%ld %d %d\n", counter, data, precise);
+		reading[counter] = data;
+		if (counter == 5) {
+			counter = 0;
+			sum = 0;
+			actualCount = 0;
+			for (i = 0; i < 5; i++) {
+				if (reading[i] > 400) {
+					actualCount++;
+					sum += reading[i];
+				}
+			}
+			if (actualCount != 0)
+				printf("%d\n", sum / actualCount);
+		}
 	  }
 	  post getMicrophoneData();
 	}
