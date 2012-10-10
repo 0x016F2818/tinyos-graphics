@@ -1,23 +1,29 @@
 #include "../include/sensor.h"
 
-int get_all_node_info(MYSQL *mysql,node_t *info){
+int get_all_node_info(node_t *info){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"call sp_get_all_node_info(%d)",NETWORK_FLUSH_TIMEOUT);
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_all_node_info]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
     else{
-        printf("[node_get_info]: %ld products updated successfully!\n",(long) mysql_affected_rows(mysql));
+        printf("[get_all_node_info]: %ld products updated.\n",(long) mysql_affected_rows(&mysql));
     }
 
     long i = 0;
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))){
             info[i].network_id   = atoi(record[0]);
@@ -34,46 +40,53 @@ int get_all_node_info(MYSQL *mysql,node_t *info){
         mysql_free_result(results);
     }
     else{
-        if (mysql_field_count(mysql) == 0) {
-            printf("%lld rows affected\n",
-                    mysql_affected_rows(mysql));
+        if (mysql_field_count(&mysql) == 0) {
+            printf("%lld rows affected\n", mysql_affected_rows(&mysql));
         }
         else{
-            printf("Could not retrieve result set\n");
+            printf("[get_all_node_info]:Could not retrieve result set\n");
+            mysql_close(&mysql);
             return -1;
         }
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return i;
 }
 
 //#################################################
-int get_network_info(MYSQL *mysql,network_t *info){
+int get_network_info(network_t *info){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"call sp_get_network_info(%d)",NETWORK_FLUSH_TIMEOUT);
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_network_info]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
-    printf("field_count:%d\n",mysql_field_count(mysql));
-    int arnold = mysql_affected_rows(mysql);
+    printf("field_count:%d\n",mysql_field_count(&mysql));
+    int arnold = mysql_affected_rows(&mysql);
     if(arnold >= 1){
         printf("Collumn list error!!!\n");
-        printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+        printf("[get_network_info]: %ld rows affected!!!\n",(long) arnold);
+        mysql_close(&mysql);
         return -1;
     }
 
     long i = 0;
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))){
             info[i].network_id   = atoi(record[0]);
@@ -86,40 +99,48 @@ int get_network_info(MYSQL *mysql,network_t *info){
         mysql_free_result(results);
     }
     else{
-        //TODO: if (mysql_field_count(mysql) == 0)
-            printf("Empty set got!!!\n");
+        //TODO: if (mysql_field_count(&mysql) == 0)
+            printf("[get_network_info]:Empty set got!!!\n");
+            mysql_close(&mysql);
             return -1;
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return i;
 }
 
 //#################################################
-long get_all_record(MYSQL *mysql,sensor_t *info){
+long get_all_record(sensor_t *info){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"call sp_get_all_record()");
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_all_record]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
-    int arnold = mysql_affected_rows(mysql);
+    int arnold = mysql_affected_rows(&mysql);
     if(arnold >= 1){
         printf("Collumn list error!!!\n");
-        printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+        printf("[get_all_record]: %ld rows affected!!!\n",(long) arnold);
+        mysql_close(&mysql);
         return -1;
     }
 
     long i = 0;
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
             info[i].network_id  = atoi(record[0]);
@@ -138,15 +159,17 @@ long get_all_record(MYSQL *mysql,sensor_t *info){
         mysql_free_result(results);
     }
     else{
-        //TODO: if (mysql_field_count(mysql) == 0)
-            printf("Empty set got!!!\n");
+        //TODO: if (mysql_field_count(&mysql) == 0)
+            printf("[get_all_record]:Empty set got!!!\n");
+            mysql_close(&mysql);
             return -1;
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return i;
 }
 
@@ -154,28 +177,34 @@ long get_all_record(MYSQL *mysql,sensor_t *info){
 //
 //RETURNS:the line number of the records
 //#################################################
-int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense){
+int get_latest_record(sensor_t *info,char *net_name,int nod_id,char *sense){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"call sp_get_latest_record('%s',%d,'%s')",net_name,nod_id,sense);
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_latest_record]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
-    printf("field_count:%d\n",mysql_field_count(mysql));
-    int arnold = mysql_affected_rows(mysql);
+    printf("field_count:%d\n",mysql_field_count(&mysql));
+    int arnold = mysql_affected_rows(&mysql);
     if(arnold >= 1){
         printf("Collumn list error!!!\n");
-        printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+        printf("[get_latest_record]: %ld rows affected!!!\n",(long) arnold);
+        mysql_close(&mysql);
         return -1;
     }
 
     int i = 0;
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
             info[i].temp  = strtod(record[0],NULL);
@@ -185,14 +214,16 @@ int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char
         mysql_free_result(results);
     }
     else{
-        printf("Empty set got!!!\n");
+        printf("[get_latest_record]:Empty set got!!!\n");
+        mysql_close(&mysql);
         return -1;
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return i;
 }
 
@@ -201,30 +232,36 @@ int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char
 //
 //RETURNS:the line number of the records
 //#################################################
-long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sensor,char *start_time,long record_num){
+long get_relative_record(sensor_t *info,char *net_name,int nod_id,char *sensor,char *start_time,long record_num){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"call sp_get_relative_record('%s',%d,'%s',%s,%ld)",net_name,nod_id,sensor,start_time,record_num);
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_relative_record]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
-    printf("field_count:%d\n",mysql_field_count(mysql));
+    printf("field_count:%d\n",mysql_field_count(&mysql));
 
-    int arnold = mysql_affected_rows(mysql);
-    printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+    int arnold = mysql_affected_rows(&mysql);
+    printf("[get_relative_record]: %ld rows affected!!!\n",(long) arnold);
     if(arnold >= 1){
         printf("Collumn list error!!!\n");
-        printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+        printf("[get_relative_record]: %ld rows affected!!!\n",(long) arnold);
+        mysql_close(&mysql);
         return -1;
     }
 
     long i = 0;
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
             info[i].temp = strtod(record[0],NULL);
@@ -234,15 +271,17 @@ long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,c
         mysql_free_result(results);
     }
     else{
-        //TODO: if (mysql_field_count(mysql) == 0)
-            printf("Empty set got!!!\n");
+        //TODO: if (mysql_field_count(&mysql) == 0)
+            printf("[get_relative_record]:Empty set got!!!\n");
+            mysql_close(&mysql);
             return -1;
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return i;
 }
 
@@ -250,29 +289,35 @@ long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,c
 //
 //RETURNS:the line number of the records
 //#################################################
-int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char sense[50],char * start_time,char *end_time){
+int get_absolute_record(sensor_t *info,char *net_name,int nod_id,char sense[50],char * start_time,char *end_time){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"call sp_get_absolute_record('%s',%d,'%s','%s','%s')",net_name,nod_id,sense,start_time,end_time);
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_absolute_record]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
-    printf("field_count:%d\n",mysql_field_count(mysql));
+    printf("field_count:%d\n",mysql_field_count(&mysql));
 
-    int arnold = mysql_affected_rows(mysql);
+    int arnold = mysql_affected_rows(&mysql);
     if(arnold >= 1){
         printf("Collumn list error!!!\n");
-        printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+        printf("[get_absolute_record]: %ld rows affected!!!\n",(long) arnold);
+        mysql_close(&mysql);
         return -1;
     }
 
     int i = 0;
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
             info[i].temp = strtod(record[0],NULL);
@@ -282,38 +327,46 @@ int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,ch
         mysql_free_result(results);
     }
     else{
-        //TODO: if (mysql_field_count(mysql) == 0)
-            printf("Empty set got!!!\n");
+        //TODO: if (mysql_field_count(&mysql) == 0)
+            printf("[get_absolute_record]:Empty set got!!!\n");
+            mysql_close(&mysql);
             return -1;
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return i;
 }
 //#################################################
-int get_all_node_num(MYSQL *mysql,int *node_num){
+int get_all_node_num(int *node_num){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"select count(*) from viw_node");
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_all_node_num]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
-    printf("field_count:%d\n",mysql_field_count(mysql));
-    int arnold = mysql_affected_rows(mysql);
+    printf("field_count:%d\n",mysql_field_count(&mysql));
+    int arnold = mysql_affected_rows(&mysql);
     if(arnold >= 1){
         printf("Collumn list error!!!\n");
-        printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+        printf("[get_all_node_num]: %ld rows affected!!!\n",(long) arnold);
+        mysql_close(&mysql);
         return -1;
     }
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
             *node_num = atoi(record[0]);
@@ -321,40 +374,48 @@ int get_all_node_num(MYSQL *mysql,int *node_num){
         mysql_free_result(results);
     }
     else{
-        //TODO: if (mysql_field_count(mysql) == 0)
-            printf("Empty set got!!!\n");
+        //TODO: if (mysql_field_count(&mysql) == 0)
+            printf("[get_all_node_num]:Empty set got!!!\n");
+            mysql_close(&mysql);
             return -1;
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return 0;
 }
 
 //#################################################
-int get_absolute_record_num(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char * start_time,char *end_time,long *record_num){
+int get_absolute_record_num(sensor_t *info,char *net_name,int nod_id,char * start_time,char *end_time,long *record_num){
     int ret;
     char command[DB_COMMAND_LENGTH] = "\0";
-    MYSQL_ROW record;
-    MYSQL_RES *results;
+    MYSQL       mysql;
+    MYSQL_ROW   record;
+    MYSQL_RES   *results;
+
+    int k = get_db_handler(&mysql);
+    if(-1 == k) return -1;
 
     sprintf(command,"call sp_get_absolute_record_num('%s',%d,'%s','%s')",net_name,nod_id,start_time,end_time);
-    ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
+    ret = mysql_real_query(&mysql,command,(unsigned int)strlen(command));
     if (ret){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:get_absolute_record_num]: %s\n",mysql_error(&mysql));
+        mysql_close(&mysql);
         return -1;
     }
-    printf("field_count:%d\n",mysql_field_count(mysql));
-    int arnold = mysql_affected_rows(mysql);
+    printf("field_count:%d\n",mysql_field_count(&mysql));
+    int arnold = mysql_affected_rows(&mysql);
     if(arnold >= 1){
         printf("Collumn list error!!!\n");
-        printf("[Rows affected]: %ld rows affected!!!\n",(long) arnold);
+        printf("[get_absolute_record_num]: %ld rows affected!!!\n",(long) arnold);
+        mysql_close(&mysql);
         return -1;
     }
 
-    results = mysql_store_result(mysql);
+    results = mysql_store_result(&mysql);
     if (results) {
         while((record = mysql_fetch_row(results))) {
             *record_num = atoi(record[0]);
@@ -362,14 +423,16 @@ int get_absolute_record_num(MYSQL *mysql,sensor_t *info,char *net_name,int nod_i
         mysql_free_result(results);
     }
     else{
-        //TODO: if (mysql_field_count(mysql) == 0)
-            printf("Empty set got!!!\n");
+        //TODO: if (mysql_field_count(&mysql) == 0)
+            printf("[get_absolute_record_num]:Empty set got!!!\n");
+            mysql_close(&mysql);
             return -1;
     }
     do {
-        if ((ret = mysql_next_result(mysql)) > 0)
+        if ((ret = mysql_next_result(&mysql)) > 0)
             printf("Could not execute statement\n");
     } while (ret == 0);    
 
+    mysql_close(&mysql);
     return 0;
 }

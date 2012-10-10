@@ -103,18 +103,19 @@ typedef struct {
 /*}db_connect_t;*/
     
 /*################################################*/
-int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info);
+void fill_connect_info(db_connect_info_t *db_connect_info);
+int get_db_handler(MYSQL *mysql);
 
-int insert_sense_record(MYSQL *mysql,sensor_t info);
-int update_network(MYSQL *mysql,network_t info);
-int update_node_info(MYSQL *mysql,node_t info);
+int insert_sense_record(sensor_t info);
+int update_network(network_t info);
+int update_node_info(node_t info);
 
-int get_all_node_num(MYSQL *mysql,int *node_num);
-int get_absolute_record_num(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char * start_time,char *end_time,long *record_num);
+int get_all_node_num(int *node_num);
+int get_absolute_record_num(sensor_t *info,char *net_name,int nod_id,char * start_time,char *end_time,long *record_num);
 
-int get_all_node_info(MYSQL *mysql,node_t *info);
-int get_network_info(MYSQL *mysql,network_t *info);
-long get_all_record(MYSQL *mysql,sensor_t *info);
-int get_latest_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense);
-int get_absolute_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,char *end_time);
-long get_relative_record(MYSQL *mysql,sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,long record_num);
+int get_all_node_info(node_t *info);
+int get_network_info(network_t *info);
+long get_all_record(sensor_t *info);
+int get_latest_record(sensor_t *info,char *net_name,int nod_id,char *sense);
+int get_absolute_record(sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,char *end_time);
+long get_relative_record(sensor_t *info,char *net_name,int nod_id,char *sense,char *start_time,long record_num);

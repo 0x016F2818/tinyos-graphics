@@ -2,9 +2,6 @@
 
 int main(int argc,char *argv[])
 {
-    MYSQL mysql;
-    db_connect_info_t db_connect_info;
-
     node_t      node_inser_info;
     sensor_t    sensor_inser_info;
     network_t   network_inser_info;
@@ -19,19 +16,6 @@ int main(int argc,char *argv[])
     memset(&sensor_info,0,sizeof(sensor_info));
     memset(&network_info,0,sizeof(network_info));
 
-    //strcpy(db_connect_info.host,"10.18.46.111");
-    //strcpy(db_connect_info.user,"tinyos");
-    //strcpy(db_connect_info.password,"tinyos");
-    //strcpy(db_connect_info.db_name,"tinyos");
-
-    strcpy(db_connect_info.host,"10.18.46.163");
-    strcpy(db_connect_info.user,"tinyos");
-    strcpy(db_connect_info.password,"njjizyj0826");
-    strcpy(db_connect_info.db_name,"tinyos");
-
-    if(get_db_handler(&mysql,db_connect_info) == -1){
-        return -1;
-    }
     int num = 0;
     node_inser_info.node_id           = num; 
     node_inser_info.power             = num;
@@ -41,13 +25,14 @@ int main(int argc,char *argv[])
     strcpy(node_inser_info.work_state,"work");
     strcpy(node_inser_info.node_status,"normal");
 
-    update_node_info(&mysql,node_inser_info);
+    update_node_info(node_inser_info);
 
     network_inser_info.node_id      = num;
     network_inser_info.parent_id    = num;
+    network_inser_info.quality      = 100;
     strcpy(network_inser_info.network_name,"10.16.17.0");
 
-    update_network(&mysql,network_inser_info);
+    update_network(network_inser_info);
     for(num = 1;num <= 10;num++){
         node_inser_info.node_id           = num; 
         node_inser_info.power             = 90 + num % 10;
@@ -57,13 +42,14 @@ int main(int argc,char *argv[])
         strcpy(node_inser_info.work_state,"work");
         strcpy(node_inser_info.node_status,"normal");
 
-        update_node_info(&mysql,node_inser_info);
+        update_node_info(node_inser_info);
 
         network_inser_info.node_id      = num;
         network_inser_info.parent_id    = num - 1;
+        network_inser_info.quality      = 100;
         strcpy(network_inser_info.network_name,"10.16.17.0");
 
-        update_network(&mysql,network_inser_info);
+        update_network(network_inser_info);
 
         //strcpy(sensor_inser_info.network_name,"10.16.17.0");
         //sensor_inser_info.node_id         = num % 300;
@@ -75,18 +61,18 @@ int main(int argc,char *argv[])
         //sensor_inser_info.x_mag           = 22 + num % 10;
         //sensor_inser_info.y_mag           = 33 + num % 10;
 
-        //insert_sense_record(&mysql,sensor_inser_info);
+        //insert_sense_record(sensor_inser_info);
     }
     
     printf("===================insert end=================\n");
 while(1){
         long i,j;
-        //j = get_all_record(&mysql,sensor_info);
-        //j = get_absolute_record(&mysql,sensor_info,"10.16.17.0",99,"temp","2012-09-23 11:21:41","2012-09-23 11:21:42");
-        //j = get_latest_record(&mysql,sensor_info,"10.16.17.0",1,"sound");
-        //j = get_relative_record(&mysql,sensor_info,"10.16.17.0",99,"temp","20120927220609",30);
-        j = get_all_node_info(&mysql,node_info);
-        j = get_network_info(&mysql,network_info);
+        //j = get_all_record(sensor_info);
+        //j = get_absolute_record(sensor_info,"10.16.17.0",99,"temp","2012-09-23 11:21:41","2012-09-23 11:21:42");
+        //j = get_latest_record(sensor_info,"10.16.17.0",1,"sound");
+        //j = get_relative_record(sensor_info,"10.16.17.0",99,"temp","20120927220609",30);
+        j = get_all_node_info(node_info);
+        j = get_network_info(network_info);
 
         printf("j = %ld\n",j);
         if(j==-1)
@@ -125,6 +111,5 @@ while(1){
         }
         sleep(2);
 }
-    mysql_close(&mysql);
     return 0;
 }
