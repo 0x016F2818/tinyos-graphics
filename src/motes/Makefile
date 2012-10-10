@@ -6,7 +6,7 @@ CFLAGS += -I$(TOSROOT)/tos/lib/net
 CFLAGS += -I$(TOSROOT)/tos/lib/net/le 
 CFLAGS += -I$(TOSROOT)/tos/lib/printf 
 CFLAGS += -DTOSH_DATA_LENGTH=40
-#CFLAGS += -I./radioprintf
+CFLAGS += -I./radioprintf
 PFLAGS += -DATM128_I2C_EXTERNAL_PULLDOWN=1
 
 #这里采用C在PC端采集数据, serial_msg.c用来操作消息包的api， serial_const包含了一些常量

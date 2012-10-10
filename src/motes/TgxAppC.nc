@@ -73,16 +73,19 @@ implementation {
 	// sensor wiring
 	// ************************************************
 	components new SensorMts300C() as Sensor;
+	components TgxMicC;
+#ifdef USE_LOCAL_MIC
+	App.Microphone -> TgxMicC;
+#else
+	App.Microphone -> Sensor.Microphone;
+#endif
+	App.MicControl -> TgxMicC;
 	App.Temp -> Sensor.Temp;
 	App.Light -> Sensor.Light;
-	App.Microphone -> Sensor.Microphone;
-	App.MicControl -> Sensor.MicControl;
 	App.AccelX -> Sensor.AccelX;
 	App.AccelY -> Sensor.AccelY;
 	App.MagX -> Sensor.MagX;
 	App.MagY -> Sensor.MagY;
-
-
 
 
 

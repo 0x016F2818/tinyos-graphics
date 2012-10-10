@@ -1,7 +1,7 @@
 delimiter ;;
 
 /*####################################################################*/
-drop procedure if exists sp_update_node_info;
+drop procedure if exists sp_update_node_info;;
 create procedure sp_update_node_info(in net_name char(50),in nod_id int,
         in state char(50),in status char(50),
         in power int,in GPS point)
@@ -48,16 +48,12 @@ begin
             tb_node.GPS         = GPS
         where node_id           = nod_id
             and network_id      = net_id;
-        /*update tb_network*/
-        /*set network_id  = net_id,*/
-        /*parent_id   = par_id*/
-        /*where node_id   = nod_id;*/
     end if;
-end;
+end;;
 
 /*####################################################################*/
-drop procedure if exists sp_update_network;
-create procedure sp_update_network(in net_name char(50),in nod_id int,in par_id int)
+drop procedure if exists sp_update_network;;
+create procedure sp_update_network(in net_name char(50),in nod_id int,in par_id int,in quality int)
 top:begin
     declare amount int;
     declare net_id int;
@@ -71,16 +67,17 @@ top:begin
     select count(*) from tb_network
     where node_id = nod_id and parent_id = par_id into amount;
     if amount = 0 then
-        insert into tb_network(network_id,node_id,parent_id) values(net_id,nod_id,par_id);
+        insert into tb_network(network_id,node_id,parent_id,quality) values(net_id,nod_id,par_id,quality);
     else 
         update tb_network
-        set parent_id = par_id
+        set parent_id = par_id,
+        tb_network.quality = quality
         where network_id = net_id and node_id = nod_id;
     end if;
-end;
+end;;
 
 /*####################################################################*/
-drop procedure if exists sp_insert_sense_record;
+drop procedure if exists sp_insert_sense_record;;
 create procedure sp_insert_sense_record(in net_name char(50),
     in nod_id        int,in temp  double(8,2),
     in photo double(8,2),in sound double(8,2),

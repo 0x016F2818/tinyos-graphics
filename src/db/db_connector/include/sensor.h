@@ -4,6 +4,7 @@
 #include<string.h>
 #include"mysql/mysql.h"
 
+#define DROP_INTERVAL_TIME	         5
 #define DB_COMMAND_LENGTH            200
 
 #define DB_QUERY                    -1001

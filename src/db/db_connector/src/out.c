@@ -6,7 +6,7 @@ int get_all_node_info(MYSQL *mysql,node_t *info){
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_all_node_info()");
+    sprintf(command,"call sp_get_all_node_info(%d)",DROP_INTERVAL_TIME);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));
@@ -58,7 +58,7 @@ int get_network_info(MYSQL *mysql,network_t *info){
     MYSQL_ROW record;
     MYSQL_RES *results;
 
-    sprintf(command,"call sp_get_network_info()");
+    sprintf(command,"call sp_get_network_info(%d)",10);
     ret = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (ret){
         printf("Error exec command: %s\n",mysql_error(mysql));

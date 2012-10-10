@@ -101,14 +101,14 @@ implementation {
 		}
 		// 如果退出循环那么说明队列很可能空了， 或者还不能发送， 
 		// 但是我们又不想让这个中断， 那么我们开启一个时钟避让一下
-		call CheckDogTimer.startOneShot(200);
+		call CheckDogTimer.startOneShot(DEFAULT_CHECKDOG_CHECK_PERIOD);
 	}
 
 	/* ****************************************** */
 	event void MicControl.startDone(error_t error) {
 		if (!bRoot) {
 				/*call Temp.read();*/
-				call SensorReadTimer.startOneShot(100);
+				call SensorReadTimer.startOneShot(DEFAULT_SENSOR_PERIOD);
 		}
 	}
 
@@ -184,7 +184,7 @@ implementation {
 	}
 
 	event void SerialControl.startDone(error_t error) {
-		call BaseStationTimer.startPeriodic(1000);
+		call BaseStationTimer.startPeriodic(DEFAULT_BASESTATION_REPORT_PERIOD);
 		post sendSerialMsg();
 	}
 	event void SerialControl.stopDone(error_t error) { }
@@ -280,7 +280,7 @@ implementation {
 			radioBusy = FALSE;
 			/*call Temp.read(); // 开启下一次采集，注意这里将采集顺序通过Split-Phase*/
 							    // 机制串起来了，解决了并发带来的问题
-			call SensorReadTimer.startOneShot(100);
+			call SensorReadTimer.startOneShot(DEFAULT_SENSOR_PERIOD);
 		}
 	}
 

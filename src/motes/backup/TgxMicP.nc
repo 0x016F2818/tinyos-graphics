@@ -35,6 +35,8 @@ implementation {
 	}
 	//************************************************************
 
+
+
 	// commands
 	//************************************************************
 	command error_t SoftwareInit.init() {
@@ -71,7 +73,6 @@ implementation {
 	  atomic {
 		reading[counter] = data;
 		counter++;
-		printf("new counter++, counter = %ld, reading = %d, precise = %d\n", counter, data, precise);
 		if (counter >= 50) {
 			counter = 0;
 			sum = 0;
@@ -89,11 +90,9 @@ implementation {
 			} else {
 				// 说明这次采集失败, 重新采集
 				// 如果采集没有成功则不释放resource， 继续采集
-				printf("capture failure:counter: %ld\n", counter);
 				post startNextMicphoneCapture();
 			}
 		} else {
-			printf("capture next:counter: %ld\n", counter);
 			post startNextMicphoneCapture();
 		}
 	  }
