@@ -10,24 +10,17 @@ NOTE:the first three table should be created before tb_node,and the last two sho
 
 FILE view_creater.sql:
 Creating the following view:
-    viw_node
-    viw_network
-    viw_work_state
-    viw_node_status
-    viw_network_segment
-    viw_sense
-    viw_temperature
+    viw_temp
     viw_humidity
-    viw_brightness
-    viw_microphone
-    viw_terre_mag
+    viw_photo
+    viw_sound
+    viw_magn
     viw_pressure
-    viw_accelerate
+    viw_acce
     viw_shoke
 
 FILE insert_proc_creater.sql
 Creating the following procedures:
-
 sp_update_node_info(in net_name char(50),in nod_id int, in state char(50),in status char(50), in power int,in GPS point)
 Description:
 This procedures is to update the node information if nod_id already exists in tb_node,otherwise insert this new node into tb_node.
@@ -39,28 +32,28 @@ status              : node status,limited to the status in tb_node_status
 power               : the power of the node
 GPS                 : the location of the node(目前仅限二维空间）
 
-sp_update_network(in net_name char(50),in nod_id int,in par_id int)
+sp_update_network(in net_name char(50),in nod_id int,in par_id int,in quality int)
 Description:
 此存储过程，如果net_name和nod_id已存在,则更新，否则插入新网络信息
 net_name            : network name
 nod_id              : node id
 par_id              : the parent id of this node
-
+quality             : the quality of the line between node and its parent;
 
 sp_insert_sense_record(in net_name char(50),
-    in nod_id           int,        in temperature  double(8,2),
-    in brightness   double(8,2),in microphone   double(8,2),
-    in accelerate_x double(8,2),in accelerate_y double(8,2),
-    in terre_mag_x  double(8,2),in terre_mag_y  double(8,2),
-    in pressure     double(8,2),in humidity     double(8,2),
-    in shoke        double(8,2),in sense_time datetime)
+    in nod_id   inti       ,in temp     double(8,2),
+    in photo    double(8,2),in sound    double(8,2),
+    in x_acc    double(8,2),in y_acc    double(8,2),
+    in x_mag    double(8,2),in y_mag    double(8,2),
+    in pressure double(8,2),in humidity double(8,2),
+    in shoke    double(8,2),in sense_time datetime)
 
 参数：
 net_name            : 网段号
 nod_id              : 节点号
-temperature         : 温度信息
-brightness
-microphone
+temp                : 温度信息
+photo               : 光照信息
+sound               : 声音信息
 ...
 sense_time          : 数据采集时间
 
@@ -72,13 +65,15 @@ sp_get_sgl_node_info(in net_name char(50),in nod_id int)
 net_name            : 网段号
 nod_id              : 节点号
 
-sp_get_all_node_info()
+sp_get_all_node_info(in sec int)
 介绍：
 获得所有节点的节点信息
+参数： sec 判断节点死亡的时间周期
 
-sp_get_network_info()
+sp_get_network_info(in sec int)
 介绍：
 获取所有网段的信息
+参数： sec 判断节点死亡的时间周期
 
 sp_get_all_record()
 介绍：

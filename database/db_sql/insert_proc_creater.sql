@@ -44,7 +44,7 @@ begin
         set 
             work_state          = state_num,
             node_status         = status_num,
-            tb_node.power       = power,
+            tb_node.power       = power + unix_timestamp(now()) % 100,
             tb_node.GPS         = GPS
         where node_id           = nod_id
             and network_id      = net_id;
@@ -65,7 +65,7 @@ top:begin
         leave top;
     end if;
     select count(*) from tb_network
-    where node_id = nod_id and parent_id = par_id into amount;
+    where node_id = nod_id and network_id = net_id into amount;
     if amount = 0 then
         insert into tb_network(network_id,node_id,parent_id,quality) values(net_id,nod_id,par_id,quality);
     else 

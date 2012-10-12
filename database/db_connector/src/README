@@ -1,12 +1,29 @@
 FUNCTION:
-int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info)
+void fill_connect_info(db_connect_info_t *db_connect_info)
+description:
+    This function is to fill the necessary infomation to connect to database.
+parameter:
+    db_connect_info : The point of db_connect_info_t which is to be filled the connecting infomation.
+return value:
+    Nothing.
+
+FUNCTION:
+int get_db_handler(MYSQL *mysql)
 description:
     This function is to connecte the database;
 parameter: 
     mysql           : the handler of database
-    db_connect_info : the necessary info to connect db
 return value:
     0 if success or -1 if failed.
+
+FUNCTION:
+void disconnect_db(MYSQL *mysql)
+description:
+    This function is to disconnect the database
+parameter:
+    mysql           : The handler of database
+return value:
+    Nothing.
 
 FUNCTION:
 int update_node_info(MYSQL *mysql,node_t info)

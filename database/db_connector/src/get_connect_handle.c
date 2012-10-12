@@ -28,3 +28,7 @@ int get_db_handler(MYSQL *mysql){
     return 0;
 }
 
+void disconnect_db(MYSQL *mysql){
+    mysql_close(mysql);
+    printf("Database disconnected success!\n");
+}
