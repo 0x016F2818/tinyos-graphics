@@ -6,6 +6,7 @@ drop view if exists viw_magn;
 drop view if exists viw_pressure;
 drop view if exists viw_acce;
 drop view if exists viw_shoke;
+drop view if exists viw_last_update;
 
 create or replace view viw_temp as
     select order_num,network_id,node_id,temp,sense_time,insert_time from tb_sense;
@@ -23,3 +24,8 @@ create or replace view viw_acce as
     select order_num,network_id,node_id,x_acc,y_acc,sense_time,insert_time from tb_sense;
 create or replace view viw_shoke as
     select order_num,network_id,node_id,shoke,sense_time,insert_time from tb_sense;
+
+create or replace view viw_last_update as
+    select network_id,node_id,insert_time from tb_network,(select network_id,node_id,insert_time from (select * from tb_sense order by insert_time desc) order by network_id, node_id) as tb_temp
+    where tb_network.node_id    = tb_temp.node_id
+    and tb_network.network_id   = tb_temp.network_id;
