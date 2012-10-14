@@ -25,7 +25,18 @@ create or replace view viw_acce as
 create or replace view viw_shoke as
     select order_num,network_id,node_id,shoke,sense_time,insert_time from tb_sense;
 
-create or replace view viw_last_update as
-    select network_id,node_id,insert_time from tb_network,(select network_id,node_id,insert_time from (select * from tb_sense order by insert_time desc) order by network_id, node_id) as tb_temp
-    where tb_network.node_id    = tb_temp.node_id
-    and tb_network.network_id   = tb_temp.network_id;
+    /**//*create or replace view viw_last_update as*/
+    /**//*select network_id,node_id,insert_time from tb_network,(select network_id,node_id,insert_time from (select * from tb_sense order by insert_time desc) group by network_id, node_id) as tb_temp*/
+    /**//*where tb_network.node_id    = tb_temp.node_id*/
+    /**//*and tb_network.network_id   = tb_temp.network_id;*/
+
+    /*create or replace view viw_all_record_desc as select network_id,node_id,insert_time from tb_sense*/
+    /*order by insert_time desc;*/
+
+    /*create or replace view viw_ordered as*/
+    /*select network_id, node_id, insert_time from viw_all_record_desc group by node_id;*/
+
+    /*create or replace view viw_last_update as*/
+    /*select distinct network_id,node_id,insert_time from tb_network left join viw_ordered */
+    /*using (network_id,node_id)*/
+    /*where insert_time in (select max(insert_time) from tb_sense group by network_id,node_id);*/

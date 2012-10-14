@@ -44,11 +44,13 @@ begin
         set 
             work_state          = state_num,
             node_status         = status_num,
-            tb_node.power       = power + unix_timestamp(now()) % 100,
+            tb_node.power       = power,
             tb_node.GPS         = GPS
         where node_id           = nod_id
             and network_id      = net_id;
     end if;
+    /*TODO: the timeout should not be static */
+    call sp_flush_network(5);
 end;;
 
 /*####################################################################*/
@@ -58,7 +60,6 @@ top:begin
     declare amount int;
     declare net_id int;
 
-    /*judge the whether the net_mame exists in tb_network_segment*/
     select count(*),network_id from tb_network_segment
     where network_name = net_name into amount,net_id;
     if amount = 0 then 
@@ -74,6 +75,8 @@ top:begin
         tb_network.quality = quality
         where network_id = net_id and node_id = nod_id;
     end if;
+    /*TODO: the timeout should not be static */
+    call sp_flush_network(5);
 end;;
 
 /*####################################################################*/
@@ -104,3 +107,4 @@ top:begin
 end;;
 
 /*####################################################################*/
+delimiter ;

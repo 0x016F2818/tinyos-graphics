@@ -25,6 +25,7 @@ end;;
 drop procedure if exists sp_get_all_node_info;;
 create procedure  sp_get_all_node_info(in sec int)
 begin
+    /*TODO: the timeout should be static or not? */
     call sp_flush_network(sec);
     select tb_network_segment.network_id,
             tb_network_segment.network_name,
@@ -45,6 +46,7 @@ end;;
 drop procedure if exists sp_get_network_info;;
 create procedure sp_get_network_info(in sec int)
 begin
+    /*TODO: the timeout should be static or not? */
     call sp_flush_network(sec);
     select tb_network.network_id,tb_network_segment.network_name, 
         node_id,parent_id,quality from tb_network,tb_network_segment
@@ -385,3 +387,12 @@ top:begin
         and insert_time >= start_time 
         and insert_time <= end_time;           
 end;;
+
+/*##########################################################################*/
+drop procedure if exists sp_get_latest_network;;
+create procedure sp_get_latest_network()
+begin
+    select * from tb_network left join ( select network_id, node_id, insert_time from (select network_id, node_id, insert_time from tb_sense  order by insert_time desc) as tb_temp group by node_id) as tb_temp using (network_id,node_id);
+end;;
+
+delimiter ;
