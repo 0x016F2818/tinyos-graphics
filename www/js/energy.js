@@ -1,10 +1,10 @@
-var energy = {},
-n = 50,
-i;
+// var energy = {},
+// n = 50,
+// i;
 
-for(i=0; i<50;i++){
-    energy[i]=100*Math.random();
-}
+// for(i=0; i<50;i++){
+//     energy[i]=100*Math.random();
+// }
 
 function showEnergy(value) {
     var type;
@@ -23,7 +23,6 @@ function showEnergy(value) {
     var divEndElement = "</\div>"
     return dangerElement+percentageElement+divEndElement
 }
-
 
 // The before version use these to test
 // $(function() {

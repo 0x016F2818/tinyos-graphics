@@ -9,7 +9,7 @@
 
 enum {
   /** The default size of this message type in bytes. */
-  SENSOR_MSG_SIZE = 22,
+  SENSOR_MSG_SIZE = 24,
 
   /** The Active Message type associated with this message. */
   SENSOR_MSG_AM_TYPE = 43,
@@ -123,6 +123,16 @@ enum {
   SENSOR_MSG_SENSOR_Y_MAG_SIZE = 2,
   /** Size (in bits) of the field 'sensor.y_mag' */
   SENSOR_MSG_SENSOR_Y_MAG_SIZEBITS = 16,
+
+  /* Field crc: type uint16_t, offset (bits) 176, size (bits) 16 */
+  /** Offset (in bytes) of the field 'crc' */
+  SENSOR_MSG_CRC_OFFSET = 22,
+  /** Offset (in bits) of the field 'crc' */
+  SENSOR_MSG_CRC_OFFSETBITS = 176,
+  /** Size (in bytes) of the field 'crc' */
+  SENSOR_MSG_CRC_SIZE = 2,
+  /** Size (in bits) of the field 'crc' */
+  SENSOR_MSG_CRC_SIZEBITS = 16,
 };
 
 /**
@@ -234,5 +244,15 @@ uint16_t sensor_msg_sensor_y_mag_get(tmsg_t *msg);
  * Set the value of the field 'sensor.y_mag'
  */
 void sensor_msg_sensor_y_mag_set(tmsg_t *msg, uint16_t value);
+
+/**
+ * Return the value of the field 'crc'
+ */
+uint16_t sensor_msg_crc_get(tmsg_t *msg);
+
+/**
+ * Set the value of the field 'crc'
+ */
+void sensor_msg_crc_set(tmsg_t *msg, uint16_t value);
 
 #endif

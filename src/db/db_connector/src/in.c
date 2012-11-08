@@ -14,7 +14,7 @@ int update_node_info(MYSQL *mysql,node_t info){
 
     result = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (result){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:update_node_info]: %s\n",mysql_error(mysql));
         return -1;
     }
     else{
@@ -33,7 +33,7 @@ int update_network(MYSQL *mysql,network_t info){
 
     result = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (result){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:update_network]: %s\n",mysql_error(mysql));
         return -1;
     }
     else{
@@ -56,11 +56,11 @@ int insert_sense_record(MYSQL *mysql,sensor_t info){
 
     result = mysql_real_query(mysql,command,(unsigned int)strlen(command));
     if (result){
-        printf("Error exec command: %s\n",mysql_error(mysql));
+        printf("[Error exec command:insert_sense_record]: %s\n",mysql_error(mysql));
         return -1;
     }
     else{
-        printf("[sense_record_insert]:%ld products updated successfully!\n",(long) mysql_affected_rows(mysql));
+        printf("[insert_sense_record]:%ld products updated successfully!\n",(long) mysql_affected_rows(mysql));
     }
     return 0;
 }

@@ -30,9 +30,9 @@ create table if not exists tb_node(
     GPS             point           not null,
     update_time     timestamp       default current_timestamp on update current_timestamp,
 
-    primary key(network_id,node_id),
-    foreign key(work_state) references tb_work_state(work_state),
-    foreign key(node_status) references tb_node_status(node_status)
+    primary key(network_id,node_id), 
+    foreign key(work_state) references tb_work_state(work_state) on update cascade on delete cascade,
+    foreign key(node_status) references tb_node_status(node_status) on update cascade on delete cascade
     /*foreign key(network_id,node_id) references tb_network_segment(network_id)*/
     )engine = innodb;
 
@@ -42,8 +42,8 @@ create table if not exists tb_network(
     parent_id       int             not null,
     quality         int             not null default 0,
     primary key(network_id,node_id),
-    foreign key(network_id,node_id) references tb_node(network_id,node_id),
-    foreign key(network_id,parent_id) references tb_node(network_id,node_id)
+    foreign key(network_id,node_id) references tb_node(network_id,node_id) on update cascade on delete cascade,
+    foreign key(network_id,parent_id) references tb_node(network_id,node_id) on update cascade on delete cascade
     )engine = innodb;
     
 create table if not exists tb_sense(
@@ -63,5 +63,5 @@ create table if not exists tb_sense(
     unknow1         double(8,2),
     sense_time      datetime,
     insert_time     timestamp   default current_timestamp,
-    foreign key(network_id,node_id) references tb_node(network_id,node_id)
+    foreign key(network_id,node_id) references tb_node(network_id,node_id) on update cascade on delete cascade
     )engine = innodb;

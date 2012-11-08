@@ -8,54 +8,12 @@
     <meta name="description" content="" />
     <meta name="author" content="icecream" />
 
+    <link href="./css/common.css" type="text/css" rel="stylesheet" />
     <link href="./css/bootstrap.min.css" type="text/css" rel="stylesheet" /> 
     <link href="./css/bootstrap-wysihtml5.css" type="text/css" rel="stylesheet" />
     <link href="./css/bootstrap-responsive.min.css" type="text/css" rel="stylesheet" />
     <link href="./css/prettify.css" type="text/css" rel="stylesheet" />
     <link href="./css/clock.css" type="text/css" rel="stylesheet" />
-    <style type="text/css">
-      body {
-      padding-top: 60px;
-      padding-bottom: 40px;
-      }
-      .sidebar-nav {
-      padding: 9px 0;
-      }
-      .loader{
-      z-index:1000;
-      position: absolute;
-      text-align: center;
-      top: 84%;
-      left: 71%;
-      margin: -250px 0 0 -280px;
-      box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-      -webkit-background-clip: padding-box;
-      }
-    </style>
-    <STYLE type="text/css">
-      /* icecream sigma.js context : */
-      .sigma-parent {
-      position: relative;
-      border-radius: 4px;
-      -moz-border-radius: 4px;
-      -webkit-border-radius: 4px;
-      /* background: #222; */
-      background:#E3E3E3;
-      height: 560px;
-      /* height:90%; */
-      }
-      .sigma-expand {
-      /*position: absolute;*/
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      }
-      .buttons-container{
-      padding-bottom: 8px;
-      padding-top: 12px;
-      }
-    </STYLE>
 
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -67,14 +25,14 @@
     <SCRIPT type="text/javascript" src="./lib/sigma.min.js"></SCRIPT>
     <script type="text/javascript" src="./lib/highcharts.js"></script>
     <script type="text/javascript" src="./lib/exporting.js"></script>
+
     <!-- <script type="text/javascript" src="./lib/prototype.js"></script> -->
     <!-- <script type="text/javascript" src="./lib/jstorage.min.js"></script> -->
-
-    <script type="text/javascript" src="./js/energy.js"></script>
 
   </head>
 
   <body>
+
     <!-- Head -->
     <div id="header" class="navbar navbar-fixed-top" style="position:absolute">
       <div class="navbar-inner">
@@ -137,7 +95,7 @@
         <a class="reference external" href="mailto:van9ogh%40gmail.com"><button class="btn btn-primary" >Content us</button></a>
         <button class="btn" data-dismiss="modal" aria-hidden="true">Close Me</button>
       </div>
-    </div>
+    </div> <!-- about end -->
 
     <!-- feedback -->
     <div class="modal hide fade" id="feedback" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
@@ -154,7 +112,7 @@
         <a class="reference external" ><button class="btn btn-primary" >Ok, Send</button></a>
         <button class="btn" data-dismiss="modal" aria-hidden="true">Close Me</button>
       </div>
-    </div>
+    </div> <!-- feedback end -->
     
 
     <!-- LICENCE -->
@@ -170,7 +128,7 @@
         <!-- <a class="reference external" ><button class="btn btn-primary" >Ok, Send</button></a> -->
         <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Close Me</button>
       </div>
-    </div>
+    </div> <!-- LICENCE end -->
     
 
     <!-- Alert -->
@@ -188,7 +146,7 @@
         <a class="reference external" ><button class="btn btn-primary" >Ok, Send</button></a>
         <button class="btn" data-dismiss="modal" aria-hidden="true">Close Me</button>
       </div>
-    </div>
+    </div> <!-- alert end -->
 
 
     <!-- Regedit -->
@@ -225,7 +183,7 @@
         <a class="reference external" href="mailto:van9ogh%40gmail.com"><button class="btn btn-primary" >Regedit</button></a>
         <button class="btn" data-dismiss="modal" aria-hidden="true">Close Me</button>
       </div>
-    </div>
+    </div> <!-- regedit end -->
 
 
     <!-- Layout -->
@@ -235,6 +193,7 @@
         <div class="span2">
           <div class="well sidebar-nav">
             <li class="nav-header">Now Time</li>
+
             <!-- Clock -->
             <!-- <div id="clock"> </div> -->
             <!-- This is for IE or Firefox -->
@@ -242,7 +201,7 @@
               <span id="clock2"></span>
             </div>
             <!-- This is for chrome(This is my favourite browser) -->
-            <div id="clockSVG" style="width:100%;height: 30%;position: relative;">
+            <div id="clockSVG" class="hide" style="width:100%;height: 30%;position: relative;">
               <!-- viewBox is coordinate system, width and height are on-screen size -->
               <svg id="clock" viewBox="0 0 100 100">
                 <defs>   <!-- Define a filter for drop-shadows -->
@@ -280,18 +239,30 @@
                 </g>
               </svg>
             </div> <!-- Clock End -->
-            <script type="text/javascript" src="./js/clock.js"></script>
+          </div> 
 
-          </div>
+          <!-- navigate -->
+          <div id="navigate" class="well sidebar-nav hide">
+            <ul class="nav nav-list nav-pills nav-stacked">
+              <li class="nav-header">Sensor</li>
+              <li class="nodeinfo"><a style="background-color:#3900CC;">Node Information</a></li>
+              <li id="networkId"></li>
+              <li id="nodeId"></li>
+              <li id="temp"><a>Temperature</a></li>
+              <li id="light"><a>Light</a></li>
+              <li id="sound"><a>Sound</a></li>
+            </ul>
+          </div> <!-- navigate end -->
 
+          <!-- node network -->
           <div class="well sidebar-nav" id="nodeNetwork">
             <ul class="nav nav-list nav-pills nav-stacked">
               <li class="nav-header">Node Network</li>
               <p>Here will be show the node network</p>
             </ul>
-          </div>
+          </div> <!-- node network end -->
 
-          <!-- </div> -->
+          <!-- google chat -->
           <div class="well sidebar-nav">
             <ul class="nav nav-list nav-pills nav-stacked">
               <li class="nav-header">System Information</li>
@@ -299,23 +270,40 @@
               <iframe src="http://www.google.com/talk/service/badge/Show?tk=z01q6amlqnnk8vnj5clh0u7emqjn8cfgm9ket4qmq6860o8r9hadbp0ii3dm17j1aet6soac1n464l88bkbikj4q13v5nutqal0i6b98atvs3l9i9sf9f7jsqg1f5jkpqsqf7pblu3551m08q792lasuuh0tg1p0lolbs7tnhdbunk4j5a8ab8tsvv0p0p3op8k&amp;w=200&amp;h=60" frameborder="0" allowtransparency="true" width="200" height="60"></iframe>
               <!-- <iframe src="http://127.0.0.1:8001" frameborder:0 height="100%" width="100%"></iframe> -->
             </ul>
-          </div>
+          </div> <!-- google chat end -->
 
         </div> <!-- Span 2 End -->
 
-        <div class="span10" id="network">
+        <div class="span10" id="displayArea">
+          
+          <!-- Here is show the node distribute, real-time temperature, real-time light, real-time sound -->
+          <div class="accordion" id="accordionChart1">
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a style="text-align: left;text-decoration: none" class="accordion-toggle btn" data-toggle="collapse" data-parent="#accordion2" href="#Chart1">
+                  <!-- <i class="icon-bar-chart"></i><i class="icon-minus pull-right"></i> -->
+                  <p id="titleOfChart"></p>
+                </a>
+              </div>
+              <div id="Chart1" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                  <div id="bodyOfChart" style="min-width: 400px; height: 70%; margin: 0 auto"> </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        </div> <!-- span 10 network end-->
+        </div> <!-- span 10 end-->
         
       </div>
     </div> <!-- Layoyt end -->
 
-</body>
+  </body>
 
-<script type="text/javascript" src="./js/nodeBasicInfo.js"></script> 
-<script type="text/javascript" src="./js/ajaxRequest.js"></script>
-<script type="text/javascript" src="./js/drawNode.js"></script>
-<script type="text/javascript" src="./js/drawNetworkChart.js"></script>
-<script type="text/javascript" src="./js/indexControl.js"></script>
+  <script type="text/javascript" src="./js/clock.js"></script>
+  <script type="text/javascript" src="./js/energy.js"></script>
+  <script type="text/javascript" src="./js/view.js"></script>
+  <script type="text/javascript" src="./js/model.js"></script>
+  <script type="text/javascript" src="./js/control.js"></script>
 
 </html>

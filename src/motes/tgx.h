@@ -1,15 +1,12 @@
 #ifndef TINYOSWEB_H
 #define TINYOSWEB_H
 
-
 enum {
 	AM_CONTROL_MSG = 42,
 	AM_SENSOR_MSG = 43,
-	DESSMINATE_KEY = 440,
+	DESSMINATE_KEY = 44,
 	DEFAULT_SEND_PERIOD = 1000,
-	DEFAULT_BASESTATION_REPORT_PERIOD = 5000,
-	DEFAULT_SENSOR_PERIOD = 1000,
-	DEFAULT_CHECKDOG_CHECK_PERIOD = 10,
+	DEFAULT_SENSOR_PERIOD = 100,
 	SENSOR_READ_COUNT = 7,
 	SENSOR_RANGE_MAX_X = 1000,
 	SENSOR_RANGE_MAX_Y = 1000,
@@ -37,6 +34,7 @@ typedef nx_struct sensor_msg {
 	nx_uint16_t parentId;
 	node_position_t position;
 	sensor_data_t sensor;
+	nx_uint16_t crc;
 } sensor_msg_t;
 
 //typedef nx_struct control_msg {

@@ -4,8 +4,8 @@
 #include<string.h>
 #include"mysql/mysql.h"
 
-#define DROP_INTERVAL_TIME	         5
-#define DB_COMMAND_LENGTH            200
+#define DB_COMMAND_LENGTH           200
+#define NETWORK_FLUSH_TIMEOUT       50
 
 #define DB_QUERY                    -1001
 #define DB_NO_QUERY                 -1002
@@ -93,17 +93,9 @@ typedef struct {
     char        db_name[50];
 }db_connect_info_t;
 
-/*typedef struct {*/
-/*enum {*/
-/*DB_MYSQL = 0, */
-/*DB_ORACLE, */
-/*DB_SQL_SERVER*/
-/*}db_type;*/
-/*void        *db_handler;*/
-/*}db_connect_t;*/
-    
 /*################################################*/
-int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info);
+void fill_connect_info(db_connect_info_t *db_connect_info);
+int get_db_handler(MYSQL *mysql);
 
 int insert_sense_record(MYSQL *mysql,sensor_t info);
 int update_network(MYSQL *mysql,network_t info);

@@ -117,3 +117,13 @@ void sensor_msg_sensor_y_mag_set(tmsg_t *msg, uint16_t value)
   tmsg_write_ube(msg, 160, 16, value);
 }
 
+uint16_t sensor_msg_crc_get(tmsg_t *msg)
+{
+  return tmsg_read_ube(msg, 176, 16);
+}
+
+void sensor_msg_crc_set(tmsg_t *msg, uint16_t value)
+{
+  tmsg_write_ube(msg, 176, 16, value);
+}
+

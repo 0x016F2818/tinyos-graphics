@@ -301,16 +301,8 @@ int main(int argc, char *argv[])
 
 							// 产生数据库句柄
 							MYSQL mysql;
-							db_connect_info_t db_connect_info;
-							{
-								strcpy(db_connect_info.host,"10.18.46.169");
-								strcpy(db_connect_info.user,"tinyos");
-								strcpy(db_connect_info.password,"njjizyj0826");
-								strcpy(db_connect_info.db_name,"test3");
-
-								if(get_db_handler(&mysql,db_connect_info) == -1){
-									return -1;
-								}
+							if(get_db_handler(&mysql) == -1){
+								return -1;
 							}
 
 							struct sockaddr_in sa;

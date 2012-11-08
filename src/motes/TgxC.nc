@@ -1,4 +1,4 @@
-#include "printf.h"
+
 #include "tgx.h"
 
 module TgxC {
@@ -6,6 +6,8 @@ module TgxC {
 		interface Boot;
 		interface Leds;
 		interface Random;
+		interface ParameterInit<uint16_t> as SeedInit;
+		interface Crc;
 		interface BigQueue<sensor_msg_t> as SerialMsgQueue;
 		interface Timer<TMilli> as SensorReadTimer;
 		interface Timer<TMilli> as BaseStationTimer;
@@ -31,7 +33,7 @@ module TgxC {
 		interface Read<uint16_t> as Temp;
 		interface Read<uint16_t> as Light;
 		interface Read<uint16_t> as Microphone;
-		interface SplitControl as MicControl;
+		//interface SplitControl as MicControl;
 		interface Read<uint16_t> as AccelX;
 		interface Read<uint16_t> as AccelY;
 		interface Read<uint16_t> as MagX;
@@ -57,7 +59,6 @@ implementation {
 	/** 用来盛放采集的数据的临时变量 */
 	uint16_t Temp_data, Light_data, Microphone_data, AccelX_data,
 			 AccelY_data, MagX_data, MagY_data;
-		
 	/*  辅助函数 */
 	/* ***************************************** */
 	/** 用来报告节点的各个部分的工作情况 */
@@ -86,6 +87,18 @@ implementation {
 	// 注意看门狗不是用startPeriod开启的， 而是在task sendSerialMsg
 	// 中用startOneShot开启的
 
+	void calcMsgCrc(sensor_msg_t *msg) {
+		int crc = 0;
+		crc = call Crc.crc16((void *)msg, sizeof(*msg) - 2);
+		msg->crc = crc;
+	/*	atomic {
+			printf("msg->crc = %d\n", crc);
+			printfflush();
+		}
+	*/
+	}
+
+
 	task void sendSerialMsg() {
 		int sizeQueue = call SerialMsgQueue.size();
 		if (bRoot && !serialBusy && sizeQueue != 0) {
@@ -101,22 +114,19 @@ implementation {
 		}
 		// 如果退出循环那么说明队列很可能空了， 或者还不能发送， 
 		// 但是我们又不想让这个中断， 那么我们开启一个时钟避让一下
-		call CheckDogTimer.startOneShot(DEFAULT_CHECKDOG_CHECK_PERIOD);
+		call CheckDogTimer.startOneShot(200);
 	}
 
 	/* ****************************************** */
-	event void MicControl.startDone(error_t error) {
-		if (!bRoot) {
-				/*call Temp.read();*/
-				call SensorReadTimer.startOneShot(DEFAULT_SENSOR_PERIOD);
+/*	event void MicControl.startDone(error_t error) {
 		}
-	}
 
 	event void MicControl.stopDone(error_t error) {
 
 	}
-
+*/
 	event void Boot.booted() {
+		//call SeedInit.init((uint16_t)(call SensorReadTimer.getNow()));
 		// 根据SENSOR_RANGE_MIN - SENSOR_RANGE_MAX, 随即生成节点的位置信息,
 		// 后期我们会根据GPRS信息， 进行定位, 得到真实的节点位置信息
 		positionX = ((call Random.rand16() / (65536 + 0.0)) *
@@ -128,7 +138,11 @@ implementation {
 			bRoot = TRUE;
 			call SerialControl.start();
 		} else {
-			call MicControl.start();
+			//call MicControl.start();
+			if (!bRoot) {
+				/*call Temp.read();*/
+				call SensorReadTimer.startOneShot(0);
+			}
 		}
 
 		call RadioControl.start();
@@ -151,6 +165,7 @@ implementation {
 			baseStationData.sensor.x_mag = 0;
 			baseStationData.sensor.y_mag = 0;
 
+			calcMsgCrc(&baseStationData);
 			call SerialMsgQueue.enqueue(baseStationData);
 		}
 	}
@@ -184,7 +199,7 @@ implementation {
 	}
 
 	event void SerialControl.startDone(error_t error) {
-		call BaseStationTimer.startPeriodic(DEFAULT_BASESTATION_REPORT_PERIOD);
+		call BaseStationTimer.startPeriodic(1000);
 		post sendSerialMsg();
 	}
 	event void SerialControl.stopDone(error_t error) { }
@@ -197,6 +212,7 @@ implementation {
 		else
 			Temp_data = 0;
 		call Light.read();
+//		call MagY.read();
 	}
 	event void Light.readDone(error_t error, uint16_t val) {
 		if (error == SUCCESS)
@@ -259,6 +275,7 @@ implementation {
 		sensorData->sensor.y_acc = AccelY_data;
 		sensorData->sensor.x_mag = MagX_data;
 		sensorData->sensor.y_mag = val;
+		calcMsgCrc(sensorData);
 
 		// 每采集完一组数据， 填写到payload之后， 闪led， 报告正在工作
 		reportSensorWorking();
@@ -280,7 +297,7 @@ implementation {
 			radioBusy = FALSE;
 			/*call Temp.read(); // 开启下一次采集，注意这里将采集顺序通过Split-Phase*/
 							    // 机制串起来了，解决了并发带来的问题
-			call SensorReadTimer.startOneShot(DEFAULT_SENSOR_PERIOD);
+			call SensorReadTimer.startOneShot(0);
 		}
 	}
 

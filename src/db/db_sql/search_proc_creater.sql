@@ -25,7 +25,7 @@ end;;
 drop procedure if exists sp_get_all_node_info;;
 create procedure  sp_get_all_node_info(in sec int)
 begin
-    call sp_flush_network(sec);
+	call sp_flush_network(sec);
     select tb_network_segment.network_id,
             tb_network_segment.network_name,
             tb_node.node_id,tb_network.parent_id,
@@ -45,7 +45,7 @@ end;;
 drop procedure if exists sp_get_network_info;;
 create procedure sp_get_network_info(in sec int)
 begin
-    call sp_flush_network(sec);
+	call sp_flush_network(sec);
     select tb_network.network_id,tb_network_segment.network_name, 
         node_id,parent_id,quality from tb_network,tb_network_segment
     where tb_network.network_id = tb_network_segment.network_id;

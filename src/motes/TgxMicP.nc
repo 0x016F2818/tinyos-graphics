@@ -1,102 +1,92 @@
-#include "printf.h"
-module TgxMicP {
-	provides {
-		interface Init as SoftwareInit;
-		interface Read<uint16_t> as MicRead;
-	}
-	uses {
-		interface Atm128AdcSingle;
-		interface MicaBusAdc as MicAdcChannel;
-		interface Resource as AdcResource;
-		interface Timer<TMilli> as MicTimer;
-	}
+module MicrophoneC
+{
+  provides interface SplitControl;
+  uses {
+    interface Timer<TMilli> as MicWarnupTimer;
+    interface GeneralIO as MicPower;  // Power control pin
+    interface GeneralIO as MicMuxSel; // Microphone / tone detector selection pin
+    interface I2CPacket<TI2CBasicAddr>;
+    interface Resource as I2CResource;
+  }
 }
-implementation {
-	uint32_t counter = 0;
-	uint16_t reading[50];
-	uint16_t actualVal;
+implementation
+{
+  enum {
+    MIC_POT_ADDR = 0x5A,
+    MIC_POT_SUBADDR = 0,
+    MIC_GAIN = 64,
+	MICROPHONE_WARMUP = 5000,
+  };
 
-	// Tasks
-	//************************************************************
-	task void getMicrophoneData() {
-		call Atm128AdcSingle.getData(call MicAdcChannel.getChannel(),
-				 ATM128_ADC_VREF_OFF, FALSE,
-				 ATM128_ADC_PRESCALE_16);
-	}
+  uint8_t gainPacket[2];
 
-	task void startNextMicphoneCapture() {
-		call MicTimer.startOneShot(0);
-	}
+  task void gainOk(), gainFail(), stopDone();
 
-	task void notifyMicReadDone() {
-		atomic {
-			signal MicRead.readDone(SUCCESS, actualVal);
-		}
-	}
-	//************************************************************
+  command error_t SplitControl.start() {
+    // Powerup the microphone
+    call MicPower.makeOutput();
+    call MicPower.set();
+    // Select raw microphone output
+    call MicMuxSel.makeOutput();    
+    call MicMuxSel.set(); 
 
-	// commands
-	//************************************************************
-	command error_t SoftwareInit.init() {
-		atomic {
-			counter = 0;
-			actualVal = 0;
-		}
-		return SUCCESS;
-	}
-	
-	command error_t MicRead.read() {
-		atomic {
-			counter = 0;
-			actualVal = 0;
-		}
-		return call AdcResource.request();
-	}
-	//************************************************************
+    // Request the I2C bus to adjust gain
+    call I2CResource.request();
 
+    return SUCCESS;
+  }
 
+  event void I2CResource.granted() {
+    error_t ok;
 
-	// Events
-	//************************************************************
-	event void MicTimer.fired() {
-		post getMicrophoneData();
-	}
+    // Send gain-control packet over I2C bus
+    gainPacket[0] = MIC_POT_SUBADDR;
+    gainPacket[1] = MIC_GAIN;
+    ok = call I2CPacket.write(I2C_START | I2C_STOP, MIC_POT_ADDR,
+			      sizeof gainPacket, gainPacket);
+    if (ok != SUCCESS)
+      signal SplitControl.startDone(FAIL);
+  }
 
-	event void AdcResource.granted() {
-		post startNextMicphoneCapture();
-	}
+  async event void I2CPacket.writeDone(error_t error, uint16_t addr,
+				       uint8_t length, uint8_t* data) {
+    // Release I2C bus and wait for microphone to warmup (report failure
+    // in case of error)
+    call I2CResource.release();
+    if (error == SUCCESS)
+      post gainOk();
+    else
+      post gainFail();
+  }
 
-	async event void Atm128AdcSingle.dataReady(uint16_t data, bool precise) {
-	  int i, sum, actualCount;
-	  atomic {
-		reading[counter] = data;
-		counter++;
-		printf("new counter++, counter = %ld, reading = %d, precise = %d\n", counter, data, precise);
-		if (counter >= 50) {
-			counter = 0;
-			sum = 0;
-			actualCount = 0;
-			for (i = 0; i < 50; i++) {
-				if (reading[i] > 300) {
-					actualCount++;
-					sum += reading[i];
-				}
-			}
-			if (actualCount != 0) {
-				actualVal = sum / actualCount;
-				call AdcResource.release();
-				post notifyMicReadDone();
-			} else {
-				// 说明这次采集失败, 重新采集
-				// 如果采集没有成功则不释放resource， 继续采集
-				printf("capture failure:counter: %ld\n", counter);
-				post startNextMicphoneCapture();
-			}
-		} else {
-			printf("capture next:counter: %ld\n", counter);
-			post startNextMicphoneCapture();
-		}
-	  }
-	}
-	//************************************************************
+  task void gainOk() {
+    call MicWarnupTimer.startOneShot(MICROPHONE_WARMUP); 
+  }
+
+  task void gainFail() {
+    signal SplitControl.startDone(FAIL);
+  }
+
+  event void MicWarnupTimer.fired() {
+    // Microphone warmed up. Signal completion of startup.
+    signal SplitControl.startDone(SUCCESS);
+  }
+
+  command error_t SplitControl.stop() {
+    // Power off microphone
+    call MicPower.clr();
+    call MicPower.makeInput();
+
+    // And let our caller know we're done - post a task as one should not
+    // signal events directly from commands
+    post stopDone();
+    return SUCCESS;
+  }
+
+  task void stopDone() {
+    signal SplitControl.stopDone(SUCCESS);
+  }
+
+  async event void I2CPacket.readDone(error_t error, uint16_t addr, uint8_t length, uint8_t* data) {
+  }
 }

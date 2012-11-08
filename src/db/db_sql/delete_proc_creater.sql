@@ -5,6 +5,6 @@ begin
     delete tb_network from tb_network,tb_node
     where tb_network.node_id  = tb_node.node_id
     and tb_network.network_id = tb_node.network_id
-    and unix_timestamp(now()) - unix_timestamp(update_time) > sec;
+    and unix_timestamp(now()) - unix_timestamp(tb_node.update_time) > sec;
 end;;
 

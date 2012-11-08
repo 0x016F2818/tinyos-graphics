@@ -27,26 +27,22 @@ int TGX_MODULE_HTTP_HANDLER(tgx_module_http_t *http)
 	http->resp->data = calloc(65536, sizeof(char));
 	http->resp->size = 65536;
 	MYSQL mysql;
-	db_connect_info_t db_connect_info;
 
 	node_t      node_inser_info[10000];
 	memset(node_inser_info, 0, sizeof(node_inser_info));
-	{
-		strcpy(db_connect_info.host,"10.18.46.169");
-		strcpy(db_connect_info.user,"tinyos");
-		strcpy(db_connect_info.password,"njjizyj0826");
-		strcpy(db_connect_info.db_name,"test3");
-
-		if(get_db_handler(&mysql,db_connect_info) == -1){
+	if(get_db_handler(&mysql) == -1){
 			return -1;
-		}
 	}
 
 	int i;
 	int nNode;
 	nNode = get_all_node_info(&mysql, node_inser_info);
 	printf("nNode = %d\n", nNode);
-	if (nNode < 0) return -1;
+	if (nNode < 0) {
+		//goto myerr;
+		mysql_close(&mysql);
+		return -1;
+	}
 
 	json_object *network = json_object_new_array(),
 				*network_object[nNode],
@@ -75,8 +71,12 @@ int TGX_MODULE_HTTP_HANDLER(tgx_module_http_t *http)
 		network_id = node_inser_info[i].network_id;
 		/*printf("network_id = %d, node_id = %d\n", node_inser_info[i].network_id, node_inser_info[i].node_id);*/
 		index = get_index(flag, nNode, network_id, &isNew);
-		if (index < 0) 
+		if (index < 0) {
+			mysql_close(&mysql);
+			//goto myerr;
 			return -1;
+		}
+
 		if (isNew) {
 			network_num++;
 			network_object[index] = json_object_new_object();
@@ -122,4 +122,8 @@ int TGX_MODULE_HTTP_HANDLER(tgx_module_http_t *http)
 	mysql_close(&mysql);
 
 	return 0;
+	
+/*myerr:
+	mysql_close(&mysql);
+	return -1;*/
 }

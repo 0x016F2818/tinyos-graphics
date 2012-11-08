@@ -1,6 +1,17 @@
 #include "../include/sensor.h"
 
-int get_db_handler(MYSQL *mysql,db_connect_info_t db_connect_info){
+void fill_connect_info(db_connect_info_t *db_connect_info){
+    strcpy(db_connect_info->host,"10.18.46.169");
+    strcpy(db_connect_info->user,"tinyos");
+    strcpy(db_connect_info->password,"njjizyj0826");
+    strcpy(db_connect_info->db_name,"tinyos");
+}
+
+int get_db_handler(MYSQL *mysql){
+
+    db_connect_info_t db_connect_info;
+    fill_connect_info(&db_connect_info);
+
     if(!mysql_init(mysql))
     {
         printf("mysql_init failed!\n");

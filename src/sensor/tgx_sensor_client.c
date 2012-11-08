@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <string.h>
 #include "sfsource.h"
+#include <math.h>
 
 
 static volatile sig_atomic_t running = 1;
@@ -86,10 +87,13 @@ int mypow(int x, int y)
 	return m;
 }
 
-int to_int(const char *str, int len)
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+
+uint16_t to_int(const char *str, int len)
 {
 	int i, j;
-	int sum = 0;
+	uint16_t sum = 0;
 	char tmp;
 	for (i = len-1; i >=0; i--) {
 		tmp = str[i];
@@ -111,6 +115,55 @@ double Celsius(double ADC)
 #define C 0.000000093
 	double Rthr = R1 * (ADC_FS-ADC)/ADC;
 	return (1 / (A + B * log(Rthr) + C * pow(log(Rthr), 3))) - 273.15;
+}
+
+uint16_t crcByte(uint16_t crc, uint8_t b)
+{
+  uint8_t i;
+  
+  crc = crc ^ b << 8;
+  i = 8;
+  do
+    if (crc & 0x8000)
+      crc = crc << 1 ^ 0x1021;
+    else
+      crc = crc << 1;
+  while (--i);
+
+  return crc;
+}
+
+uint16_t crc16(void *buf, uint8_t len)
+{
+	uint8_t *tmp = (uint8_t *)buf;
+    uint16_t crc;
+    for (crc = 0; len > 0; len--) {
+      crc = crcByte(crc, *tmp++);
+    }
+    return crc;
+}
+
+int dataCorrupt(const unsigned char *packet, int length) {
+	uint16_t crc, actualCrc;
+	int i;
+	
+	//  我们先计算除了校验位之外的packet的CRC， 再与实际
+	// 的crc进行对比， 如果不一致，return -1 否则 返回 0
+	/*int j;*/
+	/*for (j = 0; j < length; j++) {*/
+		/*if (j % 2 == 0)*/
+			/*printf("%d:%d\n", j, to_int(packet+j, 2));*/
+	/*}*/
+	
+	crc = crc16(packet, length-2);
+
+	actualCrc = to_int(packet + length - 2, 2);
+	/*printf("crc = %d, actualCrc = %d, packet[length-2] = 0x%2d, packet[length-1] = 0x%2d\n", */
+			/*crc, actualCrc, packet[length-2], packet[length-1]);*/
+	if (crc == actualCrc) 
+		return 0;
+	else
+		return -1;
 }
 
 int main(int argc, char *argv[])
@@ -137,6 +190,10 @@ int main(int argc, char *argv[])
 	sf_source  = open_sf_source("127.0.0.1", 8989);
 	srv_source = open_srv_source(argv[1], atoi(argv[2]));
 
+	if (!sf_source || !srv_source) {
+		printf("prepare not done!\n");
+		exit(0);
+	}
 	fd_set readfds, testfds, errorfds;
 	FD_ZERO(&readfds);
 	FD_SET (sf_source,   &readfds);
@@ -168,6 +225,13 @@ int main(int argc, char *argv[])
 						kill(pid, SIGKILL);
 						printf("signal kill signal to child\n");
 						exit(0);
+					}
+					
+					// 检查数据是否发生错误
+					if (dataCorrupt(packet+8, len-8) < 0) {
+						fprintf(stderr, "data corrupt happens!\n");
+			    		free((void *)packet);
+						continue;
 					}
 
 					int nwrite;
@@ -203,6 +267,8 @@ int main(int argc, char *argv[])
 									case 28:
 										printf("My: ");
 										break;
+									case 30:
+										printf("CrC: ");
 								}
 								if (isTemp)
 									printf("%3.0f ", Celsius(to_int(packet+i, 2)));
@@ -211,7 +277,7 @@ int main(int argc, char *argv[])
 									
 							}
 						} else {
-							/*printf("%02x ", packet[i]);*/
+							printf("%02x ", packet[i]);
 						}
 						if (i >= 7 && i < nwrite-1) {
 							if (i == 7) printf("( ");
